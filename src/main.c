@@ -1,12 +1,33 @@
 #include <ipc/cs_IpcRamData.h>
 #include <Arduino.h>
 
+#if __SIZEOF_POINTER__ != 4
+#warning "Incorrect uintptr_t type"
+#endif
+
 void __attribute__((optimize("O0"))) dummy_main() {
-	uint8_t len = 8;
-	unsigned char buf[8] = "arduino";
-	buf[7] = 0;
-//	std::string name("arduino");
-//	len = name.length();
+	uint8_t buf[BLUENET_IPC_RAM_DATA_ITEM_SIZE];
+
+	// protocol version
+	const char protocol_version = 0;
+	buf[0] = protocol_version;
+	uint8_t len = 1;
+
+	// address of setup() function
+	uintptr_t address = (uintptr_t)&setup;
+	for (int i = 0; i < sizeof(uintptr_t); ++i) {
+		buf[i+len] = (uint8_t)(0xFF & (address >> (i*8)));
+	}
+	len += sizeof(uintptr_t);
+
+	// address of loop() function
+	address = (uintptr_t)&loop;
+	for (int i = 0; i < sizeof(uintptr_t); ++i) {
+		buf[i+len] = (uint8_t)(0xFF & (address >> (i*8)));
+	}
+	len += sizeof(uintptr_t);
+
+	// set buffer in RAM
 	setRamData(IPC_INDEX_ARDUINO_APP, buf, len);
 }
 
