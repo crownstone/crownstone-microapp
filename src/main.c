@@ -1,4 +1,5 @@
 #include <ipc/cs_IpcRamData.h>
+#include <Arduino.h>
 
 void __attribute__((optimize("O0"))) dummy_main() {
 	uint8_t len = 8;
@@ -8,6 +9,8 @@ void __attribute__((optimize("O0"))) dummy_main() {
 //	len = name.length();
 	setRamData(IPC_INDEX_ARDUINO_APP, buf, len);
 }
+
+
 
 int main(int argc, char *argv[]) {
 	dummy_main();
