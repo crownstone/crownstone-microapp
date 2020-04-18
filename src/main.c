@@ -28,7 +28,7 @@ void __attribute__((optimize("O0"))) dummy_main() {
 	len += sizeof(uintptr_t);
 
 	// set buffer in RAM
-	setRamData(IPC_INDEX_ARDUINO_APP, buf, len);
+	setRamData(IPC_INDEX_MICROAPP, buf, len);
 }
 
 

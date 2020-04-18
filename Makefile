@@ -8,6 +8,7 @@ CC=$(GCC_PATH)/arm-none-eabi-gcc
 OBJCOPY=$(GCC_PATH)/arm-none-eabi-objcopy
 OBJDUMP=$(GCC_PATH)/arm-none-eabi-objdump
 NM=$(GCC_PATH)/arm-none-eabi-nm
+SIZE=$(GCC_PATH)/arm-none-eabi-size
 
 BUILD_PATH=build
 
@@ -17,10 +18,10 @@ FLAGS=-mthumb -ffunction-sections -fdata-sections -Wall -Werror -fno-strict-alia
 
 MAIN_SYMBOL=dummy_main
 
-all: init $(TARGET).hex
+all: init $(TARGET).hex $(TARGET).bin
 	echo "Result: $(TARGET).hex"
 
-init: 
+init:
 	mkdir -p $(BUILD_PATH)
 
 $(TARGET).elf: src/main.c example.c $(SHARED_PATH)/ipc/cs_IpcRamData.c
@@ -29,8 +30,29 @@ $(TARGET).elf: src/main.c example.c $(SHARED_PATH)/ipc/cs_IpcRamData.c
 $(TARGET).hex: $(TARGET).elf
 	$(OBJCOPY) -O ihex $^ $@
 
+$(TARGET).bin: $(TARGET).elf
+	$(OBJCOPY) -O binary $^ $@
+
 flash: $(TARGET).hex
 	nrfjprog -f nrf52 --program $(TARGET).hex --sectorerase
+
+read:
+	nrfjprog -f nrf52 --memrd 0x68000 --w 8 --n 400
+
+download: init
+	nrfjprog -f nrf52 --memrd 0x68000 --w 16 --n 0x2000 | tr [:upper:] [:lower:] | cut -f2 -d':' | cut -f1 -d'|' > $(BUILD_PATH)/download.txt
+
+dump: $(TARGET).bin
+	hexdump $^ > $(TARGET).txt
+
+compare: dump download
+	paste $(TARGET).txt $(BUILD_PATH)/download.txt | head -n100
+
+erase:
+	nrfjprog --erasepage 0x68000-0x6A000
+
+reset:
+	nrfjprog --reset
 
 show_addresses: $(TARGET).elf
 	echo -n "$(MAIN_SYMBOL)():\t"
@@ -43,12 +65,21 @@ show_addresses: $(TARGET).elf
 inspect: $(TARGET).elf
 	$(OBJDUMP) -d $^ | awk -F"\n" -v RS="\n\n" '$$1 ~ /<$(MAIN_SYMBOL)>/'
 
+size: $(TARGET).elf
+	$(SIZE) -B $^ | tail -n1 | tr '\t' ' ' | tr -s ' ' | sed 's/^ //g' | cut -f1,2 -d ' ' | tr ' ' '+' \
+		| bc | xargs -i echo "Total size: {} B"
+	$(SIZE) -B $^ | tail -n1 | tr '\t' ' ' | tr -s ' ' | sed 's/^ //g' | cut -f1 -d ' ' | tr ' ' '+' \
+		| bc | xargs -i echo "     flash: {} B"
+	$(SIZE) -B $^ | tail -n1 | tr '\t' ' ' | tr -s ' ' | sed 's/^ //g' | cut -f1 -d ' ' | tr ' ' '+' \
+		| xargs -i echo "({} + 1023) / 1024" | bc | xargs -i echo "     pages: {}"
+
 help:
 	echo "make\t\t\tbuild .elf and .hex files (requires the ARM cross-compiler)"
 	echo "make flash\t\tflash .hex file to target (requires nrfjprog)"
 	echo "make show_addresses\tshow the addresses of $(MAIN_SYMBOL), setup, and loop functions"
 	echo "make inspect\t\tdecompile the $(MAIN_SYMBOL) function"
+	echo "make size\t\tshow size information"
 
-.PHONY: flash show_addresses inspect help
+.PHONY: flash show_addresses inspect help read reset erase
 
-.SILENT: all init flash show_addresses inspect help
+.SILENT: all init flash show_addresses inspect size help read reset erase
