@@ -14,6 +14,10 @@ BUILD_PATH=build
 
 TARGET=$(BUILD_PATH)/example
 
+START_ADDRESS_WITHOUT_PREFIX=68000
+
+START_ADDRESS=0x$(START_ADDRESS_WITHOUT_PREFIX)
+
 FLAGS=-mthumb -ffunction-sections -fdata-sections -Wall -Werror -fno-strict-aliasing -fno-builtin -fshort-enums -Wno-error=format -Wno-error=unused-function -Os -fomit-frame-pointer -Wl,-z,nocopyreloc -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -u _printf_float
 
 MAIN_SYMBOL=dummy_main
@@ -37,16 +41,16 @@ flash: $(TARGET).hex
 	nrfjprog -f nrf52 --program $(TARGET).hex --sectorerase
 
 read:
-	nrfjprog -f nrf52 --memrd 0x68000 --w 8 --n 400
+	nrfjprog -f nrf52 --memrd $(START_ADDRESS) --w 8 --n 400
 
 download: init
-	nrfjprog -f nrf52 --memrd 0x68000 --w 16 --n 0x2000 | tr [:upper:] [:lower:] | cut -f2 -d':' | cut -f1 -d'|' > $(BUILD_PATH)/download.txt
+	nrfjprog -f nrf52 --memrd $(START_ADDRESS) --w 16 --n 0x2000 | tr [:upper:] [:lower:] | cut -f2 -d':' | cut -f1 -d'|' > $(BUILD_PATH)/download.txt
 
 dump: $(TARGET).bin
-	hexdump $^ > $(TARGET).txt
+	hexdump -v $^ | cut -f2- -d' ' > $(TARGET).txt
 
 compare: dump download
-	paste $(TARGET).txt $(BUILD_PATH)/download.txt | head -n100
+	meld $(TARGET).txt $(BUILD_PATH)/download.txt 
 
 erase:
 	nrfjprog --erasepage 0x68000-0x6A000
@@ -65,6 +69,11 @@ show_addresses: $(TARGET).elf
 inspect: $(TARGET).elf
 	$(OBJDUMP) -d $^ | awk -F"\n" -v RS="\n\n" '$$1 ~ /<$(MAIN_SYMBOL)>/'
 
+offset: $(TARGET).elf
+	$(OBJDUMP) -d $^ | awk -F"\n" -v RS="\n\n" '$$1 ~ /<$(MAIN_SYMBOL)>/' | head -n1 | cut -f1 -d' ' \
+		| tr [:lower:] [:upper:] \
+		| xargs -i echo "obase=16;ibase=16;{} - $(START_ADDRESS_WITHOUT_PREFIX)" | bc | xargs -i echo "Offset is 0x{}"
+
 size: $(TARGET).elf
 	$(SIZE) -B $^ | tail -n1 | tr '\t' ' ' | tr -s ' ' | sed 's/^ //g' | cut -f1,2 -d ' ' | tr ' ' '+' \
 		| bc | xargs -i echo "Total size: {} B"
@@ -80,6 +89,6 @@ help:
 	echo "make inspect\t\tdecompile the $(MAIN_SYMBOL) function"
 	echo "make size\t\tshow size information"
 
-.PHONY: flash show_addresses inspect help read reset erase
+.PHONY: flash show_addresses inspect help read reset erase offset
 
-.SILENT: all init flash show_addresses inspect size help read reset erase
+.SILENT: all init flash show_addresses inspect size help read reset erase offset

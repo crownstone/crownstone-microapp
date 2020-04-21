@@ -32,7 +32,6 @@ void __attribute__((optimize("O0"))) dummy_main() {
 }
 
 
-
 int main(int argc, char *argv[]) {
 	dummy_main();
 
