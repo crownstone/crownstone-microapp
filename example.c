@@ -9,5 +9,6 @@ void setup() {
 /*
  * A dummy loop function.
  */
-void loop() {
+int loop() {
+	return 1;
 }

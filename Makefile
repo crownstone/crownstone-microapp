@@ -18,12 +18,25 @@ START_ADDRESS_WITHOUT_PREFIX=68000
 
 START_ADDRESS=0x$(START_ADDRESS_WITHOUT_PREFIX)
 
-FLAGS=-mthumb -ffunction-sections -fdata-sections -Wall -Werror -fno-strict-aliasing -fno-builtin -fshort-enums -Wno-error=format -Wno-error=unused-function -Os -fomit-frame-pointer -Wl,-z,nocopyreloc -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -u _printf_float
+# With -fPIC we get a segfault, we need to be more careful
+#RELOC_FLAGS=-fPIC
+#-msingle-pic-base -mpic-register=r9 -mno-pic-data-is-text-relative
+
+#RELOC_FLAGS=-fPIC -msingle-pic-base -mpic-register=r9 -mno-pic-data-is-text-relative
+
+FLAGS=-mthumb -ffunction-sections -fdata-sections $(RELOC_FLAGS) -Wall -Werror -fno-strict-aliasing -fno-builtin -fshort-enums -Wno-error=format -Wno-error=unused-function -Os -fomit-frame-pointer -Wl,-z,nocopyreloc -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -u _printf_float
 
 MAIN_SYMBOL=dummy_main
+SETUP_SYMBOL=setup
+LOOP_SYMBOL=loop
 
 all: init $(TARGET).hex $(TARGET).bin
 	echo "Result: $(TARGET).hex"
+
+clean:
+	rm $(TARGET).hex
+	rm $(TARGET).bin
+	rm $(TARGET).elf
 
 init:
 	mkdir -p $(BUILD_PATH)
@@ -66,8 +79,17 @@ show_addresses: $(TARGET).elf
 	echo -n "loop():\t\t"
 	$(NM) $^ | grep -w loop | cut -f1 -d' '
 
-inspect: $(TARGET).elf
+inspect-main: $(TARGET).elf
 	$(OBJDUMP) -d $^ | awk -F"\n" -v RS="\n\n" '$$1 ~ /<$(MAIN_SYMBOL)>/'
+
+inspect-setup: $(TARGET).elf
+	$(OBJDUMP) -d $^ | awk -F"\n" -v RS="\n\n" '$$1 ~ /<$(SETUP_SYMBOL)>/'
+
+inspect-loop: $(TARGET).elf
+	$(OBJDUMP) -d $^ | awk -F"\n" -v RS="\n\n" '$$1 ~ /<$(LOOP_SYMBOL)>/'
+
+inspect: $(TARGET).elf
+	$(OBJDUMP) -x $^ 
 
 offset: $(TARGET).elf
 	$(OBJDUMP) -d $^ | awk -F"\n" -v RS="\n\n" '$$1 ~ /<$(MAIN_SYMBOL)>/' | head -n1 | cut -f1 -d' ' \
@@ -86,7 +108,8 @@ help:
 	echo "make\t\t\tbuild .elf and .hex files (requires the ARM cross-compiler)"
 	echo "make flash\t\tflash .hex file to target (requires nrfjprog)"
 	echo "make show_addresses\tshow the addresses of $(MAIN_SYMBOL), setup, and loop functions"
-	echo "make inspect\t\tdecompile the $(MAIN_SYMBOL) function"
+	echo "make inspect\t\tobjdump everything"
+	echo "make inspect-main\t\tdecompile the $(MAIN_SYMBOL) function"
 	echo "make size\t\tshow size information"
 
 .PHONY: flash show_addresses inspect help read reset erase offset
