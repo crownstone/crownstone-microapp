@@ -6,9 +6,14 @@
 void setup() {
 }
 
+static int i = 2;
+
 /*
  * A dummy loop function.
  */
 int loop() {
-	return 1;
+	i++;
+	return i;
+//
+//	return (int)&i;
 }

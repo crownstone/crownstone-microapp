@@ -34,14 +34,14 @@ all: init $(TARGET).hex $(TARGET).bin
 	echo "Result: $(TARGET).hex"
 
 clean:
-	rm $(TARGET).hex
-	rm $(TARGET).bin
-	rm $(TARGET).elf
+	rm -f $(TARGET).hex
+	rm -f $(TARGET).bin
+	rm -f $(TARGET).elf
 
 init:
 	mkdir -p $(BUILD_PATH)
 
-$(TARGET).elf: src/main.c example.c $(SHARED_PATH)/ipc/cs_IpcRamData.c
+$(TARGET).elf: src/main.c example.c $(SHARED_PATH)/ipc/cs_IpcRamData.c 
 	$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
 
 $(TARGET).hex: $(TARGET).elf
@@ -75,21 +75,18 @@ show_addresses: $(TARGET).elf
 	echo -n "$(MAIN_SYMBOL)():\t"
 	$(NM) $^ | grep -w $(MAIN_SYMBOL) | cut -f1 -d' '
 	echo -n "setup():\t"
-	$(NM) $^ | grep -w setup | cut -f1 -d' '
+	$(NM) $^ | grep -w $(SETUP_SYMBOL) | cut -f1 -d' '
 	echo -n "loop():\t\t"
-	$(NM) $^ | grep -w loop | cut -f1 -d' '
+	$(NM) $^ | grep -w $(LOOP_SYMBOL) | cut -f1 -d' '
 
 inspect-main: $(TARGET).elf
 	$(OBJDUMP) -d $^ | awk -F"\n" -v RS="\n\n" '$$1 ~ /<$(MAIN_SYMBOL)>/'
 
-inspect-setup: $(TARGET).elf
-	$(OBJDUMP) -d $^ | awk -F"\n" -v RS="\n\n" '$$1 ~ /<$(SETUP_SYMBOL)>/'
-
-inspect-loop: $(TARGET).elf
-	$(OBJDUMP) -d $^ | awk -F"\n" -v RS="\n\n" '$$1 ~ /<$(LOOP_SYMBOL)>/'
-
 inspect: $(TARGET).elf
-	$(OBJDUMP) -x $^ 
+	$(OBJDUMP) -x $^
+
+inspect-headers: $(TARGET).elf
+	$(OBJDUMP) -h $^
 
 offset: $(TARGET).elf
 	$(OBJDUMP) -d $^ | awk -F"\n" -v RS="\n\n" '$$1 ~ /<$(MAIN_SYMBOL)>/' | head -n1 | cut -f1 -d' ' \
@@ -112,6 +109,6 @@ help:
 	echo "make inspect-main\t\tdecompile the $(MAIN_SYMBOL) function"
 	echo "make size\t\tshow size information"
 
-.PHONY: flash show_addresses inspect help read reset erase offset
+.PHONY: flash show_addresses inspect help read reset erase offset all
 
-.SILENT: all init flash show_addresses inspect size help read reset erase offset
+.SILENT: all init flash show_addresses inspect size help read reset erase offset clean

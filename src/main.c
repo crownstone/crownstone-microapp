@@ -5,7 +5,7 @@
 #warning "Incorrect uintptr_t type"
 #endif
 
-void __attribute__((optimize("O0"))) dummy_main() {
+int __attribute__((optimize("O0"))) dummy_main() {
 	uint8_t buf[BLUENET_IPC_RAM_DATA_ITEM_SIZE];
 
 	// protocol version
@@ -29,6 +29,8 @@ void __attribute__((optimize("O0"))) dummy_main() {
 
 	// set buffer in RAM
 	setRamData(IPC_INDEX_MICROAPP, buf, len);
+
+	return (int)&setup;
 }
 
 
