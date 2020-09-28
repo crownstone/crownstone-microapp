@@ -19,8 +19,12 @@ clean:
 init:
 	mkdir -p $(BUILD_PATH)
 
-$(TARGET).elf: src/main.c example.c $(SHARED_PATH)/ipc/cs_IpcRamData.c 
+$(TARGET).elf: src/main.c src/Arduino.c $(TARGET).c $(SHARED_PATH)/ipc/cs_IpcRamData.c
 	$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
+
+$(TARGET).c: $(TARGET_NAME).ino
+	echo '#include <Arduino.h>' > $(TARGET).c
+	cat $(TARGET_NAME).ino >> $(TARGET).c
 
 $(TARGET).hex: $(TARGET).elf
 	$(OBJCOPY) -O ihex $^ $@

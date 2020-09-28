@@ -27,8 +27,11 @@ SIZE=$(GCC_PATH)/arm-none-eabi-size
 # The build directory
 BUILD_PATH=build
 
-# The target name (including build directory)
-TARGET=$(BUILD_PATH)/example
+# The target name 
+TARGET_NAME=example
+
+# The target itself (including build directory)
+TARGET=$(BUILD_PATH)/$(TARGET_NAME)
 
 # The location we will write into (in flash)
 START_ADDRESS_WITHOUT_PREFIX=68000

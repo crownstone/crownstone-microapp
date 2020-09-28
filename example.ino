@@ -1,5 +1,3 @@
-#include <Arduino.h>
-
 /*
  * A dummy setup function.
  */
@@ -15,6 +13,4 @@ static int i = 100;
 int loop() {
 	i++;
 	return i;
-//
-//	return (int)&i;
 }
