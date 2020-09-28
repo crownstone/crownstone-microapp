@@ -1,30 +1,7 @@
 #!/bin/make
 
-GCC_PATH=$(HOME)/workspace/bluenet/tools/gcc_arm_none_eabi/bin
-
-SHARED_PATH=$(HOME)/workspace/bluenet/source/shared
-
-CC=$(GCC_PATH)/arm-none-eabi-gcc
-OBJCOPY=$(GCC_PATH)/arm-none-eabi-objcopy
-OBJDUMP=$(GCC_PATH)/arm-none-eabi-objdump
-NM=$(GCC_PATH)/arm-none-eabi-nm
-SIZE=$(GCC_PATH)/arm-none-eabi-size
-
-BUILD_PATH=build
-
-TARGET=$(BUILD_PATH)/example
-
-START_ADDRESS_WITHOUT_PREFIX=68000
-
-START_ADDRESS=0x$(START_ADDRESS_WITHOUT_PREFIX)
-
-# With -fPIC we get a segfault, we need to be more careful
-#RELOC_FLAGS=-fPIC
-#-msingle-pic-base -mpic-register=r9 -mno-pic-data-is-text-relative
-
-#RELOC_FLAGS=-fPIC -msingle-pic-base -mpic-register=r9 -mno-pic-data-is-text-relative
-
-FLAGS=-mthumb -ffunction-sections -fdata-sections $(RELOC_FLAGS) -Wall -Werror -fno-strict-aliasing -fno-builtin -fshort-enums -Wno-error=format -Wno-error=unused-function -Os -fomit-frame-pointer -Wl,-z,nocopyreloc -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -u _printf_float
+include config.mk
+-include private.mk
 
 MAIN_SYMBOL=dummy_main
 SETUP_SYMBOL=setup
@@ -37,6 +14,7 @@ clean:
 	rm -f $(TARGET).hex
 	rm -f $(TARGET).bin
 	rm -f $(TARGET).elf
+	echo "Cleaned build directory"
 
 init:
 	mkdir -p $(BUILD_PATH)
@@ -70,6 +48,21 @@ erase:
 
 reset:
 	nrfjprog --reset
+
+ota-request:
+	scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin request
+
+ota-upload:
+	scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin upload
+
+ota-validate:
+	scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin validate
+
+ota-enable:
+	scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin enable
+
+checksum:
+	scripts/inspect_microapp.py $(TARGET).bin
 
 show_addresses: $(TARGET).elf
 	echo -n "$(MAIN_SYMBOL)():\t"

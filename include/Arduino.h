@@ -11,3 +11,8 @@ void setup();
  * your device. The same is true if processing is taking too long.
  */
 int loop();
+
+/**
+ * Write to serial
+ */
+void write(char *message, int length);

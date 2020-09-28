@@ -48,106 +48,116 @@ ENTRY(main)
 
 SECTIONS
 {
-    .text :
-    {
-        KEEP(*(.isr_vector))
-        *(.text*)
+	.text :
+	{
+		KEEP(*(.isr_vector))
+			*(.text*)
 
-        KEEP(*(.init))
-        KEEP(*(.fini))
+			KEEP(*(.init))
+			KEEP(*(.fini))
 
-        /* .ctors */
-        *crtbegin.o(.ctors)
-        *crtbegin?.o(.ctors)
-        *(EXCLUDE_FILE(*crtend?.o *crtend.o) .ctors)
-        *(SORT(.ctors.*))
-        *(.ctors)
+			/* .ctors */
+			*crtbegin.o(.ctors)
+			*crtbegin?.o(.ctors)
+			*(EXCLUDE_FILE(*crtend?.o *crtend.o) .ctors)
+			*(SORT(.ctors.*))
+			*(.ctors)
 
-        /* .dtors */
-        *crtbegin.o(.dtors)
-        *crtbegin?.o(.dtors)
-        *(EXCLUDE_FILE(*crtend?.o *crtend.o) .dtors)
-        *(SORT(.dtors.*))
-        *(.dtors)
+			/* .dtors */
+			*crtbegin.o(.dtors)
+			*crtbegin?.o(.dtors)
+			*(EXCLUDE_FILE(*crtend?.o *crtend.o) .dtors)
+			*(SORT(.dtors.*))
+			*(.dtors)
 
-        *(.rodata*)
+			*(.rodata*)
 
-        KEEP(*(.eh_frame*))
-    } > FLASH
+			KEEP(*(.eh_frame*))
+} > FLASH
 
-    .ARM.extab :
-    {
-        *(.ARM.extab* .gnu.linkonce.armextab.*)
-    } > FLASH
+.ARM.extab :
+{
+	*(.ARM.extab* .gnu.linkonce.armextab.*)
+} > FLASH
 
-    __exidx_start = .;
-    .ARM.exidx :
-    {
-        *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-    } > FLASH
-    __exidx_end = .;
+__exidx_start = .;
+.ARM.exidx :
+{
+	*(.ARM.exidx* .gnu.linkonce.armexidx.*)
+} > FLASH
+__exidx_end = .;
 
-    __etext = .;
+__etext = .;
 
-    .data : AT (__etext)
-    {
-        __data_start__ = .;
-        *(vtable)
-        *(.data*)
+.data : AT (__etext)
+{
+	__data_start__ = .;
+	*(vtable)
+		*(.data*)
 
-        . = ALIGN(4);
-        /* preinit data */
-        PROVIDE_HIDDEN (__preinit_array_start = .);
-        KEEP(*(.preinit_array))
-        PROVIDE_HIDDEN (__preinit_array_end = .);
+		. = ALIGN(4);
+		/* preinit data */
+		PROVIDE_HIDDEN (__preinit_array_start = .);
+		KEEP(*(.preinit_array))
+		PROVIDE_HIDDEN (__preinit_array_end = .);
 
-        . = ALIGN(4);
-        /* init data */
-        PROVIDE_HIDDEN (__init_array_start = .);
-        KEEP(*(SORT(.init_array.*)))
-        KEEP(*(.init_array))
-        PROVIDE_HIDDEN (__init_array_end = .);
+		. = ALIGN(4);
+		/* init data */
+		PROVIDE_HIDDEN (__init_array_start = .);
+		KEEP(*(SORT(.init_array.*)))
+		KEEP(*(.init_array))
+		PROVIDE_HIDDEN (__init_array_end = .);
 
 
-        . = ALIGN(4);
-        /* finit data */
-        PROVIDE_HIDDEN (__fini_array_start = .);
-        KEEP(*(SORT(.fini_array.*)))
-        KEEP(*(.fini_array))
-        PROVIDE_HIDDEN (__fini_array_end = .);
+		. = ALIGN(4);
+		/* finit data */
+		PROVIDE_HIDDEN (__fini_array_start = .);
+		KEEP(*(SORT(.fini_array.*)))
+		KEEP(*(.fini_array))
+		PROVIDE_HIDDEN (__fini_array_end = .);
 
-        KEEP(*(.jcr*))
-        . = ALIGN(4);
-        /* All data end */
-        __data_end__ = .;
+		KEEP(*(.jcr*))
+		. = ALIGN(4);
+		/* All data end */
+		__data_end__ = .;
 
-    } > RAM
+} > RAM
 
-    .bss :
-    {
-        . = ALIGN(4);
-        __bss_start__ = .;
-        *(.bss*)
-        *(COMMON)
-        . = ALIGN(4);
-        __bss_end__ = .;
-    } > RAM
-    
-    .heap (COPY):
-    {
-        __HeapBase = .;
-        __end__ = .;
-        PROVIDE(end = .);
-        KEEP(*(.heap*))
-        __HeapLimit = .;
-    } > RAM
+.bss :
+{
+	. = ALIGN(4);
+	__bss_start__ = .;
+	*(.bss*)
+		*(COMMON)
+		. = ALIGN(4);
+		__bss_end__ = .;
+} > RAM
 
-    /* .stack_dummy section doesn't contains any symbols. It is only
-     * used for linker to calculate size of stack sections, and assign
-     * values to stack symbols later */
-    .stack_dummy (COPY):
-    {
-        KEEP(*(.stack*))
-    } > RAM
+.heap (COPY):
+{
+	__HeapBase = .;
+	__end__ = .;
+	PROVIDE(end = .);
+	KEEP(*(.heap*))
+	__HeapLimit = .;
+} > RAM
 
+/* .stack_dummy section doesn't contains any symbols. It is only
+ * used for linker to calculate size of stack sections, and assign
+ * values to stack symbols later */
+.stack_dummy (COPY):
+{
+	KEEP(*(.stack*))
+} > RAM
+
+/*
+ * There is startup code required before you can use data in the .data
+ * section. You might also want to initialize .bss to zeros (just to
+ * convenience the developer). Alternatively, the bootloader (in this
+ * case the Crownstone firmware) might already initialize this to zero
+ * before the microapp is started.
+ *
+ * The .data copy should be from the end of the .text section, which is
+ * at __etext to the __data_start__ up to __data_end__.
+ */
 }
