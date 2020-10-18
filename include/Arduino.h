@@ -1,33 +1,64 @@
 #pragma once
 
+#include <Serial.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
-/**
- * You have to implement the setup() function. It can be empty if there is nothing to do at startup.
- */
+//
+// You have to implement the setup() function. It can be empty if there is nothing to do at startup.
+//
 void setup();
 
-/**
- * The loop function will be performed every so many milliseconds. Make sure your loop returns. If it has a while 
- * loop that does not return, it will be checked as invalid in the Crownstone code. In the worst case, it can brick
- * your device. The same is true if processing is taking too long.
- */
+//
+// The loop function will be performed every so many milliseconds. Make sure your loop returns. If it has a while 
+// loop that does not return, it will be checked as invalid in the Crownstone code. In the worst case, it can brick
+// your device. The same is true if processing is taking too long.
+//
 int loop();
 
-/**
- * Write to serial. For now this becomes logs in the Crownstone firmware. That is not so useful to the microapp
- * person though. To send it through to UART for a USB dongle is quite limited, for normal Crownstones it is almost
- * useless. It would be fun to write over Bluetooth RFCOMM.
- */
-void write(char *message, int length);
+//
+// A delay in ms. Hence 1000 means a delay of one second.
+//
+void delay(uint16_t delay_ms);
 
-/**
- * A bunch of functions that are mainly useful in either development mode, on a Crownstone that is embedded 
- * electronically, etc., not so much for built-in Crownstones.
- */
+//
+// A bunch of functions that are mainly useful in either development mode, on a Crownstone that is embedded 
+// electronically, etc., not so much for built-in Crownstones. It can also be the case that these functions are
+// made dummies to prevent mistakes. For example, setting the relay as an INPUT rather than an OUTPUT.
+//
+void init();
+void initVariant();
 void pinMode(uint8_t pin, uint8_t mode);
+
+//
+// Write to particular pins. These are virtual pins and are either mapped to physical pins or drivers.
+// 
+// @param pin 0 turn on/off the relay
+//
 void digitalWrite(uint8_t pin, uint8_t val);
+
+
 int digitalRead(uint8_t pin);
 int analogRead(uint8_t pin);
 void analogReference(uint8_t mode);
+
+//
+// Write to particular pins. These are virtual pins and are either mapped to physical pins or drivers.
+// 
+// @param pin 1 sets the dimmer to a particular value
+//
 void analogWrite(uint8_t pin, int val);
+
+
+typedef bool boolean;
+typedef uint8_t byte;
+typedef uint16_t word;
+
+
+#ifdef __cplusplus
+}
+#endif

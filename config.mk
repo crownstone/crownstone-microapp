@@ -18,11 +18,12 @@ BLUENET_PATH=$(HOME)/workspace/bluenet
 SHARED_PATH=$(BLUENET_PATH)/source/shared
 
 # The different gcc tools
-CC=$(GCC_PATH)/arm-none-eabi-gcc
+CC=$(GCC_PATH)/arm-none-eabi-g++
 OBJCOPY=$(GCC_PATH)/arm-none-eabi-objcopy
 OBJDUMP=$(GCC_PATH)/arm-none-eabi-objdump
 NM=$(GCC_PATH)/arm-none-eabi-nm
 SIZE=$(GCC_PATH)/arm-none-eabi-size
+STRIP=$(GCC_PATH)/arm-none-eabi-strip
 
 # The build directory
 BUILD_PATH=build
@@ -46,5 +47,18 @@ FLAGS=-mthumb -ffunction-sections -fdata-sections -Wall -Werror \
 	  -fno-strict-aliasing -fno-builtin -fshort-enums -Wno-error=format \
 	  -Wno-error=unused-function -Os -fomit-frame-pointer -Wl,-z,nocopyreloc \
 	  -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -u _printf_float
+
+
+# For c++
+# I have removed nanolib as well. Now I have to check if for e.g. memset I
+# have to provide a function call to the memset of Crownstone.
+FLAGS=-mthumb -ffunction-sections -fdata-sections -Wall -Werror \
+	  -fno-strict-aliasing -fno-builtin -fshort-enums -Wno-error=format \
+	  -fno-exceptions -fno-enforce-eh-specs \
+	  -nostdlib -ffreestanding -fno-threadsafe-statics \
+	  -Wl,--gc-sections \
+	  -Wno-error=unused-function -Os -fomit-frame-pointer -Wl,-z,nocopyreloc \
+	  -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -u _printf_float
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #

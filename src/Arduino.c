@@ -19,3 +19,9 @@ void analogReference(uint8_t mode){
 
 void analogWrite(uint8_t pin, int val){
 }
+
+void init() {
+}
+
+void initVariant() {
+}

@@ -1,5 +1,6 @@
 APPLICATION_START_ADDRESS = 0x00068000;
-APPLICATION_LENGTH = 0x2000;
+/* We allow for 4 pages of flash */
+APPLICATION_LENGTH = 0x4000;
 /* RAM_R1_BASE = 0x20002380; */
 /* RAM_R1_BASE = 0x200023A0; */
 /* We set memory half way. */

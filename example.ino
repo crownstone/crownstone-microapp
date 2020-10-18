@@ -1,16 +1,32 @@
-/*
- * A dummy setup function.
- */
+//
+// An example to show a few functions being implemented.
+//
+
+// Show how a counter is incremented
+static int counter = 100;
+
+//
+// A dummy setup function.
+//
 void setup() {
-	write("Setup started", 13);
+	Serial.begin();
+
+	if (!Serial) return;
+
+	Serial.write("Setup started");
+
+	Serial.write(counter);
 }
 
-static int i = 100;
-
-/*
- * A dummy loop function.
- */
+//
+// A dummy loop function.
+//
 int loop() {
-	i++;
-	return i;
+	counter++;
+
+	if (counter % 10 == 0) {
+		Serial.write("Yes, we are looping!");
+		delay(1000);
+	}
+	return counter;
 }
