@@ -12,6 +12,35 @@ results can be found in the `build` directory.
 Find out the targets through `make help`. Summarized, `make`, and `make flash` (to program the device). There are 
 probably a lot more that are undocumented, for that inspect the `Makefile` yourself.
 
+The usual way of development is:
+
+```
+make clean
+make
+make flash
+make reset
+```
+
+This makes sure everything is uploaded fine and dandy. In the meantime you can also update the bluenet code. Make 
+sure it is microapp compatible of course. You might encounter a checksum error if you do the above.
+
+```
+[t/source/src/cs_Crownstone.cpp : 271  ] ---- init microapp ----
+[ce/src/storage/cs_MicroApp.cpp : 218  ] Sucessfully initialized from 0x00068000 to 0x00069FFF
+[ce/src/storage/cs_MicroApp.cpp : 477  ] Micro app 0 has checksum 0x6620, but calculation shows 0xA07C
+[ce/src/storage/cs_MicroApp.cpp : 241  ] Checksum error
+```
+
+This means that the bluenet code has still the checksum of the previous app and will not load this one. Enabling the
+app will automatically correct the checksum. You can enable the app with something like:
+
+```
+scripts/microapp.py $PRIVATE_PATH/sphere-keys.json AA:BB:CC:DD:EE:FF build/example.bin enable
+```
+
+Make sure your sphere keys are not accessible and not accidentally committed to a code repository. When you run the 
+bluenet code in debug mode you can find the Bluetooth MAC address of the device you are uploading to using UART.
+
 # Configuration
 
 Create a `private.mk` file with a link to a file somewhere private (say `~/.crownstone/keys`) which contains your keys and the Crownstone with a particular Bluetooth address:

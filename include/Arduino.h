@@ -36,8 +36,8 @@ void pinMode(uint8_t pin, uint8_t mode);
 
 //
 // Write to particular pins. These are virtual pins and are either mapped to physical pins or drivers.
-// 
-// @param pin 0 turn on/off the relay
+//
+// @param pin 1 turn on/off the relay
 //
 void digitalWrite(uint8_t pin, uint8_t val);
 

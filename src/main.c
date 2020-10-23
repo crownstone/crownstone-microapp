@@ -1,8 +1,7 @@
 #include <Arduino.h>
 #include <ipc/cs_IpcRamData.h>
+#include <microapp.h>
 #include <string.h>
-
-#include <setjmp.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,83 +18,48 @@ extern unsigned __data_end__;
 
 // initialize .data, can be moved to assembly later
 void copy_data() {
-    unsigned *src = &__etext;
-    unsigned *dst = &__data_start__;
-    while (dst < &__data_end__) {
-        *dst++ = *src++;
-    }
+	unsigned *src = &__etext;
+	unsigned *dst = &__data_start__;
+	while (dst < &__data_end__) {
+		*dst++ = *src++;
+	}
 }
 
-static int _delay_ms = 0;
+void* _coroutine_args;
 
-typedef struct {
-  jmp_buf callee_context;
-  jmp_buf caller_context;
-} coroutine;
+void goyield(uint16_t prefix) {
+	global_msg.payload[0] = 2;
 
-coroutine cor;
+	global_msg.payload[1] = 0xFF & (prefix >> 8);
+	global_msg.payload[2] = 0xFF & prefix;
 
-int cont(coroutine *c);
+	global_msg.payload[3] = 0xFF & ((uintptr_t)_coroutine_args >> 24);
+	global_msg.payload[4] = 0xFF & ((uintptr_t)_coroutine_args >> 16);
+	global_msg.payload[5] = 0xFF & ((uintptr_t)_coroutine_args >> 8);
+	global_msg.payload[6] = 0xFF & (uintptr_t)_coroutine_args;
 
+	global_msg.length = 7;
 
-int entry_func(char opcode, char* payload) {
-	int result = 0;
-	switch(opcode) {
-	case 0: {
-		setup();
-		break;
-	}
-	case 1: {
-		result = loop();
-		break;
-	}
-	case 2: {
-		result = cont(&cor);
-		break;
-	}
-	default: {
-		// unhandled opcode
-		result = -1;
-		
-	}
-	}
-	return result;
+	sendMessage(global_msg);
 }
 
-//
-// The implementation of delay is tough. We cannot just have some kind of entry function and either start a loop or
-// jump directly at the end of some delay function. This would namely not preserve the stack. We can neither just 
-// call into the bluenet code and then return to this code because that would put all kind of stuff on the stack in
-// the bluenet code after running the microapp code. We should normally return from the call into the microapp code
-// and not enter bluenet code via a different path. 
-//
-// What would be ideal is to put certain tasks on the app_scheduler for later execution. Hence, what we need is to
-// write towards the bluenet code a task that has to be executed later and then return normally. Mmm, but how do we
-// resume then?
-//
-// No, we should implement two stacks and jump back and forth... How to do this? First, we can have the stack grow
-// downwards from RAM_END as defined for this microapp. Then we use setjmp/longjmp to implement coroutines.
-//
 void delay(uint16_t delay_ms) {
-	_delay_ms = delay_ms;
-
-//	cont(&cor);
-
+	goyield(delay_ms);
 }
 
-enum { WORKING=1, DONE };
-
-int cont(coroutine *c) {
-	if(!setjmp(c->callee_context)) {
-		longjmp(c->caller_context, WORKING);
-	}
-	return 0;
+/*
+ * We wrap loop() to store the coroutine arguments and be able to pass it back to the caller in e.g. the delay
+ * function.
+ */
+void coloop(void *p) {
+	_coroutine_args = p;
+	loop();
 }
 
 /*
  * We assume the following protocol
  *
- * [version] [setup] [loop]
+ * [version] [setup] [coloop]
  *
  * Version is only one byte. The addresses of setup and loop are of size uniptr_t.
  * Note that you are not allowed to change the signature of those functions! 
@@ -117,21 +81,13 @@ int __attribute__((optimize("O0"))) dummy_main() {
 	}
 	len += sizeof(uintptr_t);
 
-	// address of loop() function
-	address = (uintptr_t)&loop;
+	// address of coroutine which calls the loop() function
+	address = (uintptr_t)&coloop;
 	for (uint16_t i = 0; i < sizeof(uintptr_t); ++i) {
 		buf[i+len] = (uint8_t)(0xFF & (address >> (i*8)));
 	}
 	len += sizeof(uintptr_t);
 
-	/*
-	// address of entry_func() function
-	address = (uintptr_t)&entry_func;
-	for (uint16_t i = 0; i < sizeof(uintptr_t); ++i) {
-		buf[i+len] = (uint8_t)(0xFF & (address >> (i*8)));
-	}
-	len += sizeof(uintptr_t);
-	*/
 	// set buffer in RAM
 	setRamData(IPC_INDEX_MICROAPP, buf, len);
 
@@ -142,14 +98,12 @@ int __attribute__((optimize("O0"))) dummy_main() {
 }
 #endif
 
+/**
+ * We actually do not "use" the main function. The bluenet code will immmediately jump to dummy_main. The function 
+ * also does not need to return. This function exists just to make the compiler happy.
+ */
 int main(int argc, char *argv[]) {
 	dummy_main();
-
-	// assume callback, mmm, no, we can't do that like this
-	// our stack is trashed by just setting stack pointer, we have to jump back
-
-
-	// reboot(?)
-	return -1; 
+	return -1;
 }
 

@@ -12,13 +12,19 @@ class Serial_ {
 			return instance;
 		}
 	private:
-		Serial_() {}                    // Constructor? (the {} brackets) are needed here.
+		Serial_() {}
 
-//		Serial_(Serial_ const&);              // Don't Implement
-//		void operator=(Serial_ const&);      // Don't implement
+		enum Type { Char = 0, Int = 1, Str = 2 };
+		
+		// Write a string (as char array) to serial.
+		int _write(const char *str, int length, Type type);
+
+		// Do not implement the following functions
+		//Serial_(Serial_ const&);
+		//void operator=(Serial_ const&);
 
 	public:
-		Serial_(Serial_ const&)          = delete;
+		Serial_(Serial_ const&)         = delete;
 		void operator=(Serial_ const&)  = delete;
 
 		// Dummy
