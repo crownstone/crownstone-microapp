@@ -39,7 +39,13 @@ scripts/microapp.py $PRIVATE_PATH/sphere-keys.json AA:BB:CC:DD:EE:FF build/examp
 ```
 
 Make sure your sphere keys are not accessible and not accidentally committed to a code repository. When you run the 
-bluenet code in debug mode you can find the Bluetooth MAC address of the device you are uploading to using UART.
+bluenet code in debug mode you can find the Bluetooth MAC address of the device you are uploading to using UART. The above can also be done by:
+
+```
+make ota-enable
+```
+
+See below for how to set that up.
 
 # Configuration
 
