@@ -56,6 +56,21 @@ KEYS_JSON=~/.crownstone/keys/your_sphere_keys.json
 BLE_ADDRESS=XX:XX:XX:XX:XX:XX
 ```
 
+The file `your_sphere_keys.json` has the format as stipulated in the [python lib](https://github.com/crownstone/crownstone-lib-python-ble) documentation:
+
+```
+}
+  "admin": "ffffffffffffffffffffffffffffffff",
+  "member": "ffffffffffffffffffffffffffffffff",
+  "guest": "ffffffffffffffffffffffffffffffff",
+  "basic": "ffffffffffffffffffffffffffffffff",
+  "serviceDataKey": "ffffffffffffffffffffffffffffffff",
+  "localizationKey": "ffffffffffffffffffffffffffffffff",
+  "meshApplicationKey": "ffffffffffffffffffffffffffffffff",
+  "meshNetworkKey": "ffffffffffffffffffffffffffffffff"
+}
+```
+
 # Process
 
 You can use the `microapp.py` script in the `scripts` directory to upload over the air.
