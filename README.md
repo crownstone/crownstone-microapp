@@ -71,6 +71,8 @@ The file `your_sphere_keys.json` has the format as stipulated in the [python lib
 }
 ```
 
+Most likely only the admin key is required (but the lib might complain if others are missing).
+
 # Process
 
 You can use the `microapp.py` script in the `scripts` directory to upload over the air.
