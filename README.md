@@ -1,6 +1,6 @@
-# Bluenet module
+# Bluenet microapp
 
-Create a module that can be run from Crownstone code. Very first implementation.
+Create a microapp that can be run on top of the bluenet firmware on a Crownstone. Very first implementation.
 
 # Organization
 
