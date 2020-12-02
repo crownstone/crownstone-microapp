@@ -45,8 +45,8 @@ int loop() {
 		// See protocol definition for other options.
 		digitalWrite(1, 0);
 
-		// We can also use write() and specify the number of characters explicitly.
-		Serial.write("Done!", 5);
+		// We can also use write() and specify the number of characters (plus 1 for null terminator) explicitly.
+		Serial.write("Done!", 6);
 
 		// We increment a local variable for testing below.
 		test++;
