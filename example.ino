@@ -5,6 +5,8 @@
 // Show how a counter is incremented
 static int counter = 100;
 
+uint8_t serviceDataBuf[12] = {0};
+
 //
 // A dummy setup function.
 //
@@ -20,6 +22,10 @@ void setup() {
 
 	// We can also write integers.
 	Serial.write(counter);
+
+	// Set the UUID of this microapp.
+	serviceDataBuf[0] = 12;
+	serviceDataBuf[1] = 34;
 }
 
 //
@@ -45,8 +51,7 @@ int loop() {
 		// See protocol definition for other options.
 		digitalWrite(1, 0);
 
-		// We can also use write() and specify the number of characters explicitly.
-		Serial.write("Done!", 5);
+		Serial.write("Done!");
 
 		// We increment a local variable for testing below.
 		test++;
@@ -56,5 +61,10 @@ int loop() {
 	}
 	// Show counter.
 	Serial.write(counter);
+
+	// Let's also advertise the latest counter value in the service data.
+	serviceDataBuf[2] = counter;
+	SerialServiceData.write(serviceDataBuf, sizeof(serviceDataBuf));
+
 	return counter;
 }

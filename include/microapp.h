@@ -12,7 +12,7 @@ const uint8_t MAX_PAYLOAD = 32;
  * The structure used for communication.
  */
 typedef struct {
-	char payload[MAX_PAYLOAD];
+	uint8_t payload[MAX_PAYLOAD];
 	int length;
 } message_t;
 
