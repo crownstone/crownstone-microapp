@@ -28,7 +28,7 @@ void copy_data() {
 void* _coroutine_args;
 
 void goyield(uint16_t prefix) {
-	global_msg.payload[0] = 2;
+	global_msg.payload[0] = CS_MICROAPP_COMMAND_DELAY;
 
 	global_msg.payload[1] = 0xFF & (prefix >> 8);
 	global_msg.payload[2] = 0xFF & prefix;
