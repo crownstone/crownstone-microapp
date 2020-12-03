@@ -12,7 +12,15 @@ message_t global_msg;
 int sendMessage(message_t msg) {
 	int result = -1;
 
+	// Check length.
+	if (msg.length > MAX_PAYLOAD) {
+		return result;
+	}
+
+	// QUESTION: can we cache the callback function, so we don't have to get it from ipc ram data every time?
+
 	// Clear buffer.
+	// QUESTION: why does it have to be set to zero? 
 	uint8_t buf[BLUENET_IPC_RAM_DATA_ITEM_SIZE];
 	for (int i = 0; i < BLUENET_IPC_RAM_DATA_ITEM_SIZE; ++i) {
 		buf[i] = 0;
@@ -23,6 +31,7 @@ int sendMessage(message_t msg) {
 	uint8_t ret_code = getRamData(IPC_INDEX_CROWNSTONE_APP, buf, BLUENET_IPC_RAM_DATA_ITEM_SIZE, &rd_size);
 
 	// Check if the (right) struct exists.
+	// QUESTION: can we do this check before the getRamData call?
 	bluenet_ipc_ram_data_item_t *ramStruct = getRamStruct(IPC_INDEX_MICROAPP);
 	if (!ramStruct) {
 		return result;
@@ -39,11 +48,6 @@ int sendMessage(message_t msg) {
 				_callback = _callback | ( (uintptr_t)(buf[i+offset]) << (i*8));
 			}
 		}
-	}
-
-	// Limit length to maximum payload length.
-	if (msg.length > MAX_PAYLOAD) {
-		msg.length = MAX_PAYLOAD;
 	}
 
 	// The actual callback.
