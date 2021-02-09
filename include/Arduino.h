@@ -6,6 +6,7 @@
 extern "C" {
 #endif
 
+#include <microapp.h>
 #include <stdint.h>
 
 //
@@ -57,7 +58,6 @@ void analogWrite(uint8_t pin, int val);
 typedef bool boolean;
 typedef uint8_t byte;
 typedef uint16_t word;
-
 
 #ifdef __cplusplus
 }

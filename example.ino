@@ -26,6 +26,8 @@ void setup() {
 	// Set the UUID of this microapp.
 	serviceDataBuf[0] = 12;
 	serviceDataBuf[1] = 34;
+
+	pinMode(1, OUTPUT);
 }
 
 //
