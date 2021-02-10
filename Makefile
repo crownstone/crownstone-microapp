@@ -19,7 +19,7 @@ clean:
 init:
 	mkdir -p $(BUILD_PATH)
 
-$(TARGET).elf: src/main.c src/microapp.c src/Arduino.c src/Serial.cpp $(TARGET).c $(SHARED_PATH)/ipc/cs_IpcRamData.c
+$(TARGET).elf: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp $(TARGET).c $(SHARED_PATH)/ipc/cs_IpcRamData.c
 	$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
 
 $(TARGET).c: $(TARGET_NAME).ino

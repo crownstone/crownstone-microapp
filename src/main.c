@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <ipc/cs_IpcRamData.h>
 #include <microapp.h>
-#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {

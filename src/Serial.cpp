@@ -4,19 +4,12 @@
 #include <microapp.h>
 #include <stdint.h>
 
-#define SIZE_OPCODE                           2
-#define MAX_SERIAL_PAYLOAD_LENGTH             (MAX_PAYLOAD - SIZE_OPCODE)
-#define MAX_STRING_LENGTH                     (MAX_SERIAL_PAYLOAD_LENGTH - 1) // Strings need space for a null termination.
+// Design choice is that strings will always be null-terminated.
+// The last byte will be overwritten at the bluenet side by a null byte even if this is not done in the microapp code.
 
-// returns size MAX_STRING_LENGTH for strings that are too long
-uint8_t strlen(const char *str) {
-	for (uint8_t i = 0; i < MAX_STRING_LENGTH + 1; ++i) {
-		if (str[i] == 0) {
-			return i;
-		}
-	}
-	return MAX_STRING_LENGTH;
-}
+#define SERIAL_SIZE_OPCODE                           2
+#define SERIAL_MAX_PAYLOAD_LENGTH                    (MAX_PAYLOAD - SERIAL_SIZE_OPCODE)
+#define SERIAL_MAX_STRING_LENGTH                     (SERIAL_MAX_PAYLOAD_LENGTH - 1)
 
 int SerialBase_::write(char value) {
 	const char buf[1] = { value };
@@ -50,21 +43,22 @@ int SerialBase_::_write(const uint8_t *buf, int length, Type type) {
 	global_msg.payload[0] = _port;
 	global_msg.payload[1] = type;
 
-	// Make sure length is not too large.
-	if (type == Type::Str && length > MAX_STRING_LENGTH) {
-		// Strings can be truncated.
-		length = MAX_STRING_LENGTH;
+	// Make sure length is not too large. Do not silently fail.
+	if (type == Type::Str && length > SERIAL_MAX_STRING_LENGTH) {
+		length = SERIAL_MAX_STRING_LENGTH;
 	}
-	else if (length > MAX_SERIAL_PAYLOAD_LENGTH) {
-		return 0;
+
+	// Make sure that in all cases that length is truncated. Do not silently fail.
+	if (length > SERIAL_MAX_PAYLOAD_LENGTH) {
+		length = SERIAL_MAX_PAYLOAD_LENGTH;
 	}
 	
 	// Copy the data.
 	for (int i = 0; i < length; ++i) {
-		global_msg.payload[i + SIZE_OPCODE] = buf[i];
+		global_msg.payload[i + SERIAL_SIZE_OPCODE] = buf[i];
 	}
 	
-	global_msg.length = length + SIZE_OPCODE;
+	global_msg.length = length + SERIAL_SIZE_OPCODE;
 
 	// TODO: check result.
 	sendMessage(global_msg);

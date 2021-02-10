@@ -1,5 +1,6 @@
 #pragma once
 
+// Get defaults from bluenet
 #include <cs_MicroappStructs.h>
 
 #ifdef __cplusplus
@@ -9,13 +10,18 @@ extern "C" {
 #define OUTPUT CS_MICROAPP_COMMAND_PIN_WRITE
 #define INPUT CS_MICROAPP_COMMAND_PIN_READ
 #define TOGGLE CS_MICROAPP_COMMAND_PIN_TOGGLE
-#define I2C_READ CS_MICROAPP_COMMAND_PIN_I2C_READ
-#define I2C_WRITE CS_MICROAPP_COMMAND_PIN_I2C_WRITE
+
+#define I2C_INIT CS_MICROAPP_COMMAND_TWI_INIT
+#define I2C_READ CS_MICROAPP_COMMAND_TWI_READ
+#define I2C_WRITE CS_MICROAPP_COMMAND_TWI_WRITE
 
 #define HIGH CS_MICROAPP_COMMAND_SWITCH_ON
 #define LOW CS_MICROAPP_COMMAND_SWITCH_OFF
 
-#define NUMBER_OF_PINS 2
+#define NUMBER_OF_PINS 5
+
+// returns size MAX_PAYLOAD for strings that are too long
+uint8_t strlen(const char *str);
 
 /*
  * To save space have a single global message object.

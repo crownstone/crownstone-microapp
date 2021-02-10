@@ -27,7 +27,11 @@ void setup() {
 	serviceDataBuf[0] = 12;
 	serviceDataBuf[1] = 34;
 
+	// Set digital port 1 to OUTPUT, so we can write.
 	pinMode(1, OUTPUT);
+
+	// Join the i2c bus
+	Wire.begin();
 }
 
 //
@@ -38,28 +42,35 @@ int loop() {
 	counter++;
 
 	// We can use local variables, also before and after delay() calls.
-	int test = 1;
+	// int test = 1;
+
+	byte address = 0x7;
+		
+	// Start transmission over i2c bus
+	Wire.beginTransmission(address);
+	Wire.write("i2c");
+	Wire.endTransmission();
 
 	// Do this only every 5 ticks.
 	if (counter % 5 == 0) {
-		Serial.write("Hi there! Greetings from the microapp!");
+//		Serial.write("Hi there! Greetings from the microapp!");
 
 		// We can control a particular virtual pin.
-		digitalWrite(1, 1);
+//		digitalWrite(1, 1);
 
 		// We delay 10 seconds.
 		delay(10000);
 
 		// See protocol definition for other options.
 		digitalWrite(1, 0);
-
+		
 		Serial.write("Done!");
 
 		// We increment a local variable for testing below.
-		test++;
+		//test++;
 
 		// Print it (should print 2).
-		Serial.write(test);
+		// Serial.write(test);
 	}
 	// Show counter.
 	Serial.write(counter);

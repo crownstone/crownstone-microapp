@@ -1,8 +1,6 @@
 #include <Arduino.h>
 #include <microapp.h>
 
-// Shared header files with bluenet
-//#include <cs_MicroappStructs.h>
 #include <ipc/cs_IpcRamData.h>
 
 static uint8_t pin_modes[NUMBER_OF_PINS];

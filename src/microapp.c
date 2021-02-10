@@ -1,6 +1,21 @@
 #include <microapp.h>
 #include <ipc/cs_IpcRamData.h>
 
+// Important: Do not include <string.h> / <cstring>. This bloats the binary unnecessary.
+// On Arduino there is the String class. Roll your own functions like strlen, see below.
+
+// returns size MAX_PAYLOAD for strings that are too long, note that this can still not fit in the payload
+// the actually supported string length depends on the opcode
+// the limit here is just to prevent looping forever
+uint8_t strlen(const char *str) {
+	for (uint8_t i = 0; i < MAX_PAYLOAD; ++i) {
+		if (str[i] == 0) {
+			return i;
+		}
+	}
+	return MAX_PAYLOAD;
+}
+
 /*
  * A global object to send a message.
  */

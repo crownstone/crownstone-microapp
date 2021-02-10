@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Serial.h>
+#include <Wire.h>
 
 #ifdef __cplusplus
 extern "C" {
