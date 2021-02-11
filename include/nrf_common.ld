@@ -48,31 +48,42 @@ ENTRY(main)
 
 SECTIONS
 {
+	.firmware_header :
+	{
+		. = ALIGN(4);
+		KEEP(*(.firmware_header))
+		LONG(OFFSET)
+		LONG(SIZE)
+		LONG(CHECKSUM)
+		LONG(RESERVE)
+		. = ALIGN(4);
+	} > FLASH
+
 	.text :
 	{
 		KEEP(*(.isr_vector))
-			*(.text*)
+		*(.text*)
 
-			KEEP(*(.init))
-			KEEP(*(.fini))
+		KEEP(*(.init))
+		KEEP(*(.fini))
 
-			/* .ctors */
-			*crtbegin.o(.ctors)
-			*crtbegin?.o(.ctors)
-			*(EXCLUDE_FILE(*crtend?.o *crtend.o) .ctors)
-			*(SORT(.ctors.*))
-			*(.ctors)
+		/* .ctors */
+		*crtbegin.o(.ctors)
+		*crtbegin?.o(.ctors)
+		*(EXCLUDE_FILE(*crtend?.o *crtend.o) .ctors)
+		*(SORT(.ctors.*))
+		*(.ctors)
 
-			/* .dtors */
-			*crtbegin.o(.dtors)
-			*crtbegin?.o(.dtors)
-			*(EXCLUDE_FILE(*crtend?.o *crtend.o) .dtors)
-			*(SORT(.dtors.*))
-			*(.dtors)
+		/* .dtors */
+		*crtbegin.o(.dtors)
+		*crtbegin?.o(.dtors)
+		*(EXCLUDE_FILE(*crtend?.o *crtend.o) .dtors)
+		*(SORT(.dtors.*))
+		*(.dtors)
 
-			*(.rodata*)
+		*(.rodata*)
 
-			KEEP(*(.eh_frame*))
+		KEEP(*(.eh_frame*))
 } > FLASH
 
 .ARM.extab :

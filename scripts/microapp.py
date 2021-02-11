@@ -81,9 +81,9 @@ protocol = 0
 chunk_size = 40
 
 # Offset of dummy_main in executable (use nm, objdump, readelf, etc.)
-offset=0xB4
+#offset=0xB4
 
-#offset=0x0
+offset=0x0
 
 if 'request' in actions:
     print('Request a new app upload')

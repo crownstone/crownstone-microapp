@@ -7,20 +7,24 @@ MAIN_SYMBOL=dummy_main
 SETUP_SYMBOL=setup
 LOOP_SYMBOL=loop
 
-all: init $(TARGET).hex $(TARGET).bin
-	echo "Result: $(TARGET).hex"
+all: init $(TARGET).config $(TARGET).hex $(TARGET).bin
+	echo "Result: $(TARGET).hex (and $(TARGET).bin)"
 
 clean:
-	rm -f $(TARGET).hex
-	rm -f $(TARGET).bin
-	rm -f $(TARGET).elf
+	rm -f $(TARGET).*
 	echo "Cleaned build directory"
 
 init:
 	mkdir -p $(BUILD_PATH)
 
+$(TARGET).elf.tmp: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp $(TARGET).c $(SHARED_PATH)/ipc/cs_IpcRamData.c
+	$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Wl,--defsym=OFFSET=0 -Wl,--defsym=SIZE=0 -Wl,--defsym=CHECKSUM=0 -Wl,--defsym=RESERVE=0 -Tgeneric_gcc_nrf52.ld -o $@
+
+$(TARGET).config: $(TARGET).offset $(TARGET).size $(TARGET).checksum $(TARGET).reserve
+	echo "Create configs"
+
 $(TARGET).elf: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp $(TARGET).c $(SHARED_PATH)/ipc/cs_IpcRamData.c
-	$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
+	$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Wl,--defsym=OFFSET=$(shell cat $(TARGET).offset) -Wl,--defsym=SIZE=$(shell cat $(TARGET).size) -Wl,--defsym=CHECKSUM=$(shell cat $(TARGET).checksum) -Wl,--defsym=RESERVE=$(shell cat $(TARGET).reserve) -Tgeneric_gcc_nrf52.ld -o $@
 
 $(TARGET).c: $(TARGET_NAME).ino
 	echo '#include <Arduino.h>' > $(TARGET).c
@@ -29,8 +33,23 @@ $(TARGET).c: $(TARGET_NAME).ino
 $(TARGET).hex: $(TARGET).elf
 	$(OBJCOPY) -O ihex $^ $@
 
+$(TARGET).bin.tmp: $(TARGET).elf.tmp
+	$(OBJCOPY) -O binary $^ $@
+
 $(TARGET).bin: $(TARGET).elf
 	$(OBJCOPY) -O binary $^ $@
+
+$(TARGET).offset: $(TARGET).bin.tmp
+	scripts/microapp_make.py $^ $@ offset
+
+$(TARGET).size: $(TARGET).bin.tmp
+	scripts/microapp_make.py $^ $@ size
+
+$(TARGET).checksum: $(TARGET).bin.tmp
+	scripts/microapp_make.py $^ $@ checksum
+
+$(TARGET).reserve: $(TARGET).bin.tmp
+	scripts/microapp_make.py $^ $@ reserve
 
 flash: $(TARGET).hex
 	nrfjprog -f nrf52 --program $(TARGET).hex --sectorerase
