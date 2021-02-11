@@ -2,6 +2,11 @@
 
 #include <String.h>
 #include <stdint.h>
+#include <microapp.h>
+
+#define WIRE_SIZE_OPCODE                           6
+#define WIRE_MAX_PAYLOAD_LENGTH                    (MAX_PAYLOAD - WIRE_SIZE_OPCODE)
+#define WIRE_MAX_STRING_LENGTH                     (WIRE_MAX_PAYLOAD_LENGTH - 1)
 
 class WireBase_ {
 private:
@@ -10,6 +15,15 @@ private:
 
 	// The address of the twi device to talk to (7 bits)
 	uint8_t _address;
+
+	// Extra buffer for incoming data
+	uint8_t _readBuf[WIRE_MAX_PAYLOAD_LENGTH];
+
+	// How much data is read
+	uint8_t _readLen;
+
+	// Current pointer
+	uint8_t _readPtr;
 protected:
 	WireBase_(char port) : _port(port) {}
 

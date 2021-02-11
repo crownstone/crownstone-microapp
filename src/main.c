@@ -39,7 +39,7 @@ void goyield(uint16_t prefix) {
 
 	global_msg.length = 7;
 
-	sendMessage(global_msg);
+	sendMessage(&global_msg);
 }
 
 void delay(uint16_t delay_ms) {

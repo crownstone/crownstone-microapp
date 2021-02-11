@@ -24,11 +24,11 @@ message_t global_msg;
 /*
  * Send the actual message.
  */
-int sendMessage(message_t msg) {
+int sendMessage(message_t *msg) {
 	int result = -1;
 
 	// Check length.
-	if (msg.length > MAX_PAYLOAD) {
+	if (msg->length > MAX_PAYLOAD) {
 		return result;
 	}
 
@@ -68,7 +68,7 @@ int sendMessage(message_t msg) {
 	// The actual callback.
 	if (_callback) {
 		int (*callback_func)(char*,uint16_t) = (int (*)(char*,uint16_t)) _callback;
-		result = callback_func((char*)msg.payload, msg.length);
+		result = callback_func((char*)msg->payload, msg->length);
 	}
 	return result;
 }

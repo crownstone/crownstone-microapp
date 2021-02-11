@@ -25,7 +25,7 @@ void digitalWrite(uint8_t pin, uint8_t val) {
 	pin_cmd->value = val;
 	global_msg.length = sizeof(pin_cmd_t);
 
-	sendMessage(global_msg);
+	sendMessage(&global_msg);
 }
 
 int digitalRead(uint8_t pin) {
@@ -38,7 +38,7 @@ int digitalRead(uint8_t pin) {
 	pin_cmd->value = 0;
 	global_msg.length = sizeof(pin_cmd_t);
 	
-	sendMessage(global_msg);
+	sendMessage(&global_msg);
 
 	// TODO, perhaps a larger type then uint8_t is required / desired
 	uint8_t value = pin_cmd->value;

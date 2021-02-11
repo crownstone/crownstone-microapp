@@ -61,6 +61,6 @@ int SerialBase_::_write(const uint8_t *buf, int length, Type type) {
 	global_msg.length = length + SERIAL_SIZE_OPCODE;
 
 	// TODO: check result.
-	sendMessage(global_msg);
+	sendMessage(&global_msg);
 	return length;
 }

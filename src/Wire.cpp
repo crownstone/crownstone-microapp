@@ -1,15 +1,10 @@
 #include <Wire.h>
 
 #include <ipc/cs_IpcRamData.h>
-#include <microapp.h>
 #include <stdint.h>
 
 // Design choice is that strings will always be null-terminated.
 // The last byte will be overwritten at the bluenet side by a null byte even if this is not done in the microapp code.
-
-#define WIRE_SIZE_OPCODE                           6
-#define WIRE_MAX_PAYLOAD_LENGTH                    (MAX_PAYLOAD - WIRE_SIZE_OPCODE)
-#define WIRE_MAX_STRING_LENGTH                     (WIRE_MAX_PAYLOAD_LENGTH - 1)
 
 int WireBase_::write(char value) {
 	const char buf[1] = { value };
@@ -51,7 +46,7 @@ void WireBase_::begin() {
 	twi_cmd->opcode = I2C_INIT;
 	twi_cmd->ack = 0;
 	twi_cmd->stop = true;
-	sendMessage(global_msg);
+	sendMessage(&global_msg);
 }
 
 //void WireBase_::begin(uint8_t address) {
@@ -66,14 +61,35 @@ void WireBase_::endTransmission() {
 }
 
 void WireBase_::requestFrom(const uint8_t address, const int size, bool stop) {
+	twi_cmd_t *twi_cmd = (twi_cmd_t*)&global_msg;
+	twi_cmd->cmd = CS_MICROAPP_COMMAND_TWI;
+	twi_cmd->address = address;
+	twi_cmd->opcode = I2C_READ;
+	twi_cmd->length = size;
+	twi_cmd->ack = 0;
+	twi_cmd->stop = stop;
+	sendMessage(&global_msg);
+
+	_readPtr = 0;
+	_readLen = twi_cmd->length;
+	if (_readLen > WIRE_MAX_PAYLOAD_LENGTH) {
+		_readLen = WIRE_MAX_PAYLOAD_LENGTH;
+	}
+	for (int i = 0; i < _readLen; ++i) {
+		_readBuf[i] = global_msg.payload[i + WIRE_SIZE_OPCODE];
+	}
 }
 
 int WireBase_::available() {
-	return 0;
+	return _readLen - _readPtr;
 }
 
 const uint8_t WireBase_::read() {
-	return 0;
+	uint8_t val = _readBuf[_readPtr];
+	if (_readPtr < WIRE_MAX_PAYLOAD_LENGTH) {
+		_readPtr++;
+	}
+	return val;
 }
 
 //
@@ -114,6 +130,6 @@ int WireBase_::_write(const uint8_t *buf, int length, Type type) {
 	global_msg.length = length + WIRE_SIZE_OPCODE;
 
 	// TODO: check result.
-	sendMessage(global_msg);
+	sendMessage(&global_msg);
 	return length;
 }

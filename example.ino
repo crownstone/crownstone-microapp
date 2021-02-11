@@ -51,6 +51,18 @@ int loop() {
 	Wire.write("i2c");
 	Wire.endTransmission();
 
+	if (counter == 101) {
+		Serial.write("Read req");
+
+		// Request 5 bytes from device at given address
+		Wire.requestFrom(address, 5);
+
+		while (Wire.available()) {
+			char c = Wire.read();
+			Serial.write(c);
+		}
+	}
+
 	// Do this only every 5 ticks.
 	if (counter % 5 == 0) {
 //		Serial.write("Hi there! Greetings from the microapp!");
