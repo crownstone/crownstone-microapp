@@ -20,10 +20,10 @@ private:
 	uint8_t _readBuf[WIRE_MAX_PAYLOAD_LENGTH];
 
 	// How much data is read
-	uint8_t _readLen;
+	int8_t _readLen;
 
 	// Current pointer
-	uint8_t _readPtr;
+	int8_t _readPtr;
 protected:
 	WireBase_(char port) : _port(port) {}
 
@@ -63,7 +63,7 @@ public:
 	// TODO: register callback and call from bluenet (this is as slave device)
 	// void onReceive(void *receiveEvent);
 
-	// Returns number of bytes available for a read (can be less than request).
+	// Returns if there are bytes available
 	int available();
 
 	// Returns a single byte

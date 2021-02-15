@@ -81,7 +81,9 @@ void WireBase_::requestFrom(const uint8_t address, const int size, bool stop) {
 }
 
 int WireBase_::available() {
-	return _readLen - _readPtr;
+	int result = (_readLen - _readPtr);
+	if (result > 0) result = 0;
+	return result;
 }
 
 const uint8_t WireBase_::read() {

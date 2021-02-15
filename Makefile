@@ -7,49 +7,59 @@ MAIN_SYMBOL=dummy_main
 SETUP_SYMBOL=setup
 LOOP_SYMBOL=loop
 
-all: init $(TARGET).config $(TARGET).hex $(TARGET).bin
+all: init $(TARGET).config $(TARGET).hex $(TARGET).bin $(TARGET).info
 	echo "Result: $(TARGET).hex (and $(TARGET).bin)"
 
 clean:
-	rm -f $(TARGET).*
+	@rm -f $(TARGET).*
 	echo "Cleaned build directory"
 
 init:
-	mkdir -p $(BUILD_PATH)
+	@mkdir -p $(BUILD_PATH)
 
 $(TARGET).elf.tmp: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp $(TARGET).c $(SHARED_PATH)/ipc/cs_IpcRamData.c
-	$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Wl,--defsym=OFFSET=0 -Wl,--defsym=SIZE=0 -Wl,--defsym=CHECKSUM=0 -Wl,--defsym=RESERVE=0 -Tgeneric_gcc_nrf52.ld -o $@
+	@echo "Compile without firmware header"
+	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Wl,--defsym=OFFSET=0 -Wl,--defsym=SIZE=0 -Wl,--defsym=CHECKSUM=0 -Wl,--defsym=RESERVE=0 -Tgeneric_gcc_nrf52.ld -o $@
 
 $(TARGET).config: $(TARGET).offset $(TARGET).size $(TARGET).checksum $(TARGET).reserve
-	echo "Create configs"
 
 $(TARGET).elf: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp $(TARGET).c $(SHARED_PATH)/ipc/cs_IpcRamData.c
-	$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Wl,--defsym=OFFSET=$(shell cat $(TARGET).offset) -Wl,--defsym=SIZE=$(shell cat $(TARGET).size) -Wl,--defsym=CHECKSUM=$(shell cat $(TARGET).checksum) -Wl,--defsym=RESERVE=$(shell cat $(TARGET).reserve) -Tgeneric_gcc_nrf52.ld -o $@
+	@echo "Compile with firmware header"
+	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Wl,--defsym=OFFSET=$(shell cat $(TARGET).offset) -Wl,--defsym=SIZE=$(shell cat $(TARGET).size) -Wl,--defsym=CHECKSUM=$(shell cat $(TARGET).checksum) -Wl,--defsym=RESERVE=$(shell cat $(TARGET).reserve) -Tgeneric_gcc_nrf52.ld -o $@
 
 $(TARGET).c: $(TARGET_NAME).ino
-	echo '#include <Arduino.h>' > $(TARGET).c
-	cat $(TARGET_NAME).ino >> $(TARGET).c
+	@echo "Get updated ino file"
+	@echo '#include <Arduino.h>' > $(TARGET).c
+	@cat $(TARGET_NAME).ino >> $(TARGET).c
 
 $(TARGET).hex: $(TARGET).elf
-	$(OBJCOPY) -O ihex $^ $@
-
-$(TARGET).bin.tmp: $(TARGET).elf.tmp
-	$(OBJCOPY) -O binary $^ $@
-
-$(TARGET).bin: $(TARGET).elf
-	$(OBJCOPY) -O binary $^ $@
+	@echo "Create hex file"
+	@$(OBJCOPY) -O ihex $^ $@
 
 $(TARGET).offset: $(TARGET).bin.tmp
-	scripts/microapp_make.py $^ $@ offset
+	@scripts/microapp_make.py $^ $@ offset
 
 $(TARGET).size: $(TARGET).bin.tmp
-	scripts/microapp_make.py $^ $@ size
+	@scripts/microapp_make.py $^ $@ size
 
 $(TARGET).checksum: $(TARGET).bin.tmp
-	scripts/microapp_make.py $^ $@ checksum
+	@scripts/microapp_make.py $^ $@ checksum
 
 $(TARGET).reserve: $(TARGET).bin.tmp
-	scripts/microapp_make.py $^ $@ reserve
+	@scripts/microapp_make.py $^ $@ reserve
+
+$(TARGET).bin.tmp: $(TARGET).elf.tmp
+	@echo "Create temp bin file"
+	@$(OBJCOPY) -O binary $^ $@
+
+$(TARGET).bin: $(TARGET).elf
+	@echo "Create bin file"
+	@$(OBJCOPY) -O binary $^ $@
+
+$(TARGET).info:
+	@echo "Size:     $(shell cat $(TARGET).size)"
+	@echo "Offset:   $(shell cat $(TARGET).offset)"
+	@echo "Checksum: $(shell printf "0x%x" $(shell cat $(TARGET).checksum))"
 
 flash: $(TARGET).hex
 	nrfjprog -f nrf52 --program $(TARGET).hex --sectorerase
@@ -64,7 +74,7 @@ dump: $(TARGET).bin
 	hexdump -v $^ | cut -f2- -d' ' > $(TARGET).txt
 
 compare: dump download
-	meld $(TARGET).txt $(BUILD_PATH)/download.txt 
+	meld $(TARGET).txt $(BUILD_PATH)/download.txt
 
 erase:
 	nrfjprog --erasepage 0x68000-0x6A000
@@ -125,6 +135,6 @@ help:
 	echo "make inspect-main\t\tdecompile the $(MAIN_SYMBOL) function"
 	echo "make size\t\tshow size information"
 
-.PHONY: flash show_addresses inspect help read reset erase offset all
+.PHONY: flash show_addresses inspect help read reset erase offset all $(TARGET).config $(TARGET).offset $(TARGET).size $(TARGET).checksum $(TARGET).reserve
 
 .SILENT: all init flash show_addresses inspect size help read reset erase offset clean

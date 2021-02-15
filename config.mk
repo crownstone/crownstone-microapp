@@ -28,8 +28,8 @@ STRIP=$(GCC_PATH)/arm-none-eabi-strip
 # The build directory
 BUILD_PATH=build
 
-# The target name 
-TARGET_NAME=example
+# The target name
+TARGET_NAME=read_twi
 
 # The target itself (including build directory)
 TARGET=$(BUILD_PATH)/$(TARGET_NAME)
