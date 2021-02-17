@@ -58,7 +58,15 @@ void analogWrite(uint8_t pin, int val);
 
 typedef bool boolean;
 typedef uint8_t byte;
-typedef uint16_t word;
+
+// Return highest byte (8 bits) or second-lowest byte (for larger data types)
+byte highByte(short val);
+
+// Return lowest byte (8 bits)
+byte lowByte(short val);
+
+// Combine two bytes into a short
+short word(byte highByte, byte lowByte);
 
 #ifdef __cplusplus
 }

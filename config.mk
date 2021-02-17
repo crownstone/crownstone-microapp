@@ -52,7 +52,7 @@ FLAGS=-mthumb -ffunction-sections -fdata-sections -Wall -Werror \
 # For c++
 # I have removed nanolib as well. Now I have to check if for e.g. memset I
 # have to provide a function call to the memset of Crownstone.
-FLAGS=-mthumb -ffunction-sections -fdata-sections -Wall -Werror \
+FLAGS=-std=c++17 -mthumb -ffunction-sections -fdata-sections -Wall -Werror \
 	  -fno-strict-aliasing -fno-builtin -fshort-enums -Wno-error=format \
 	  -fno-exceptions -fno-enforce-eh-specs \
 	  -nostdlib -ffreestanding -fno-threadsafe-statics \

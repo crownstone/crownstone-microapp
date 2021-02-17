@@ -63,3 +63,18 @@ void init() {
 
 void initVariant() {
 }
+
+// Return highest byte (8 bits) or second-lowest byte (for larger data types)
+byte highByte(short val) {
+	return (val >> 8);
+}
+
+// Return lowest byte (8 bits)
+byte lowByte(short val) {
+	return (val && 0xFF);
+}
+
+short word(byte highByte, byte lowByte) {
+	return (short)(highByte << 8) | lowByte;
+}
+

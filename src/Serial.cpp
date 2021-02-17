@@ -16,6 +16,28 @@ int SerialBase_::write(char value) {
 	return _write(reinterpret_cast<const uint8_t*>(buf), 1, Type::Char);
 }
 
+int SerialBase_::write(float value) {
+	const int32_t casted = (int32_t)(value * 10000); // we just cast to 4 decimals
+//	const uint8_t size = sizeof(value);
+	return _write(reinterpret_cast<const uint8_t*>(&casted), sizeof(value), Type::Float);
+}
+
+int SerialBase_::write(double value) {
+	return _write(reinterpret_cast<const uint8_t*>(&value), sizeof(value), Type::Double);
+}
+
+int SerialBase_::write(int value) {
+	return _write(reinterpret_cast<const uint8_t*>(&value), sizeof(value), Type::Int);
+}
+
+int SerialBase_::write(short value) {
+	return _write(reinterpret_cast<const uint8_t*>(&value), sizeof(value), Type::Short);
+}
+
+int SerialBase_::write(unsigned int value) {
+	return _write(reinterpret_cast<const uint8_t*>(&value), sizeof(value), Type::UnsignedInt);
+}
+
 int SerialBase_::write(const char *str) {
 	return _write(reinterpret_cast<const uint8_t*>(str), strlen(str), Type::Str);
 }

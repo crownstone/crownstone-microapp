@@ -11,8 +11,8 @@ private:
 protected:
 	SerialBase_(char port) : _port(port) {}
 
-	enum Type { Char = 0, Int = 1, Str = 2, Arr = 3};
-	
+	enum Type { Char = 0, Int = 1, Str = 2, Arr = 3, Float = 4, Double = 5, UnsignedInt = 6, Short = 7};
+
 	// Write an array of bytes to serial.
 	// Returns number of bytes written.
 	int _write(const uint8_t *buf, int length, Type type);
@@ -49,6 +49,56 @@ public:
 	// Write a single byte to serial.
 	// Returns number of bytes written.
 	int write(char value);
+
+	int write(float value);
+
+	int write(double value);
+
+	int write(short value);
+
+	int write(int value);
+
+	int write(unsigned int value);
+
+	int print(String str, int length) {
+		return write(str, length);
+	}
+
+	int print(const char *str) {
+		return write(str);
+	}
+
+	int print(const uint8_t *buf, int length) {
+		return write(buf, length);
+	}
+
+	int print(char value) {
+		return write(value);
+	}
+
+	int print(float value) {
+		return write(value);
+	}
+
+	int print(short value) {
+		return write(value);
+	}
+
+	int println(String str, int length) {
+		return write(str, length);
+	}
+
+	int println(const char *str) {
+		return write(str);
+	}
+
+	int println(const uint8_t *buf, int length) {
+		return write(buf, length);
+	}
+
+	int println(char value) {
+		return write(value);
+	}
 };
 
 class Serial_: public SerialBase_ {

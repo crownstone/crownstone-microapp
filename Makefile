@@ -61,7 +61,7 @@ $(TARGET).info:
 	@echo "Offset:   $(shell cat $(TARGET).offset)"
 	@echo "Checksum: $(shell printf "0x%x" $(shell cat $(TARGET).checksum))"
 
-flash: $(TARGET).hex
+flash: all
 	nrfjprog -f nrf52 --program $(TARGET).hex --sectorerase
 
 read:
