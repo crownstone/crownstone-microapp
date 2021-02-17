@@ -14,7 +14,7 @@ void setup() {
 	if (!Serial) return;
 
 	// Write something to the log (will be shown in the bluenet code as print statement).
-	Serial.write("Setup");
+	Serial.println("Setup");
 
 	// Join the i2c bus
 	Wire.begin();
@@ -70,6 +70,7 @@ int loop() {
 		float temp = signBit * value * 0.0625;
 		Serial.print("Temperature in Celsius: ");
 		Serial.print(temp);
+		Serial.println(" °C");
 	}
 
 	counter++;

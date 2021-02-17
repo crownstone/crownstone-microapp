@@ -2,6 +2,7 @@
 
 #include <String.h>
 #include <stdint.h>
+#include <cs_MicroappStructs.h>
 
 class SerialBase_ {
 private:
@@ -15,7 +16,7 @@ protected:
 
 	// Write an array of bytes to serial.
 	// Returns number of bytes written.
-	int _write(const uint8_t *buf, int length, Type type);
+	int _write(const uint8_t *buf, int length, Type type, CommandMicroappLogOption option = CS_MICROAPP_COMMAND_LOG_NO_NEWLINE);
 
 public:
 
@@ -60,45 +61,25 @@ public:
 
 	int write(unsigned int value);
 
-	int print(String str, int length) {
-		return write(str, length);
-	}
+	int print(String str, int length);
 
-	int print(const char *str) {
-		return write(str);
-	}
+	int print(const char *str);
 
-	int print(const uint8_t *buf, int length) {
-		return write(buf, length);
-	}
+	int print(const uint8_t *buf, int length);
 
-	int print(char value) {
-		return write(value);
-	}
+	int print(char value);
 
-	int print(float value) {
-		return write(value);
-	}
+	int print(float value);
 
-	int print(short value) {
-		return write(value);
-	}
+	int print(short value);
 
-	int println(String str, int length) {
-		return write(str, length);
-	}
+	int println(String str, int length);
 
-	int println(const char *str) {
-		return write(str);
-	}
+	int println(const char *str);
 
-	int println(const uint8_t *buf, int length) {
-		return write(buf, length);
-	}
+	int println(const uint8_t *buf, int length);
 
-	int println(char value) {
-		return write(value);
-	}
+	int println(char value);
 };
 
 class Serial_: public SerialBase_ {
