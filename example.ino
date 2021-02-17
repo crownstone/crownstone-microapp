@@ -18,10 +18,10 @@ void setup() {
 	if (!Serial) return;
 
 	// Write something to the log (will be shown in the bluenet code as print statement).
-	Serial.write("Setup started");
+	Serial.println("Setup started");
 
 	// We can also write integers.
-	Serial.write(counter);
+	Serial.println(counter);
 
 	// Set the UUID of this microapp.
 	serviceDataBuf[0] = 12;
@@ -44,31 +44,28 @@ int loop() {
 	// We can use local variables, also before and after delay() calls.
 	// int test = 1;
 
-	byte address = 0x7;
-		
-	// Start transmission over i2c bus
-	Wire.beginTransmission(address);
-	Wire.write("i2c");
-	Wire.endTransmission();
+	byte address = 0x18;
 
-	if (counter == 101) {
-		Serial.write("Read req");
+	if (counter % 5 == 0) {
+		// Start transmission over i2c bus
+		Wire.beginTransmission(address);
+		Wire.write(5);
+		Wire.endTransmission();
 
-		// Request 5 bytes from device at given address
-		Wire.requestFrom(address, 5);
+		Serial.print("Read req: ");
+
+		// Request a few bytes from device at given address
+		Wire.requestFrom(address, 2);
 
 		while (Wire.available()) {
 			char c = Wire.read();
 			Serial.write(c);
 		}
+		Serial.println(".");
 	}
 
-	// Do this only every 5 ticks.
-	if (counter % 5 == 0) {
-//		Serial.write("Hi there! Greetings from the microapp!");
-
-		// We can control a particular virtual pin.
-//		digitalWrite(1, 1);
+	if (counter % 10 == 0) {
+		Serial.println("Delay 10 sec");
 
 		// We delay 10 seconds.
 		delay(10000);
@@ -76,16 +73,10 @@ int loop() {
 		// See protocol definition for other options.
 		digitalWrite(1, 0);
 		
-		Serial.write("Done!");
-
-		// We increment a local variable for testing below.
-		//test++;
-
-		// Print it (should print 2).
-		// Serial.write(test);
+		Serial.println("Done...");
 	}
 	// Show counter.
-	Serial.write(counter);
+	Serial.println(counter);
 
 	// Let's also advertise the latest counter value in the service data.
 	serviceDataBuf[2] = counter;
