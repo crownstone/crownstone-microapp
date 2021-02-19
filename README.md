@@ -26,7 +26,7 @@ sure it is microapp compatible of course. You might encounter a checksum error i
 
 ```
 [t/source/src/cs_Crownstone.cpp : 271  ] ---- init microapp ----
-[ce/src/storage/cs_MicroApp.cpp : 218  ] Sucessfully initialized from 0x00068000 to 0x00069FFF
+[ce/src/storage/cs_MicroApp.cpp : 218  ] Sucessfully initialized from 0x00069000 to ...
 [ce/src/storage/cs_MicroApp.cpp : 477  ] Micro app 0 has checksum 0x6620, but calculation shows 0xA07C
 [ce/src/storage/cs_MicroApp.cpp : 241  ] Checksum error
 ```

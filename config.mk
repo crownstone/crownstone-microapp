@@ -29,13 +29,13 @@ STRIP=$(GCC_PATH)/arm-none-eabi-strip
 BUILD_PATH=build
 
 # The target name
-TARGET_NAME=read_twi
+TARGET_NAME=example
 
 # The target itself (including build directory)
 TARGET=$(BUILD_PATH)/$(TARGET_NAME)
 
 # The location we will write into (in flash)
-START_ADDRESS_WITHOUT_PREFIX=68000
+START_ADDRESS_WITHOUT_PREFIX=69000
 
 # The location including 0x
 START_ADDRESS=0x$(START_ADDRESS_WITHOUT_PREFIX)

@@ -77,7 +77,7 @@ compare: dump download
 	meld $(TARGET).txt $(BUILD_PATH)/download.txt
 
 erase:
-	nrfjprog --erasepage 0x68000-0x6A000
+	nrfjprog --erasepage 0x69000-0x6B000
 
 reset:
 	nrfjprog --reset
