@@ -50,11 +50,25 @@ void analogReference(uint8_t mode);
 
 //
 // Write to particular pins. These are virtual pins and are either mapped to physical pins or drivers.
-// 
+//
 // @param pin 1 sets the dimmer to a particular value
 //
 void analogWrite(uint8_t pin, int val);
 
+//
+// Attach an interrupt to a particular pin.
+//
+// @param pin      Set interrupt on particular pin
+// @param isr      The interrupt service routine to call
+// @param mode     The options are LOW, CHANGE, RISING, FALLING, and HIGH.
+//
+void attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode);
+
+//
+// Mapping from digital pins to interrupts. This will be just the same for Crownstone hardware. Any mapping will be
+// done in bluenet.
+//
+uint8_t digitalPinToInterrupt(uint8_t pin);
 
 typedef bool boolean;
 typedef uint8_t byte;

@@ -7,6 +7,14 @@ static int counter = 100;
 
 uint8_t serviceDataBuf[12] = {0};
 
+volatile byte state = LOW;
+
+void blink() {
+	state = !state;
+}
+
+const uint8_t BUTTON1_INDEX=4;
+
 //
 // A dummy setup function.
 //
@@ -32,6 +40,10 @@ void setup() {
 
 	// Join the i2c bus
 	Wire.begin();
+
+	// Set interrupt handler
+	pinMode(BUTTON1_INDEX, INPUT_PULLUP);
+	attachInterrupt(digitalPinToInterrupt(BUTTON1_INDEX), blink, CHANGE);
 }
 
 //
@@ -43,7 +55,6 @@ int loop() {
 
 	// We can use local variables, also before and after delay() calls.
 	// int test = 1;
-
 	byte address = 0x18;
 
 	if (counter % 5 == 0) {
@@ -62,6 +73,12 @@ int loop() {
 			Serial.write(c);
 		}
 		Serial.println(".");
+
+		if (state == LOW) {
+			Serial.println("State up");
+		} else {
+			Serial.println("State down");
+		}
 	}
 
 	if (counter % 10 == 0) {
