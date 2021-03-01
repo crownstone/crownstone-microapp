@@ -6,7 +6,7 @@ import time
 import argparse
 import math
 
-from crownstone_core.util.fletcher import fletcher32_uint8Arr
+from crownstone_core.util import CRC
 
 parser = argparse.ArgumentParser(description='Manipulate microapp binary')
 parser.add_argument('input',
@@ -28,36 +28,21 @@ f.close()
 
 size=len(buf)
 
+header_size = 16
 chunk_size = 40
 
-# Create chunk of proper size
-chunk = bytearray(chunk_size)
 
-nof_chunks = math.ceil(len(buf) / chunk_size)
+# print(f"header: {list(buf[0:header_size])}")
 
-# Create a chunk size that can be zero-padded if it is originally of odd size
-if chunk_size % 2 != 0:
-    chunk.append(0)
-
-for c in range(0, nof_chunks):
-    # Segment [start,stop] in chunk
-    start = c*chunk_size
-    stop = (c+1)*chunk_size
-    last = stop > len(buf)
-    if last:
-        stop = len(buf)
-    this_chunk_size = stop - start;
-    chunk[0:this_chunk_size] = buf[start:stop]
-
-    # Add zero-padding to every chunk of odd size as well as the last chunk
-    for i in range(this_chunk_size, chunk_size):
-        chunk[i] = 0
-
-    checksum = fletcher32_uint8Arr(chunk)
+numChunks = math.ceil((size - header_size) / chunk_size)
+# print(f"numChunks={numChunks}")
+for i in range(0, numChunks):
+    chunk = buf[header_size + i * chunk_size: header_size + (i+1) * chunk_size]
+    # print(f"CRC chunk {i} = {hex(CRC.CRC_16_CCITT.crc(chunk))}")
+    # print(f"  data: {list(chunk)}")
 
 # Calculates checksum over the entire buffer
-r_checksum = fletcher32_uint8Arr(buf)
-checksum = r_checksum & 0xFFFF
+checksum = CRC.CRC_16_CCITT.crc(buf)
 
 offset = 16
 null = 0

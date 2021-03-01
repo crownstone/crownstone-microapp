@@ -6,7 +6,6 @@ import time
 import argparse
 
 from crownstone_ble import CrownstoneBle
-from crownstone_core.util.fletcher import fletcher32_uint8Arr
 
 from crownstone_core.packets.MicroappPacket import MicroappUploadCmd, MicroappRequestCmd, MicroappValidateCmd, MicroappEnableCmd
 
