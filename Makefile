@@ -74,16 +74,16 @@ reset:
 	nrfjprog --reset
 
 ota-request:
-	python3.7 scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin request
+	scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin request
 
 ota-upload:
-	python3.7 scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin upload
+	scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin upload
 
 ota-validate:
-	python3.7 scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin validate
+	scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin validate
 
 ota-enable:
-	python3.7 scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin enable
+	scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin enable
 
 checksum:
 	scripts/inspect_microapp.py $(TARGET).bin
