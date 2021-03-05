@@ -9,7 +9,7 @@ from MicroappBinaryHeaderPacket import MicroappBinaryHeaderPacket
 
 parser = argparse.ArgumentParser(description='Manipulate microapp binary')
 parser.add_argument('-i', '--input',
-        help='The binary file to be processed. If no input is given, a fields will be set to dummy values.')
+        help='The binary file to be processed. If no input is given, the fields will be set to dummy values.')
 parser.add_argument('output',
         help='The file to write output to.')
 

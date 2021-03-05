@@ -7,7 +7,7 @@ MAIN_SYMBOL=dummy_main
 SETUP_SYMBOL=setup
 LOOP_SYMBOL=loop
 
-all: init $(TARGET).config $(TARGET).hex $(TARGET).bin $(TARGET).info
+all: init $(TARGET).hex $(TARGET).bin $(TARGET).info
 	echo "Result: $(TARGET).hex (and $(TARGET).bin)"
 
 clean:
@@ -22,8 +22,6 @@ $(TARGET).elf.tmp: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Seri
 	@scripts/microapp_make.py include/microapp_header_symbols.ld
 	@$(CC) -CC -E -P -x c -Iinclude include/microapp_symbols.ld.in -o include/microapp_symbols.ld
 	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
-
-$(TARGET).config: $(TARGET).offset $(TARGET).size $(TARGET).checksum $(TARGET).reserve
 
 $(TARGET).elf: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp $(TARGET).c $(SHARED_PATH)/ipc/cs_IpcRamData.c include/microapp_header_symbols.ld
 	@echo "Compile with firmware header"
@@ -85,9 +83,6 @@ ota-validate:
 ota-enable:
 	scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin enable
 
-checksum:
-	scripts/inspect_microapp.py $(TARGET).bin
-
 show_addresses: $(TARGET).elf
 	echo -n "$(MAIN_SYMBOL)():\t"
 	$(NM) $^ | grep -w $(MAIN_SYMBOL) | cut -f1 -d' '
@@ -126,6 +121,6 @@ help:
 	echo "make inspect-main\t\tdecompile the $(MAIN_SYMBOL) function"
 	echo "make size\t\tshow size information"
 
-.PHONY: flash show_addresses inspect help read reset erase offset all $(TARGET).config $(TARGET).offset $(TARGET).size $(TARGET).checksum $(TARGET).reserve
+.PHONY: flash show_addresses inspect help read reset erase offset all
 
 .SILENT: all init flash show_addresses inspect size help read reset erase offset clean
