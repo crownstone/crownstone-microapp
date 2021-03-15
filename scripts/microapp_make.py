@@ -4,7 +4,8 @@
 
 import argparse
 
-from crownstone_core.util import CRC
+from crownstone_core.util.CRC import crc16ccitt
+
 from MicroappBinaryHeaderPacket import MicroappBinaryHeaderPacket
 
 parser = argparse.ArgumentParser(description='Manipulate microapp binary')
@@ -24,23 +25,31 @@ if inputFilename != None:
     with open(inputFilename, "rb") as f:
         buf = f.read()
 
-    size=len(buf)
+    size = len(buf)
 
+    # Fill fields from binary, as some fields are already set.
+    header.fromBuffer(buf)
+    print(f"Read header: {header}")
+
+    # Set header fields that are not set yet.
     headerSize = len(header.toBuffer())
 
-    header.startAddress = headerSize
+    header.startOffset = headerSize
     header.size = len(buf)
 
     # Test value: remove on release:
     header.appBuildVersion = 987654321
 
-    header.checksum = CRC.CRC_16_CCITT.crc(buf[headerSize:])
-    header.checksumHeader = CRC.CRC_16_CCITT.crc(bytearray(header.toBuffer()))
+    header.checksum = crc16ccitt(buf[headerSize:])
+    print(f"Calculate header checksum from: {header} {header.toBuffer()}")
+    header.checksumHeader = crc16ccitt(bytearray(header.toBuffer()))
+    print(f"Final header: {header}")
 
 with open(outputFilename, "w") as outputFile:
-    outputFile.write(f"START_ADDRESS = {header.startAddress};\n")
     outputFile.write(f"APP_BINARY_SIZE = {header.size};\n")
     outputFile.write(f"CHECKSUM = {header.checksum};\n")
     outputFile.write(f"CHECKSUM_HEADER = {header.checksumHeader};\n")
     outputFile.write(f"APP_BUILD_VERSION = {header.appBuildVersion};\n")
+    outputFile.write(f"START_OFFSET = {header.startOffset};\n")
     outputFile.write(f"HEADER_RESERVED = {header.reserved};\n")
+    outputFile.write(f"HEADER_RESERVED2 = {header.reserved2};\n")
