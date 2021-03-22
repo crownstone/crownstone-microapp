@@ -8,7 +8,9 @@ class MicroappBinaryHeaderPacket():
 	/**
 	* Header of a microapp binary.
 	*
+	* Changes should be reflected in the SDK version.
 	* Has to match section .firmware_header in linker file nrf_common.ld of the microapp repo.
+	* Changes should also be updated in the firmware: https://github.com/crownstone/bluenet/blob/master/source/include/protocol/cs_MicroappPackets.h
 	*/
 	struct __attribute__((__packed__)) microapp_binary_header_t {
 		uint8_t sdkVersionMajor;   // Similar to microapp_sdk_version_t
