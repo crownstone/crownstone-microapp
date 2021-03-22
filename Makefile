@@ -37,7 +37,7 @@ $(TARGET).hex: $(TARGET).elf
 	@$(OBJCOPY) -O ihex $^ $@
 
 include/microapp_header_symbols.ld: $(TARGET).bin.tmp
-	@scripts/microapp_make.py -i $^ include/microapp_header_symbols.ld
+	@scripts/microapp_make.py -i $^ $@
 
 $(TARGET).bin.tmp: $(TARGET).elf.tmp
 	@echo "Create temp bin file"
