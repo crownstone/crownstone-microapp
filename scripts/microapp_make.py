@@ -37,8 +37,8 @@ if inputFilename != None:
     header.startOffset = headerSize
     header.size = len(buf)
 
-    # Test value: remove on release:
-    header.appBuildVersion = 987654321
+    # # Test value: remove on release:
+    # header.appBuildVersion = 987654321
 
     header.checksum = crc16ccitt(buf[headerSize:])
     print(f"Calculate header checksum from: {header} {header.toBuffer()}")
