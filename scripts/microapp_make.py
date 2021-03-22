@@ -4,7 +4,7 @@
 
 import argparse
 
-from crownstone_core.util.CRC import crc16ccitt
+from CRC import crc16ccitt
 
 from MicroappBinaryHeaderPacket import MicroappBinaryHeaderPacket
 
