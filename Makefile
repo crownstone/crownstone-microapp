@@ -7,7 +7,7 @@ MAIN_SYMBOL=dummy_main
 SETUP_SYMBOL=setup
 LOOP_SYMBOL=loop
 
-all: init $(TARGET).config $(TARGET).hex $(TARGET).bin $(TARGET).info
+all: init $(TARGET).hex $(TARGET).bin $(TARGET).info
 	echo "Result: $(TARGET).hex (and $(TARGET).bin)"
 
 clean:
@@ -19,13 +19,13 @@ init:
 
 $(TARGET).elf.tmp: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp $(TARGET).c $(SHARED_PATH)/ipc/cs_IpcRamData.c
 	@echo "Compile without firmware header"
-	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Wl,--defsym=OFFSET=0 -Wl,--defsym=SIZE=0 -Wl,--defsym=CHECKSUM=0 -Wl,--defsym=RESERVE=0 -Tgeneric_gcc_nrf52.ld -o $@
+	@scripts/microapp_make.py include/microapp_header_symbols.ld
+	@$(CC) -CC -E -P -x c -Iinclude include/microapp_symbols.ld.in -o include/microapp_symbols.ld
+	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
 
-$(TARGET).config: $(TARGET).offset $(TARGET).size $(TARGET).checksum $(TARGET).reserve
-
-$(TARGET).elf: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp $(TARGET).c $(SHARED_PATH)/ipc/cs_IpcRamData.c
+$(TARGET).elf: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp $(TARGET).c $(SHARED_PATH)/ipc/cs_IpcRamData.c include/microapp_header_symbols.ld
 	@echo "Compile with firmware header"
-	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Wl,--defsym=OFFSET=$(shell cat $(TARGET).offset) -Wl,--defsym=SIZE=$(shell cat $(TARGET).size) -Wl,--defsym=CHECKSUM=$(shell cat $(TARGET).checksum) -Wl,--defsym=RESERVE=$(shell cat $(TARGET).reserve) -Tgeneric_gcc_nrf52.ld -o $@
+	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
 
 $(TARGET).c: $(TARGET_NAME).ino
 	@echo "Get updated ino file"
@@ -36,17 +36,8 @@ $(TARGET).hex: $(TARGET).elf
 	@echo "Create hex file"
 	@$(OBJCOPY) -O ihex $^ $@
 
-$(TARGET).offset: $(TARGET).bin.tmp
-	@scripts/microapp_make.py $^ $@ offset
-
-$(TARGET).size: $(TARGET).bin.tmp
-	@scripts/microapp_make.py $^ $@ size
-
-$(TARGET).checksum: $(TARGET).bin.tmp
-	@scripts/microapp_make.py $^ $@ checksum
-
-$(TARGET).reserve: $(TARGET).bin.tmp
-	@scripts/microapp_make.py $^ $@ reserve
+include/microapp_header_symbols.ld: $(TARGET).bin.tmp
+	@scripts/microapp_make.py -i $^ $@
 
 $(TARGET).bin.tmp: $(TARGET).elf.tmp
 	@echo "Create temp bin file"
@@ -57,9 +48,7 @@ $(TARGET).bin: $(TARGET).elf
 	@$(OBJCOPY) -O binary $^ $@
 
 $(TARGET).info:
-	@echo "Size:     $(shell cat $(TARGET).size)"
-	@echo "Offset:   $(shell cat $(TARGET).offset)"
-	@echo "Checksum: $(shell printf "0x%x" $(shell cat $(TARGET).checksum))"
+	@echo "$(shell cat include/microapp_header_symbols.ld)"
 
 flash: all
 	nrfjprog -f nrf52 --program $(TARGET).hex --sectorerase
@@ -93,9 +82,6 @@ ota-validate:
 
 ota-enable:
 	scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin enable
-
-checksum:
-	scripts/inspect_microapp.py $(TARGET).bin
 
 show_addresses: $(TARGET).elf
 	echo -n "$(MAIN_SYMBOL)():\t"
@@ -135,6 +121,6 @@ help:
 	echo "make inspect-main\t\tdecompile the $(MAIN_SYMBOL) function"
 	echo "make size\t\tshow size information"
 
-.PHONY: flash show_addresses inspect help read reset erase offset all $(TARGET).config $(TARGET).offset $(TARGET).size $(TARGET).checksum $(TARGET).reserve
+.PHONY: flash show_addresses inspect help read reset erase offset all
 
 .SILENT: all init flash show_addresses inspect size help read reset erase offset clean
