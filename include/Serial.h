@@ -79,7 +79,9 @@ public:
 
 	int println(const uint8_t *buf, int length);
 
-	int println(char value);
+	//int println(char value);
+
+	int println(uint32_t value);
 };
 
 class Serial_: public SerialBase_ {

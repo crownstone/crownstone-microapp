@@ -89,9 +89,14 @@ int SerialBase_::println(const uint8_t *buf, int length) {
 	return _write(buf, length, Type::Arr, CS_MICROAPP_COMMAND_LOG_NEWLINE);
 }
 
+/*
 int SerialBase_::println(char value) {
 	const char buf[1] = { value };
 	return _write(reinterpret_cast<const uint8_t*>(buf), 1, Type::Char, CS_MICROAPP_COMMAND_LOG_NEWLINE);
+}*/
+
+int SerialBase_::println(uint32_t value) {
+	return _write(reinterpret_cast<const uint8_t*>(&value), sizeof(value), Type::UnsignedInt, CS_MICROAPP_COMMAND_LOG_NEWLINE);
 }
 
 //

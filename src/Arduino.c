@@ -17,6 +17,7 @@ void pinMode(uint8_t pin, uint8_t mode) {
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_MODE;
 	pin_cmd->opcode2 = mode;
 	pin_cmd->value = 0;
+	pin_cmd->callback = 0;
 	global_msg.length = sizeof(pin_cmd_t);
 
 	sendMessage(&global_msg);
@@ -30,6 +31,7 @@ void digitalWrite(uint8_t pin, uint8_t val) {
 	pin_cmd->pin = pin;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_ACTION;
 	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_WRITE;
+	pin_cmd->callback = 0;
 	pin_cmd->value = val;
 	global_msg.length = sizeof(pin_cmd_t);
 
@@ -44,6 +46,7 @@ int digitalRead(uint8_t pin) {
 	pin_cmd->pin = pin;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_ACTION;
 	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_READ;
+	pin_cmd->callback = 0;
 	pin_cmd->value = 0;
 	global_msg.length = sizeof(pin_cmd_t);
 	
@@ -61,7 +64,7 @@ void attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode) {
 	pin_cmd->cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_MODE;
-	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_READ;
+	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_INPUT_PULLUP;
 	pin_cmd->value = mode;
 	pin_cmd->callback = (uint32_t)(isr);
 	global_msg.length = sizeof(pin_cmd_t);

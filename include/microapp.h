@@ -26,7 +26,8 @@ extern "C" {
 const uint8_t LOW = 0;
 const uint8_t HIGH = !LOW;
 
-#define NUMBER_OF_PINS 5
+// 1 virtual pin, 4 GPIO pins, 4 buttons, and 4 leds
+#define NUMBER_OF_PINS 13
 
 // returns size MAX_PAYLOAD for strings that are too long
 uint8_t strlen(const char *str);
