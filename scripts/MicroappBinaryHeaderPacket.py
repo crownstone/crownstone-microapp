@@ -1,5 +1,5 @@
 from crownstone_core.packets.BasePacket import BasePacket
-from crownstone_core.util.BufferFiller import BufferFiller
+from crownstone_core.util.BufferWriter import BufferWriter
 from crownstone_core.util.BufferReader import BufferReader
 
 
@@ -44,23 +44,23 @@ class MicroappBinaryHeaderPacket():
 		self.reserved2 = 0
 
 	def toBuffer(self) -> list:
-		bufferFiller = BufferFiller()
+		bufferWriter = BufferWriter()
 
-		bufferFiller.putUInt8(self.sdkVersionMajor)
-		bufferFiller.putUInt8(self.sdkVersionMinor)
-		bufferFiller.putUInt16(self.size)
+		bufferWriter.putUInt8(self.sdkVersionMajor)
+		bufferWriter.putUInt8(self.sdkVersionMinor)
+		bufferWriter.putUInt16(self.size)
 
-		bufferFiller.putUInt16(self.checksum)
-		bufferFiller.putUInt16(self.checksumHeader)
+		bufferWriter.putUInt16(self.checksum)
+		bufferWriter.putUInt16(self.checksumHeader)
 
-		bufferFiller.putUInt32(self.appBuildVersion)
+		bufferWriter.putUInt32(self.appBuildVersion)
 
-		bufferFiller.putUInt16(self.startOffset)
-		bufferFiller.putUInt16(self.reserved)
+		bufferWriter.putUInt16(self.startOffset)
+		bufferWriter.putUInt16(self.reserved)
 
-		bufferFiller.putUInt32(self.reserved2)
+		bufferWriter.putUInt32(self.reserved2)
 
-		return bufferFiller.getBuffer()
+		return bufferWriter.getBuffer()
 
 	def fromBuffer(self, buf: list):
 		reader = BufferReader(buf)
