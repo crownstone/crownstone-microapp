@@ -33,7 +33,13 @@ sure it is microapp compatible of course. You might encounter a checksum error i
 
 This means that the bluenet code has still the checksum of the previous app and will not load this one. 
 
-Enabling the app will automatically correct the checksum. Enabling the app is one of the steps in the following script:
+Enabling the app will automatically correct the checksum. Easiest is to use the following option for the bluenet firmware:
+
+```
+AUTO_ENABLE_MICROAPP_ON_BOOT=1
+```
+
+Enabling the app is also one of the steps in the following python script (that uses Bluetooth to do the same):
 
 ```
 scripts/upload_microapp.py --keyFile $PRIVATE_PATH/sphere-keys.json -a AA:BB:CC:DD:EE:FF -f build/example.bin
@@ -82,7 +88,7 @@ You can use the `microapp.py` script in the `scripts` directory to upload over t
 2. Make sure you have a `private.mk` file with up to date info (see above at "Configuration").
 3. Adjust `config.mk` to paths for your local system. Alternatively, write those paths in `private.mk`.
 4. Run `make` to build the application.
-5. Run `make ota-upload` to upload the application (over serial, use `make flash`). On `make ota-upload` the script will also validate and enable the binary. On `make flash` you will have to do this yourself.
+5. Run `make ota-upload` to upload the application (over serial, use `make flash`). On `make ota-upload` the script will also validate and enable the binary. On `make flash` you will have to do this yourself (or use `AUTO_ENABLE_MICROAPP_ON_BOOT=1`).
 
 Currently we do not yet allow a persistent enable option. However, everything is already supported in the hardware for
 this. This is a choice.
