@@ -8,22 +8,22 @@ SETUP_SYMBOL=setup
 LOOP_SYMBOL=loop
 
 all: init $(TARGET).hex $(TARGET).bin $(TARGET).info
-	echo "Result: $(TARGET).hex (and $(TARGET).bin)"
+	@echo "Result: $(TARGET).hex (and $(TARGET).bin)"
 
 clean:
 	@rm -f $(TARGET).*
-	echo "Cleaned build directory"
+	@echo "Cleaned build directory"
 
 init:
 	@mkdir -p $(BUILD_PATH)
 
-$(TARGET).elf.tmp: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp $(TARGET).c $(SHARED_PATH)/ipc/cs_IpcRamData.c
+$(TARGET).elf.tmp: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c
 	@echo "Compile without firmware header"
 	@scripts/microapp_make.py include/microapp_header_symbols.ld
 	@$(CC) -CC -E -P -x c -Iinclude include/microapp_symbols.ld.in -o include/microapp_symbols.ld
 	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
 
-$(TARGET).elf: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp $(TARGET).c $(SHARED_PATH)/ipc/cs_IpcRamData.c include/microapp_header_symbols.ld
+$(TARGET).elf: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c include/microapp_header_symbols.ld
 	@echo "Compile with firmware header"
 	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
 
