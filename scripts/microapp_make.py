@@ -42,6 +42,8 @@ if inputFilename != None:
 
     header.checksum = crc16ccitt(buf[headerSize:])
     print(f"Calculate header checksum from: {header} {header.toBuffer()}")
+    print_buf = bytearray(header.toBuffer())
+    print(print_buf)
     header.checksumHeader = crc16ccitt(bytearray(header.toBuffer()))
     print(f"Final header: {header}")
 

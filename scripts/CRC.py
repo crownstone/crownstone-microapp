@@ -54,3 +54,45 @@ def crc16ccitt(data: bytearray or list, crc=None):
         index = ((crc >> 8) ^ data[i]) & 0xFF
         crc = (_crc16ccitt_table[index] ^ (crc << 8)) & 0xFFFF
     return crc & 0xFFFF
+
+# As indicated at http://srecord.sourceforge.net/crc16-ccitt.html this is the "bad" CRC
+# We are using what Nordic is using though...
+# Hence, there is no padding in the Nordic code... 
+def test_crc():
+    """
+    Calculate crc for example string
+    """
+    str = "123456789"
+    h = bytearray()
+    h.extend(map(ord, str))
+    print(h)
+    crc_bad = crc16ccitt(h)
+    print('Bad CRC:', crc_bad, '=', hex(crc_bad))
+    crc_good = crc16ccitt(h, 0x1D0F)
+    print('Good CRC:', crc_good, '=', hex(crc_good))
+
+    for i in range(0,255):
+        for j in range(0,255):
+            h = bytearray([i,j])
+            h.extend(map(ord, str))
+            #print(h)
+            crc = crc16ccitt(h)
+            if crc == crc_good:
+                print('CRC:', crc, '=', hex(crc))
+
+    # This will print 0x99 0xc0
+    for i in range(0,255):
+        for j in range(0,255):
+            h = bytearray([i,j])
+            g = h
+            h.extend(map(ord, str))
+            crc = crc16ccitt(h, 0x1D0F)
+            if crc == crc_bad:
+                print(g)
+                print('CRC:', crc, '=', hex(crc))
+
+    f = open("bytes.bin", "wb")
+    f.write(h)
+    f.close()
+
+

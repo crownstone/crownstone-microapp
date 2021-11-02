@@ -31,18 +31,19 @@ sure it is microapp compatible of course. You might encounter a checksum error i
 [ce/src/storage/cs_MicroApp.cpp : 241  ] Checksum error
 ```
 
-This means that the bluenet code has still the checksum of the previous app and will not load this one. Enabling the
-app will automatically correct the checksum. You can enable the app with something like:
+This means that the bluenet code has still the checksum of the previous app and will not load this one. 
+
+Enabling the app will automatically correct the checksum. Enabling the app is one of the steps in the following script:
 
 ```
-scripts/microapp.py $PRIVATE_PATH/sphere-keys.json AA:BB:CC:DD:EE:FF build/example.bin enable
+scripts/upload_microapp.py --keyFile $PRIVATE_PATH/sphere-keys.json -a AA:BB:CC:DD:EE:FF -f build/example.bin
 ```
 
 Make sure your sphere keys are not accessible and not accidentally committed to a code repository. When you run the 
-bluenet code in debug mode you can find the Bluetooth MAC address of the device you are uploading to using UART. The above can also be done by:
+bluenet code in debug mode you can find the Bluetooth MAC address of the device you are uploading to using UART. 
 
 ```
-make ota-enable
+make ota-upload
 ```
 
 See below for how to set that up.
@@ -81,9 +82,7 @@ You can use the `microapp.py` script in the `scripts` directory to upload over t
 2. Make sure you have a `private.mk` file with up to date info (see above at "Configuration").
 3. Adjust `config.mk` to paths for your local system. Alternatively, write those paths in `private.mk`.
 4. Run `make` to build the application.
-5. Run `make ota-upload` to upload the application (over serial, use `make flash`).
-6. Run `make ota-validate` to validate (this sends a checksum).
-7. Run `make ota-enable` to enable the application (this is up to a reboot).
+5. Run `make ota-upload` to upload the application (over serial, use `make flash`). On `make ota-upload` the script will also validate and enable the binary. On `make flash` you will have to do this yourself.
 
 Currently we do not yet allow a persistent enable option. However, everything is already supported in the hardware for
 this. This is a choice.

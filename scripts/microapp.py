@@ -10,8 +10,6 @@ from crownstone_ble import CrownstoneBle
 from crownstone_core.packets.MicroappPacket import MicroappUploadCmd, MicroappRequestCmd, MicroappValidateCmd, MicroappEnableCmd
 
 parser = argparse.ArgumentParser(description='Microapp commands')
-parser.add_argument('--hciIndex', dest='hciIndex', metavar='I', type=int, nargs='?', default=0,
-        help='The hci-index of the BLE chip')
 parser.add_argument('keyFile',
         help='The json file with key information, expected values: admin, member, guest, basic,' + 
         'serviceDataKey, localizationKey, meshApplicationKey, and meshNetworkKey')
@@ -46,7 +44,7 @@ if args.action == 'add':
 
 
 # Initialize the Bluetooth Core.
-core = CrownstoneBle(hciIndex=args.hciIndex)
+core = CrownstoneBle()
 core.loadSettingsFromFile(args.keyFile);
 
 print("Connecting to", args.bleAddress)
@@ -87,27 +85,27 @@ offset=0x0
 if 'request' in actions:
     print('Request a new app upload')
     cmd = MicroappRequestCmd(protocol, app_id, buf, chunk_size)
-    core.control.requestMicroapp(cmd)
+    core._dev.requestMicroapp(cmd)
 
 if 'upload' in actions:
     print('Upload the data itself (this is a sequence of commands)')
     cmd = MicroappUploadCmd(protocol, app_id, buf, chunk_size)
-    core.control.sendMicroapp(cmd)
+    core._dev.sendMicroapp(cmd)
 
 if 'validate' in actions:
     print('Validate')
     cmd = MicroappValidateCmd(protocol, app_id, buf, chunk_size)
-    core.control.validateMicroapp(cmd)
+    core._dev.validateMicroapp(cmd)
 
 if 'enable' in actions:
     print('Enable the app')
     cmd = MicroappEnableCmd(protocol, app_id, True, offset)
-    core.control.enableMicroapp(cmd)
+    await core._dev.enableMicroapp(cmd)
 
 if 'disable' in actions:
     print('Disable the app')
     cmd = MicroappEnableCmd(protocol, app_id, False, 0x00)
-    core.control.enableMicroapp(cmd)
+    core._dev.enableMicroapp(cmd)
 
 print("Make sure commands have been received, sleep")
 time.sleep(4)

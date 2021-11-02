@@ -71,17 +71,8 @@ erase:
 reset:
 	nrfjprog --reset
 
-ota-request:
-	scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin request
-
 ota-upload:
-	scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin upload
-
-ota-validate:
-	scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin validate
-
-ota-enable:
-	scripts/microapp.py $(KEYS_JSON) $(BLE_ADDRESS) $(TARGET).bin enable
+	scripts/upload_microapp.py --keyFile $(KEYS_JSON) -a $(BLE_ADDRESS) -f $(TARGET).bin
 
 show_addresses: $(TARGET).elf
 	echo -n "$(MAIN_SYMBOL)():\t"
