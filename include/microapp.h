@@ -32,6 +32,9 @@ const uint8_t HIGH = !LOW;
 // returns size MAX_PAYLOAD for strings that are too long
 uint8_t strlen(const char *str);
 
+// returns true if bufA and bufB of length len are equal
+bool memcmp(void *bufA, void *bufB, uint8_t len);
+
 /*
  * To save space have a single global message object.
  */
