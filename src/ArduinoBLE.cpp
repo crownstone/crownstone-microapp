@@ -32,17 +32,7 @@ void Ble::setEventHandler(BleEventHandlerType type, void (*isr)(ble_dev_t))
 
     global_msg.length = sizeof(ble_cmd_t);
 
-    int success = sendMessage(&global_msg);
-    
-    if (success == -1)
-    {
-        Serial.println("Setting event handler failed");
-    }
-    else
-    {
-        Serial.println("Set event handler successfully");
-    }
-    
+    sendMessage(&global_msg);
 }
 
 bool Ble::scan()

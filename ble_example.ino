@@ -44,9 +44,7 @@ void setup() {
 	Serial.println("Setup");
 
     // Set scanning filters
-    // We are looking for the BLE sensor with MAC address A4:C1:38:9A:45:E3
-    //MACaddress mac = {0xA4, 0xC1, 0x38, 0x9A, 0x45, 0xE3};
-    MACaddress mac = {0xE3, 0x45, 0x9A, 0x38, 0xC1, 0xA4}; // reverse since nordic's address is little endian. TODO: fix this somewhere in bluenet
+    MACaddress mac = {0xA4, 0xC1, 0x38, 0x9A, 0x45, 0xE3}; // We are looking for the BLE sensor with MAC address A4:C1:38:9A:45:E3
     BleFilter filter; filter.filterType = BleFilterAddress; filter.address = mac;
     BLE.addFilter(filter);
 
