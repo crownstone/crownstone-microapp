@@ -29,6 +29,8 @@ private:
 
     BleFilter _filter;
 
+    bool _isScanning = false;
+
 public:
 
     uint32_t _scanned_device_callback; // TODO: make this not accessible to users while still able to be called in handleEvent()
@@ -45,6 +47,10 @@ public:
     void setEventHandler(BleEventHandlerType type, void (*isr)(ble_dev_t)); // registers a callback function for some event triggered within bluenet
 
     bool scan(); // starts scanning for advertisements (actually starts forwarding bluenet advertisement events to registered microapp callback function in setHandler)
+
+    void stopScan(); // stops calling the registered microapp callback upon scanned bluenet advertisements
+
+    bool isScanning();
 
     void addFilter(BleFilter filter);
 

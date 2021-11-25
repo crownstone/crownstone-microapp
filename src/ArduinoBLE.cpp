@@ -37,8 +37,36 @@ void Ble::setEventHandler(BleEventHandlerType type, void (*isr)(ble_dev_t))
 
 bool Ble::scan()
 {
-    Serial.println("BLE scan called");
+    if (_isScanning) return true;
+
+    Serial.println("Starting BLE device scanning");
+
+    ble_cmd_t *ble_cmd = (ble_cmd_t*)&global_msg;
+    ble_cmd->cmd = CS_MICROAPP_COMMAND_BLE;
+    ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_SCAN_START;
+    global_msg.length = sizeof(ble_cmd_t);
+
+    sendMessage(&global_msg);
+
+    _isScanning = true;
+
     return true;
+}
+
+void Ble::stopScan()
+{
+    if (!_isScanning) return;
+
+    Serial.println("Stopping BLE device scanning");
+
+    ble_cmd_t *ble_cmd = (ble_cmd_t*)&global_msg;
+    ble_cmd->cmd = CS_MICROAPP_COMMAND_BLE;
+    ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_SCAN_STOP;
+    global_msg.length = sizeof(ble_cmd_t);
+
+    _isScanning = false;
+
+    sendMessage(&global_msg);
 }
 
 void Ble::addFilter(BleFilter filter)

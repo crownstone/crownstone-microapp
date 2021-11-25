@@ -1,7 +1,8 @@
 #include <ArduinoBLE.h>
 
 // A ble microapp example for reading advertisements from a Xiaomi Thermometer with custom firmware: https://github.com/atc1441/ATC_MiThermometer
-
+uint16_t counter = 0;
+bool scanToggle = false;
 
 void my_callback_func(ble_dev_t dev) // callback for received peripheral advertisement
 {
@@ -61,6 +62,20 @@ int loop() {
 	// Say something every time we loop (which is every second)
 	Serial.println("Loop");
 
+    if (scanToggle)
+    {
+        BLE.scan();
+    }
+    else
+    {
+        BLE.stopScan();
+    }
+
+    counter++;
+    if ((counter % 10) == 0) // every 10 loops, toggle scanning
+    {
+        scanToggle = !scanToggle;
+    }
     return 1;
 
 }
