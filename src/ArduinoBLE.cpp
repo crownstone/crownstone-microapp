@@ -5,15 +5,31 @@ void handleScanEvent(ble_dev_t dev)
 {
     BleFilter filter = BLE.getFilter();
     switch (filter.filterType) {
-        case BleFilterAddress:{
+        case BleFilterAddress: {
             //Serial.print("Scanned device MAC address "); Serial.println(dev.addr, sizeof(dev.addr));
             if (!memcmp(dev.addr,filter.address.byte,MAC_ADDRESS_LENGTH)) return;
+            break;
         }
-        case BleFilterLocalName:
+        case BleFilterLocalName: {
+            uint8_t type = dev.data[1];
+            if (type != 0x09) return; // Not a complete local name ad
+            char * deviceName = (char*) &dev.data[2];
+            if ((dev.dlen - 2) != strlen(filter.completeLocalName)) return; // device name and filter name don't have same length
+            if (!memcmp(deviceName,filter.completeLocalName,dev.dlen - 2)) return; // local name doesn't match filter name
+            break;
+        }
+        case BleFilterServiceData: {
+            uint8_t type = dev.data[1];
+            if (type != 0x16) return; // Not a service data ad
+            uint16_t uuid = ((dev.data[3] << 8) | dev.data[2]);
+            if (uuid != filter.uuid) return; // service data uuid does not match filter uuid
+            break;
+        }
         case BleFilterNone:
         default:
             break;
     }
+    // now call the user registered callback
     void (*callback_func)(ble_dev_t) = (void (*)(ble_dev_t)) BLE._scanned_device_callback;
     callback_func(dev);
 }
@@ -21,8 +37,6 @@ void handleScanEvent(ble_dev_t dev)
 void Ble::setEventHandler(BleEventHandlerType type, void (*isr)(ble_dev_t))
 {
     Serial.println("Setting event handler");
-
-    //TODO: add switch to set different handlers based on type
 
     ble_cmd_t *ble_cmd = (ble_cmd_t*)&global_msg;
     ble_cmd->cmd = CS_MICROAPP_COMMAND_BLE;
@@ -71,7 +85,16 @@ void Ble::stopScan()
 
 void Ble::addFilter(BleFilter filter)
 {
-    Serial.print("Setting filter");
+    Serial.println("Setting filter");
+    _filter = filter;
+}
+
+void Ble::removeFilter()
+{
+    Serial.println("Removing filter");
+
+    BleFilter filter; 
+    filter.filterType = BleFilterNone;
     _filter = filter;
 }
 

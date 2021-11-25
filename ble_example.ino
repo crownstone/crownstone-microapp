@@ -45,8 +45,10 @@ void setup() {
 	Serial.println("Setup");
 
     // Set scanning filters
-    MACaddress mac = {0xA4, 0xC1, 0x38, 0x9A, 0x45, 0xE3}; // We are looking for the BLE sensor with MAC address A4:C1:38:9A:45:E3
-    BleFilter filter; filter.filterType = BleFilterAddress; filter.address = mac;
+    // MACaddress mac = {0xA4, 0xC1, 0x38, 0x9A, 0x45, 0xE3}; // We are looking for the BLE sensor with MAC address A4:C1:38:9A:45:E3
+    // BleFilter filter; filter.filterType = BleFilterAddress; filter.address = mac;
+    // BleFilter filter; filter.filterType = BleFilterLocalName; filter.completeLocalName = "ATC_9A45E3";
+    BleFilter filter; filter.filterType = BleFilterServiceData; filter.uuid = 0x181A;
     BLE.addFilter(filter);
 
     // Register my_callback_func

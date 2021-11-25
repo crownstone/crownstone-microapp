@@ -10,7 +10,8 @@ enum BleEventHandlerType {
 enum BleFilterType {
     BleFilterNone = 0, // default
     BleFilterAddress,
-    BleFilterLocalName
+    BleFilterLocalName,
+    BleFilterServiceData
 };
 
 typedef struct {
@@ -20,6 +21,8 @@ typedef struct {
 typedef struct {
     BleFilterType filterType;
     MACaddress address;
+    const char* completeLocalName;
+    uint16_t uuid;
 } BleFilter;
 
 class Ble 
@@ -54,11 +57,10 @@ public:
 
     void addFilter(BleFilter filter);
 
+    void removeFilter();
+
     BleFilter getFilter();
 
-    //void handleEvent(ble_dev_t dev);
-
-    //void callCallback(int arg); // temporary function to test callback function
 };
 
 

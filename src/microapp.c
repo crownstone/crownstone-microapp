@@ -18,20 +18,17 @@ uint8_t strlen(const char *str) {
 
 // compares two buffers of length len, bufA and bufB
 // returns true if bufA and bufB are equal
-bool memcmp(void *bufA, void *bufB, uint8_t len)
+bool memcmp(const void *bufA, const void *bufB, uint8_t len)
 {
-	//Serial.print("memcmp: comparing "); Serial.print((uint8_t*) bufA, len); Serial.print(" and "); Serial.println((uint8_t*) bufB, len);
 	char *p = (char*) bufA;
 	char *q = (char*) bufB;
 	for (uint8_t i = 0; i<len; i++)
 	{
 		if (*(p+i) != *(q+i) )
 		{
-			//Serial.print("memcmp: byte "); Serial.print(i); Serial.print(" not equal: "); Serial.print((uint8_t) *(p+i)); Serial.print(" and "); Serial.println((uint8_t) *(q+i));
 			return false;
 		}
 	}
-	//Serial.println("memcmp: bufs are equal");
 	return true;
 }
 
