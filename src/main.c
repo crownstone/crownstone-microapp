@@ -27,17 +27,14 @@ void copy_data() {
 void* _coroutine_args;
 
 void goyield(uint16_t prefix) {
-	global_msg.payload[0] = CS_MICROAPP_COMMAND_DELAY;
 
-	global_msg.payload[1] = 0xFF & (prefix >> 8);
-	global_msg.payload[2] = 0xFF & prefix;
+	microapp_delay_cmd_t *delay_cmd = (microapp_delay_cmd_t*)&global_msg;
 
-	global_msg.payload[3] = 0xFF & ((uintptr_t)_coroutine_args >> 24);
-	global_msg.payload[4] = 0xFF & ((uintptr_t)_coroutine_args >> 16);
-	global_msg.payload[5] = 0xFF & ((uintptr_t)_coroutine_args >> 8);
-	global_msg.payload[6] = 0xFF & (uintptr_t)_coroutine_args;
+	delay_cmd->cmd = CS_MICROAPP_COMMAND_DELAY;
+	delay_cmd->period = prefix;
+	delay_cmd->coargs = (uintptr_t)_coroutine_args;
 
-	global_msg.length = 7;
+	global_msg.length = sizeof(microapp_delay_cmd_t);
 
 	sendMessage(&global_msg);
 }

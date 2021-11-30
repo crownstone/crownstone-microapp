@@ -16,4 +16,6 @@ void setup() {
 int loop() {
 	// Say high ever time we loop (which is every second)
 	Serial.println("Hi!");
+
+	return 1;
 }
