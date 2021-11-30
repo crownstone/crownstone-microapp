@@ -38,13 +38,13 @@ bool memcmp(const void *bufA, const void *bufB, uint8_t len);
 /*
  * To save space have a single global message object.
  */
-extern message_t global_msg;
+extern microapp_message_t global_msg;
 
 /*
  * Send a message to the bluenet code. This is the function that is called - in the end - by all the functions
  * that have to reach the microapp code.
  */
-int sendMessage(message_t *msg);
+int sendMessage(microapp_message_t *msg);
 
 #ifdef __cplusplus
 }

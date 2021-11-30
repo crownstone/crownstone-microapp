@@ -35,12 +35,12 @@ bool memcmp(const void *bufA, const void *bufB, uint8_t len)
 /*
  * A global object to send a message.
  */
-message_t global_msg;
+microapp_message_t global_msg;
 
 /*
  * Send the actual message.
  */
-int sendMessage(message_t *msg) {
+int sendMessage(microapp_message_t *msg) {
 	int result = -1;
 
 	// Check length.

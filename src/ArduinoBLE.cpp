@@ -1,7 +1,7 @@
 #include <ArduinoBLE.h>
 
 // Filters and forwards the bluenet scanned device event interrupt to the user callback
-void handleScanEvent(ble_dev_t dev)
+void handleScanEvent(microapp_ble_dev_t dev)
 {
     BleFilter filter = BLE.getFilter();
     switch (filter.filterType) {
@@ -30,21 +30,21 @@ void handleScanEvent(ble_dev_t dev)
             break;
     }
     // now call the user registered callback
-    void (*callback_func)(ble_dev_t) = (void (*)(ble_dev_t)) BLE._scanned_device_callback;
+    void (*callback_func)(microapp_ble_dev_t) = (void (*)(microapp_ble_dev_t)) BLE._scanned_device_callback;
     callback_func(dev);
 }
 
-void Ble::setEventHandler(BleEventHandlerType type, void (*isr)(ble_dev_t))
+void Ble::setEventHandler(BleEventHandlerType type, void (*isr)(microapp_ble_dev_t))
 {
     Serial.println("Setting event handler");
 
-    ble_cmd_t *ble_cmd = (ble_cmd_t*)&global_msg;
+    microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
     ble_cmd->cmd = CS_MICROAPP_COMMAND_BLE;
     ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_SCAN_SET_HANDLER;
-    ble_cmd->callback = (uint32_t)(handleScanEvent);
-    _scanned_device_callback = (uint32_t)(isr);
+    ble_cmd->callback = (uintptr_t)(handleScanEvent);
+    _scanned_device_callback = (uintptr_t)(isr);
 
-    global_msg.length = sizeof(ble_cmd_t);
+    global_msg.length = sizeof(microapp_ble_cmd_t);
 
     sendMessage(&global_msg);
 }
@@ -55,10 +55,10 @@ bool Ble::scan()
 
     Serial.println("Starting BLE device scanning");
 
-    ble_cmd_t *ble_cmd = (ble_cmd_t*)&global_msg;
+    microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
     ble_cmd->cmd = CS_MICROAPP_COMMAND_BLE;
     ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_SCAN_START;
-    global_msg.length = sizeof(ble_cmd_t);
+    global_msg.length = sizeof(microapp_ble_cmd_t);
 
     sendMessage(&global_msg);
 
@@ -73,10 +73,10 @@ void Ble::stopScan()
 
     Serial.println("Stopping BLE device scanning");
 
-    ble_cmd_t *ble_cmd = (ble_cmd_t*)&global_msg;
+    microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
     ble_cmd->cmd = CS_MICROAPP_COMMAND_BLE;
     ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_SCAN_STOP;
-    global_msg.length = sizeof(ble_cmd_t);
+    global_msg.length = sizeof(microapp_ble_cmd_t);
 
     _isScanning = false;
 

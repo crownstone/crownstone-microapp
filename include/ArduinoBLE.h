@@ -47,7 +47,7 @@ public:
 		return instance;
 	}
 
-    void setEventHandler(BleEventHandlerType type, void (*isr)(ble_dev_t)); // registers a callback function for some event triggered within bluenet
+    void setEventHandler(BleEventHandlerType type, void (*isr)(microapp_ble_dev_t)); // registers a callback function for some event triggered within bluenet
 
     bool scan(); // starts scanning for advertisements (actually starts forwarding bluenet advertisement events to registered microapp callback function in setHandler)
 
