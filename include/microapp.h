@@ -29,11 +29,14 @@ const uint8_t HIGH = !LOW;
 // 1 virtual pin, 4 GPIO pins, 4 buttons, and 4 leds
 #define NUMBER_OF_PINS 13
 
+// define size_t as a 16-bit unsigned int
+typedef uint16_t size_t;
+
 // returns size MAX_PAYLOAD for strings that are too long
 uint8_t strlen(const char *str);
 
-// returns true if bufA and bufB of length len are equal
-bool memcmp(const void *bufA, const void *bufB, uint8_t len);
+// compares the first len bytes of bufA and bufB and returns zero if they match
+int memcmp(const void *bufA, const void *bufB, size_t len);
 
 /*
  * To save space have a single global message object.

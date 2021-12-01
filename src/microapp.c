@@ -17,19 +17,25 @@ uint8_t strlen(const char *str) {
 }
 
 // compares two buffers of length len, bufA and bufB
-// returns true if bufA and bufB are equal
-bool memcmp(const void *bufA, const void *bufB, uint8_t len)
+// returns 0 if bufA and bufB are equal
+// returns -1 if for the first unmatching byte i we have bufA[i] < bufB[i]
+// returns 1 if for the first unmatching byte i we have bufA[i] > bufB[i]
+int memcmp(const void *bufA, const void *bufB, size_t len)
 {
 	char *p = (char*) bufA;
 	char *q = (char*) bufB;
-	for (uint8_t i = 0; i<len; i++)
-	{
-		if (*(p+i) != *(q+i) )
-		{
-			return false;
+	if (bufA == bufB) { // point to the same address
+		return 0;
+	}
+	for (uint8_t i = 0; i<len; i++) {
+		if (*(p+i) < *(q+i)) {
+			return -1;
+		}
+		else if (*(p+i) > *(q+i)) {
+			return 1;
 		}
 	}
-	return true;
+	return 0;
 }
 
 /*
@@ -51,7 +57,7 @@ int sendMessage(microapp_message_t *msg) {
 	// QUESTION: can we cache the callback function, so we don't have to get it from ipc ram data every time?
 
 	// Clear buffer.
-	// QUESTION: why does it have to be set to zero? 
+	// QUESTION: why does it have to be set to zero?
 	uint8_t buf[BLUENET_IPC_RAM_DATA_ITEM_SIZE];
 	for (int i = 0; i < BLUENET_IPC_RAM_DATA_ITEM_SIZE; ++i) {
 		buf[i] = 0;

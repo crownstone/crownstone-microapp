@@ -7,7 +7,7 @@ void handleScanEvent(microapp_ble_dev_t dev)
 	switch (filter.filterType) {
 		case BleFilterAddress: {
 			//Serial.print("Scanned device MAC address "); Serial.println(dev.addr, sizeof(dev.addr));
-			if (!memcmp(dev.addr,filter.address.byte,MAC_ADDRESS_LENGTH)) return;
+			if (memcmp(dev.addr,filter.address.byte,MAC_ADDRESS_LENGTH) != 0) return;
 			break;
 		}
 		case BleFilterLocalName: {
@@ -15,7 +15,7 @@ void handleScanEvent(microapp_ble_dev_t dev)
 			if (type != 0x09) return; // Not a complete local name ad
 			char * deviceName = (char*) &dev.data[2];
 			if ((dev.dlen - 2) != strlen(filter.completeLocalName)) return; // device name and filter name don't have same length
-			if (!memcmp(deviceName,filter.completeLocalName,dev.dlen - 2)) return; // local name doesn't match filter name
+			if (memcmp(deviceName,filter.completeLocalName,dev.dlen - 2) != 0) return; // local name doesn't match filter name
 			break;
 		}
 		case BleFilterServiceData: {
