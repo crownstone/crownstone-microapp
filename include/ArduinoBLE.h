@@ -2,43 +2,43 @@
 #include <microapp.h>
 
 enum BleEventHandlerType {
-    BleEventDeviceScanned,
-    BleEventConnected,
-    BleEventDisconnected
+	BleEventDeviceScanned,
+	BleEventConnected,
+	BleEventDisconnected
 };
 
 enum BleFilterType {
-    BleFilterNone = 0, // default
-    BleFilterAddress,
-    BleFilterLocalName,
-    BleFilterServiceData
+	BleFilterNone = 0, // default
+	BleFilterAddress,
+	BleFilterLocalName,
+	BleFilterServiceData
 };
 
 typedef struct {
-    uint8_t byte[MAC_ADDRESS_LENGTH];
+	uint8_t byte[MAC_ADDRESS_LENGTH];
 } MACaddress;
 
 typedef struct {
-    BleFilterType filterType;
-    MACaddress address;
-    const char* completeLocalName;
-    uint16_t uuid;
+	BleFilterType filterType;
+	MACaddress address;
+	const char* completeLocalName;
+	uint16_t uuid;
 } BleFilter;
 
-class Ble 
+class Ble
 {
 private:
-    Ble(){};
+	Ble(){};
 
-    BleFilter _filter;
+	BleFilter _filter;
 
-    bool _isScanning = false;
+	bool _isScanning = false;
 
 public:
 
-    uint32_t _scanned_device_callback; // TODO: make this not accessible to users while still able to be called in handleEvent()
+	uint32_t _scanned_device_callback; // TODO: make this not accessible to users while still able to be called in handleEvent()
 
-    static Ble & getInstance()
+	static Ble & getInstance()
 	{
 		// Guaranteed to be destroyed.
 		static Ble instance;
@@ -47,19 +47,19 @@ public:
 		return instance;
 	}
 
-    void setEventHandler(BleEventHandlerType type, void (*isr)(microapp_ble_dev_t)); // registers a callback function for some event triggered within bluenet
+	void setEventHandler(BleEventHandlerType type, void (*isr)(microapp_ble_dev_t)); // registers a callback function for some event triggered within bluenet
 
-    bool scan(); // starts scanning for advertisements (actually starts forwarding bluenet advertisement events to registered microapp callback function in setHandler)
+	bool scan(); // starts scanning for advertisements (actually starts forwarding bluenet advertisement events to registered microapp callback function in setHandler)
 
-    void stopScan(); // stops calling the registered microapp callback upon scanned bluenet advertisements
+	void stopScan(); // stops calling the registered microapp callback upon scanned bluenet advertisements
 
-    bool isScanning();
+	bool isScanning();
 
-    void addFilter(BleFilter filter);
+	void addFilter(BleFilter filter);
 
-    void removeFilter();
+	void removeFilter();
 
-    BleFilter getFilter();
+	BleFilter getFilter();
 
 };
 
