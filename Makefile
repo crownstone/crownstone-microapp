@@ -17,13 +17,13 @@ clean:
 init:
 	@mkdir -p $(BUILD_PATH)
 
-$(TARGET).elf.tmp: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c
+$(TARGET).elf.tmp: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp src/BleUtils.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c
 	@echo "Compile without firmware header"
 	@scripts/microapp_make.py include/microapp_header_symbols.ld
 	@$(CC) -CC -E -P -x c -Iinclude include/microapp_symbols.ld.in -o include/microapp_symbols.ld
 	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
 
-$(TARGET).elf: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c include/microapp_header_symbols.ld
+$(TARGET).elf: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp src/BleUtils.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c include/microapp_header_symbols.ld
 	@echo "Compile with firmware header"
 	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
 

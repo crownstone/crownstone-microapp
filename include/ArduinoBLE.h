@@ -1,5 +1,6 @@
 #include <Serial.h>
 #include <microapp.h>
+#include <BleUtils.h>
 
 enum BleEventHandlerType {
 	BleEventDeviceScanned,
@@ -13,10 +14,6 @@ enum BleFilterType {
 	BleFilterLocalName,
 	BleFilterServiceData
 };
-
-typedef struct {
-	uint8_t byte[MAC_ADDRESS_LENGTH];
-} MACaddress;
 
 typedef struct {
 	BleFilterType filterType;
@@ -51,15 +48,17 @@ public:
 
 	bool scan(); // starts scanning for advertisements (actually starts forwarding bluenet advertisement events to registered microapp callback function in setHandler)
 
-	void stopScan(); // stops calling the registered microapp callback upon scanned bluenet advertisements
+	bool scanForName(const char* completeLocalName, bool withDuplicates);
 
-	bool isScanning();
+	bool scanForAddress(const char* mac, bool withDuplicates);
+
+	void stopScan(); // stops calling the registered microapp callback upon scanned bluenet advertisements
 
 	void addFilter(BleFilter filter);
 
 	void removeFilter();
 
-	BleFilter getFilter();
+	BleFilter* getFilter();
 
 };
 
