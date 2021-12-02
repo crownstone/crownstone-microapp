@@ -35,9 +35,15 @@ private:
 
 	bool _isScanning = false;
 
-public:
+	uintptr_t _scanned_device_callback;
 
-	uint32_t _scanned_device_callback; // TODO: make this not accessible to users while still able to be called in handleEvent()
+	friend void handleScanEventWrapper(microapp_ble_dev_t dev); // add handleScanEvent as a friend so it can access private variables of Ble
+
+	void handleScanEvent(microapp_ble_dev_t dev);
+
+	bool filterScanEvent(microapp_ble_dev_t dev);
+
+public:
 
 	static Ble & getInstance()
 	{

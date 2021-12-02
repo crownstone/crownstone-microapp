@@ -75,3 +75,21 @@ uuid16_t convertStringToUuid(const char* uuid_str) {
 	uuid16_t res = (byte[0] << 8) | (byte[1] & 0xFF);
 	return res;
 }
+
+bool findAdvType(GapAdvType type, uint8_t* advData, uint8_t advLen, uint8_t* foundData) {
+	uint8_t i = 0;
+	foundData = nullptr;
+	while (i < advLen-1) {
+		uint8_t fieldLen = advData[i];
+		uint8_t fieldType = advData[i+1];
+		if (fieldLen == 0 || i + 1 + fieldLen > advLen) {
+			return false;
+		}
+		if (fieldType == type) {
+			foundData = &advData[i];
+			return true;
+		}
+		i += fieldLen+1;
+	}
+	return false;
+}
