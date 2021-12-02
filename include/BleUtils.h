@@ -2,6 +2,9 @@
 
 // Utilities for the microapp BLE library
 
+// type for 16-bit uuid
+typedef uint16_t uuid16_t;
+
 // MAC address struct
 typedef struct {
 	uint8_t byte[MAC_ADDRESS_LENGTH];
@@ -18,3 +21,5 @@ MACaddress convertStringToMac(const char* mac_str);
 
 // Convert from MACaddress struct to string "aa":bb:cc:dd:ee:ff"
 void convertMacToString(MACaddress mac, char* res);
+
+uuid16_t convertStringToUuid(const char* uuid_str);

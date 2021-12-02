@@ -38,6 +38,9 @@ uint8_t strlen(const char *str);
 // compares the first len bytes of bufA and bufB and returns zero if they match
 int memcmp(const void *bufA, const void *bufB, size_t len);
 
+// copies the string at src to dest
+char* strcpy (char* dest, const char* src);
+
 /*
  * To save space have a single global message object.
  */

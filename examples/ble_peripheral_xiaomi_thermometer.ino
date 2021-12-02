@@ -2,7 +2,10 @@
 
 // A ble microapp example for reading advertisements from a Xiaomi Thermometer with custom firmware: https://github.com/atc1441/ATC_MiThermometer
 uint16_t counter = 0;
-bool scanToggle = false;
+bool scanToggle = true;
+const char* myAddress = "A4:C1:38:9A:45:E3";
+const char* myName = "ATC_9A45E3";
+const char* myUuid = "181A";
 
 void my_callback_func(microapp_ble_dev_t dev) // callback for received peripheral advertisement
 {
@@ -44,18 +47,8 @@ void setup() {
 	// Write something to the log (will be shown in the bluenet code as print statement).
 	Serial.println("Setup");
 
-	// Set scanning filters (uncomment the desired filter)
-	MACaddress mac = {0xA4, 0xC1, 0x38, 0x9A, 0x45, 0xE3}; // We are looking for the BLE sensor with MAC address A4:C1:38:9A:45:E3
-	BleFilter filter; filter.filterType = BleFilterAddress; filter.address = mac;
-	// BleFilter filter; filter.filterType = BleFilterLocalName; filter.completeLocalName = "ATC_9A45E3"; // looking for devices with complete local name 'ATC_9A45E3'
-	// BleFilter filter; filter.filterType = BleFilterServiceData; filter.uuid = 0x181A; // looking for devices with service data 0x181A 'Environmental sensing'
-	BLE.addFilter(filter);
-
 	// Register my_callback_func
 	BLE.setEventHandler(BleEventDeviceScanned, my_callback_func);
-
-	// Start scanning for BLE ads
-	BLE.scan();
 }
 
 // The Arduino loop function.
@@ -66,7 +59,9 @@ int loop() {
 
 	if (scanToggle)
 	{
-		BLE.scan();
+		BLE.scanForAddress(myAddress);
+		// BLE.scanForName(myName);
+		// BLE.scanForUuid(myUuid);
 	}
 	else
 	{

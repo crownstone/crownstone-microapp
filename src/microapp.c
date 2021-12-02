@@ -20,8 +20,7 @@ uint8_t strlen(const char *str) {
 // returns 0 if bufA and bufB are equal
 // returns -1 if for the first unmatching byte i we have bufA[i] < bufB[i]
 // returns 1 if for the first unmatching byte i we have bufA[i] > bufB[i]
-int memcmp(const void *bufA, const void *bufB, size_t len)
-{
+int memcmp(const void *bufA, const void *bufB, size_t len) {
 	char *p = (char*) bufA;
 	char *q = (char*) bufB;
 	if (bufA == bufB) { // point to the same address
@@ -36,6 +35,18 @@ int memcmp(const void *bufA, const void *bufB, size_t len)
 		}
 	}
 	return 0;
+}
+
+char* strcpy(char* dest, const char* src) {
+	char* p = (char*) src;
+	for (uint8_t i = 0; i < MAX_PAYLOAD; i++) {
+		*(dest+i) = *p;
+		if (*p == 0) {
+			break;
+		}
+		p++;
+	}
+	return dest;
 }
 
 /*

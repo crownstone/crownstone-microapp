@@ -2,7 +2,7 @@
 #include <microapp.h>
 #include <BleUtils.h>
 
-enum BleEventHandlerType {
+enum BleEventType {
 	BleEventDeviceScanned,
 	BleEventConnected,
 	BleEventDisconnected
@@ -12,22 +12,26 @@ enum BleFilterType {
 	BleFilterNone = 0, // default
 	BleFilterAddress,
 	BleFilterLocalName,
-	BleFilterServiceData
+	BleFilterUuid
 };
 
-typedef struct {
-	BleFilterType filterType;
-	MACaddress address;
-	const char* completeLocalName;
-	uint16_t uuid;
-} BleFilter;
+struct BleFilter {
+	BleFilterType type;
+	union {
+		MACaddress address;
+		char name[MAX_BLE_ADV_DATA_LENGTH]; // max length of name equals max advertisement length
+		uuid16_t uuid;
+	};
+	uint16_t len; // length of the name
+};
+
 
 class Ble
 {
 private:
 	Ble(){};
 
-	BleFilter _filter;
+	BleFilter _activeFilter;
 
 	bool _isScanning = false;
 
@@ -44,19 +48,23 @@ public:
 		return instance;
 	}
 
-	void setEventHandler(BleEventHandlerType type, void (*isr)(microapp_ble_dev_t)); // registers a callback function for some event triggered within bluenet
+	void setEventHandler(BleEventType eventType, void (*isr)(microapp_ble_dev_t)); // registers a callback function for some event triggered within bluenet
 
-	bool scan(); // starts scanning for advertisements (actually starts forwarding bluenet advertisement events to registered microapp callback function in setHandler)
+	/*
+	 * Sends command to bluenet to call registered microapp callback function upon receiving advertisements
+	 */
+	bool scan(bool withDuplicates = false);
 
-	bool scanForName(const char* completeLocalName, bool withDuplicates);
+	bool scanForName(const char* name, bool withDuplicates = false);
 
-	bool scanForAddress(const char* mac, bool withDuplicates);
+	bool scanForAddress(const char* address, bool withDuplicates = false);
 
-	void stopScan(); // stops calling the registered microapp callback upon scanned bluenet advertisements
+	bool scanForUuid(const char* uuid, bool withDuplicates = false);
 
-	void addFilter(BleFilter filter);
-
-	void removeFilter();
+	/*
+	 * Sends command to bluenet to stop calling registered microapp callback function upon receiving advertisements
+	 */
+	void stopScan();
 
 	BleFilter* getFilter();
 

@@ -4,9 +4,9 @@
 void handleScanEvent(microapp_ble_dev_t dev)
 {
 	BleFilter* filter = BLE.getFilter();
-	switch (filter->filterType) {
+	switch (filter->type) {
 		case BleFilterAddress: {
-			//Serial.print("Scanned device MAC address "); Serial.println(dev.addr, sizeof(dev.addr));
+			// Serial.print("Scanned device MAC address "); Serial.println(dev.addr, sizeof(dev.addr));
 			if (memcmp(dev.addr,filter->address.byte,MAC_ADDRESS_LENGTH) != 0) return;
 			break;
 		}
@@ -14,11 +14,11 @@ void handleScanEvent(microapp_ble_dev_t dev)
 			uint8_t type = dev.data[1];
 			if (type != 0x09) return; // Not a complete local name ad
 			char * deviceName = (char*) &dev.data[2];
-			if ((dev.dlen - 2) != strlen(filter->completeLocalName)) return; // device name and filter name don't have same length
-			if (memcmp(deviceName,filter->completeLocalName,dev.dlen - 2) != 0) return; // local name doesn't match filter name
+			if ((dev.dlen - 2) != strlen(filter->name)) return; // device name and filter name don't have same length
+			if (memcmp(deviceName,filter->name,dev.dlen - 2) != 0) return; // local name doesn't match filter name
 			break;
 		}
-		case BleFilterServiceData: {
+		case BleFilterUuid: {
 			uint8_t type = dev.data[1];
 			if (type != 0x16) return; // Not a service data ad
 			uint16_t uuid = ((dev.data[3] << 8) | dev.data[2]);
@@ -35,10 +35,10 @@ void handleScanEvent(microapp_ble_dev_t dev)
 }
 
 
-void Ble::setEventHandler(BleEventHandlerType type, void (*isr)(microapp_ble_dev_t))
+void Ble::setEventHandler(BleEventType type, void (*isr)(microapp_ble_dev_t))
 {
 	Serial.println("Setting event handler");
-
+	// TODO: do something with type. For now assume type is BleEventDeviceScanned
 	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
 	ble_cmd->cmd = CS_MICROAPP_COMMAND_BLE;
 	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_SCAN_SET_HANDLER;
@@ -50,9 +50,9 @@ void Ble::setEventHandler(BleEventHandlerType type, void (*isr)(microapp_ble_dev
 	sendMessage(&global_msg);
 }
 
-bool Ble::scan()
+bool Ble::scan(bool withDuplicates)
 {
-	if (_isScanning) return true;
+	if (_isScanning) return true; // already scanning
 
 	Serial.println("Starting BLE device scanning");
 
@@ -68,12 +68,40 @@ bool Ble::scan()
 	return true;
 }
 
+bool Ble::scanForName(const char* name, bool withDuplicates)
+{
+	_activeFilter.type = BleFilterLocalName;
+	_activeFilter.len = strlen(name);
+	strcpy(_activeFilter.name, name);
+	// TODO: do something with withDuplicates argument
+	return scan(withDuplicates);
+}
+
+bool Ble::scanForAddress(const char* address, bool withDuplicates)
+{
+	_activeFilter.type = BleFilterAddress;
+	_activeFilter.address = convertStringToMac(address);
+	// TODO: do something with withDuplicates argument
+	return scan(withDuplicates);
+}
+
+bool Ble::scanForUuid(const char* uuid, bool withDuplicates)
+{
+	_activeFilter.type = BleFilterUuid;
+	_activeFilter.uuid = convertStringToUuid(uuid);
+	// TODO: do something with withDuplicates argument
+	return scan(withDuplicates);
+}
+
 void Ble::stopScan()
 {
-	if (!_isScanning) return;
+	if (!_isScanning) return; // already not scanning
 
 	Serial.println("Stopping BLE device scanning");
 
+	_activeFilter.type = BleFilterNone; // reset filter
+
+	// send a message to bluenet commanding it to stop forwarding ads to microapp
 	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
 	ble_cmd->cmd = CS_MICROAPP_COMMAND_BLE;
 	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_SCAN_STOP;
@@ -84,19 +112,7 @@ void Ble::stopScan()
 	sendMessage(&global_msg);
 }
 
-void Ble::addFilter(BleFilter filter)
-{
-	Serial.println("Setting filter");
-	_filter = filter;
-}
-
-void Ble::removeFilter()
-{
-	Serial.println("Removing filter");
-	_filter.filterType = BleFilterNone;
-}
-
 BleFilter* Ble::getFilter()
 {
-	return &_filter;
+	return &_activeFilter;
 }

@@ -1,5 +1,4 @@
 #include <BleUtils.h>
-#include <Serial.h>
 
 // Convert a pair of chars to a byte, e.g. convert "A3" to 0xA3
 uint8_t convertTwoHexCharsToByte(const char* chars) {
@@ -42,7 +41,6 @@ void convertByteToTwoHexChars(uint8_t byte, char* res) {
 MACaddress convertStringToMac(const char* mac_str) {
 	// initialize return value
 	MACaddress mac = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	Serial.println(mac_str);
 	uint8_t len = strlen(mac_str);
 	if (len != 17) {  // length of 'stringified' mac address
 		return mac;  // input string not of correct size
@@ -66,3 +64,14 @@ void convertMacToString(MACaddress mac, char* res) {
 	// replace last colon with a terminating character
 	res[17] = 0;
 };
+
+uuid16_t convertStringToUuid(const char* uuid_str) {
+	uint8_t byte[2];
+	char* p = (char*) uuid_str;
+	for (uint8_t i = 0; i < 2; i++) {
+		byte[i] = convertTwoHexCharsToByte(p);
+		p += 2;
+	}
+	uuid16_t res = (byte[0] << 8) | (byte[1] & 0xFF);
+	return res;
+}
