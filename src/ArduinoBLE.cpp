@@ -14,7 +14,7 @@ void handleScanEvent(microapp_ble_dev_t dev)
 			uint8_t type = dev.data[1];
 			if (type != 0x09) return; // Not a complete local name ad
 			char * deviceName = (char*) &dev.data[2];
-			if ((dev.dlen - 2) != strlen(filter->name)) return; // device name and filter name don't have same length
+			if ((dev.dlen - 2) != filter->len) return; // device name and filter name don't have same length
 			if (memcmp(deviceName,filter->name,dev.dlen - 2) != 0) return; // local name doesn't match filter name
 			break;
 		}
