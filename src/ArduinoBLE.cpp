@@ -9,7 +9,6 @@ void handleScanEventWrapper(microapp_ble_dev_t dev)
 // Filters and forwards the bluenet scanned device event interrupt to the user callback
 void Ble::handleScanEvent(microapp_ble_dev_t dev)
 {
-	// parseAdvertisement()
 	if (!filterScanEvent(dev)) {
 		return; // advertisement does not match filter
 	}
@@ -27,14 +26,25 @@ bool Ble::filterScanEvent(microapp_ble_dev_t dev)
 			break;
 		}
 		case BleFilterLocalName: {
-			uint8_t clnData[31];
-			if (!findAdvType(GapAdvType::CompleteLocalName,dev.data,dev.dlen,clnData)) return false; // No complete local name in ad
-			// TODO: or shortened local name
-			uint8_t type = dev.data[1];
-			if (type != 0x09) return false; // Not a complete local name ad
-			char * deviceName = (char*) &dev.data[2];
-			if ((dev.dlen - 2) != _activeFilter.len) return false; // device name and filter name don't have same length
-			if (memcmp(deviceName,_activeFilter.name,dev.dlen - 2) != 0) return false; // local name doesn't match filter name
+			data_ptr_t cln; // complete local name
+			data_ptr_t sln; // shortened local name
+			// check if either cln or sln can be found in ad data
+			bool isCLN = findAdvType(GapAdvType::CompleteLocalName,dev.data,dev.dlen,&cln);
+			bool isSLN = findAdvType(GapAdvType::ShortenedLocalName,dev.data,dev.dlen,&sln);
+			data_ptr_t* ln;
+			if (isCLN) {
+				ln = &cln;
+			}
+			else if (isSLN) {
+				ln = &sln;
+			}
+			else {
+				return false;
+			}
+			char * deviceName = (char*) ln->data;
+			Serial.println(deviceName);
+			if (ln->len != _activeFilter.len) return false; // device name and filter name don't have same length
+			if (memcmp(deviceName,_activeFilter.name,ln->len) != 0) return false; // local name doesn't match filter name
 			break;
 		}
 		case BleFilterUuid: {

@@ -10,6 +10,11 @@ typedef struct {
 	uint8_t byte[MAC_ADDRESS_LENGTH];
 } MACaddress;
 
+struct data_ptr_t {
+	uint8_t* data = nullptr;
+	uint16_t len = 0;
+};
+
 // GAP advertisement types, see
 // https://www.bluetooth.com/specifications/assigned-numbers/
 enum GapAdvType {
@@ -35,4 +40,4 @@ void convertMacToString(MACaddress mac, char* res);
 uuid16_t convertStringToUuid(const char* uuid_str);
 
 // Tries to find an ad of specified GAP ad type and if found returns true and a pointer to its location
-bool findAdvType(GapAdvType type, uint8_t* advData, uint8_t advLen, uint8_t* foundAd);
+bool findAdvType(GapAdvType type, uint8_t* advData, uint8_t advLen, data_ptr_t* foundAd);
