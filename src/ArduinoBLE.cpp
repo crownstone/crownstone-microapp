@@ -42,15 +42,15 @@ bool Ble::filterScanEvent(microapp_ble_dev_t dev)
 				return false;
 			}
 			char * deviceName = (char*) ln->data;
-			Serial.println(deviceName);
 			if (ln->len != _activeFilter.len) return false; // device name and filter name don't have same length
 			if (memcmp(deviceName,_activeFilter.name,ln->len) != 0) return false; // local name doesn't match filter name
 			break;
 		}
 		case BleFilterUuid: {
-			uint8_t type = dev.data[1];
-			if (type != 0x16) return false; // Not a service data ad
-			uint16_t uuid = ((dev.data[3] << 8) | dev.data[2]);
+			// TODO: refactor. Now filters ads of type service data with as first element the filtered uuid
+			data_ptr_t serviceData;
+			if (!findAdvType(GapAdvType::ServiceData, dev.data, dev.dlen,&serviceData)) return false;
+			uint16_t uuid = ((serviceData.data[1] << 8) | serviceData.data[0]);
 			if (uuid != _activeFilter.uuid) return false; // service data uuid does not match filter uuid
 			break;
 		}
