@@ -1,6 +1,7 @@
 #include <Serial.h>
 #include <microapp.h>
 #include <BleUtils.h>
+#include <BleDevice.h>
 
 enum BleEventType {
 	BleEventDeviceScanned,
@@ -30,6 +31,8 @@ class Ble
 {
 private:
 	Ble(){};
+
+	BleDevice _bleDev;
 
 	BleFilter _activeFilter;
 

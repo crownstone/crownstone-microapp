@@ -16,17 +16,17 @@ uint8_t strlen(const char *str) {
 	return MAX_PAYLOAD;
 }
 
-// compares two buffers of length len, bufA and bufB
-// returns 0 if bufA and bufB are equal
-// returns -1 if for the first unmatching byte i we have bufA[i] < bufB[i]
-// returns 1 if for the first unmatching byte i we have bufA[i] > bufB[i]
-int memcmp(const void *bufA, const void *bufB, size_t len) {
-	char *p = (char*) bufA;
-	char *q = (char*) bufB;
-	if (bufA == bufB) { // point to the same address
+// compares two buffers of length num, ptr1 and ptr2
+// returns 0 if ptr1 and ptr2 are equal
+// returns -1 if for the first unmatching byte i we have ptr1[i] < ptr2[i]
+// returns 1 if for the first unmatching byte i we have ptr1[i] > ptr2[i]
+int memcmp(const void *ptr1, const void *ptr2, size_t num) {
+	char *p = (char*) ptr1;
+	char *q = (char*) ptr2;
+	if (ptr1 == ptr2) { // point to the same address
 		return 0;
 	}
-	for (uint8_t i = 0; i<len; i++) {
+	for (uint8_t i = 0; i<num; i++) {
 		if (*(p+i) < *(q+i)) {
 			return -1;
 		}
@@ -35,6 +35,17 @@ int memcmp(const void *bufA, const void *bufB, size_t len) {
 		}
 	}
 	return 0;
+}
+
+void* memcpy(void* dest, const void* src, size_t num) {
+	uint8_t* p = (uint8_t*) src;
+	uint8_t* q = (uint8_t*) dest;
+	for (uint8_t i = 0; i < num; i++) {
+		*q = *p;
+		p++;
+		q++;
+	}
+	return dest;
 }
 
 char* strcpy(char* dest, const char* src) {

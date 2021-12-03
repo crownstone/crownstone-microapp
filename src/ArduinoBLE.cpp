@@ -9,9 +9,11 @@ void handleScanEventWrapper(microapp_ble_dev_t dev)
 // Filters and forwards the bluenet scanned device event interrupt to the user callback
 void Ble::handleScanEvent(microapp_ble_dev_t dev)
 {
+	_bleDev = BleDevice(&dev);
 	if (!filterScanEvent(dev)) {
 		return; // advertisement does not match filter
 	}
+	Serial.println(_bleDev.address().c_str());
 	// now call the user registered callback
 	void (*callback_func)(microapp_ble_dev_t) = (void (*)(microapp_ble_dev_t)) _scanned_device_callback;
 	callback_func(dev);

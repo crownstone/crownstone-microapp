@@ -42,7 +42,7 @@ MACaddress convertStringToMac(const char* mac_str) {
 	// initialize return value
 	MACaddress mac = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	uint8_t len = strlen(mac_str);
-	if (len != 17) {  // length of 'stringified' mac address
+	if (len != MAC_ADDRESS_STRING_LENGTH) {
 		return mac;  // input string not of correct size
 	}
 	char* p = (char*) mac_str;
@@ -62,7 +62,7 @@ void convertMacToString(MACaddress mac, char* res) {
 		res[3*i+2] = ':';
 	}
 	// replace last colon with a terminating character
-	res[17] = 0;
+	res[MAC_ADDRESS_STRING_LENGTH] = 0;
 };
 
 uuid16_t convertStringToUuid(const char* uuid_str) {

@@ -1,9 +1,14 @@
+#pragma once
+
 #include <microapp.h>
 
 // Utilities for the microapp BLE library
 
 // type for 16-bit uuid
 typedef uint16_t uuid16_t;
+
+// length of 'stringified' mac address
+const uint8_t MAC_ADDRESS_STRING_LENGTH = 17;
 
 // MAC address struct
 typedef struct {

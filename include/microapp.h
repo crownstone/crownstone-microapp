@@ -35,8 +35,11 @@ typedef uint16_t size_t;
 // returns size MAX_PAYLOAD for strings that are too long
 uint8_t strlen(const char *str);
 
-// compares the first len bytes of bufA and bufB and returns zero if they match
-int memcmp(const void *bufA, const void *bufB, size_t len);
+// compares the first num bytes of ptr1 and ptr2 and returns zero if they match
+int memcmp(const void *ptr1, const void *ptr2, size_t num);
+
+// copies the first num bytes starting at src to dest
+void* memcpy(void* dest, const void* src, size_t num);
 
 // copies the string at src to dest
 char* strcpy (char* dest, const char* src);
