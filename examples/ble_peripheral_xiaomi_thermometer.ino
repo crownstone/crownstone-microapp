@@ -7,35 +7,30 @@ const char* myAddress = "A4:C1:38:9A:45:E3";
 const char* myName = "ATC_9A45E3";
 const char* myUuid = "181A";
 
-void my_callback_func(microapp_ble_dev_t dev) // callback for received peripheral advertisement
+void my_callback_func(BleDevice dev) // callback for received peripheral advertisement
 {
 	Serial.println("my_callback_func: ");
-	Serial.print("\trssi: "); Serial.println(dev.rssi);
-	Serial.print("\taddress type: "); Serial.println(dev.addr_type);
-	Serial.print("\taddress: "); Serial.println(dev.addr,sizeof(dev.addr));
-	Serial.print("\tdlen: "); Serial.println(dev.dlen);
-	Serial.print("\tdata: "); Serial.println(dev.data,dev.dlen);
+	Serial.print("\trssi: "); Serial.println(dev.rssi());
+	Serial.print("\taddress: "); Serial.println(dev.address().c_str());
 
-	// parse advertisement data
-	uint8_t adType = dev.data[1];
-	switch(adType) {
-		case 0x09 : { // complete local name
-			Serial.print("\tComplete local name: ");
-			char* localName = (char*) &(dev.data[2]);
-			Serial.println(localName,dev.dlen-2);
-			break;
-		}
-		case 0x16 : { // service data
-			Serial.println("\tService data");
-			uint8_t UUID[2] = {dev.data[3], dev.data[2]};
-			Serial.print("\t\tUUID: "); Serial.println(UUID,2);
-			uint16_t temperature = (dev.data[10] << 8) | dev.data[11];
-			Serial.print("\t\tTemperature: "); Serial.println(temperature);
-			uint8_t humidity = dev.data[12];
-			Serial.print("\t\tHumidity: "); Serial.println(humidity);
-			uint16_t battery_perc = dev.data[13];
-			Serial.print("\t\tBattery \%: "); Serial.println(battery_perc);
-		}
+	if (dev.hasLocalName()) {
+		Serial.print("\tComplete local name: ");
+		Serial.println(dev.localName().c_str());
+	}
+
+	// parse service data of Xiaomi device advertisement if available
+	microapp_ble_dev_t* rawDev = dev.rawData(); // we need to access the raw advertisement data since service data protocol is device-specific
+	data_ptr_t serviceData;
+	if (findAdvType(GapAdvType::ServiceData,rawDev->data,rawDev->dlen,&serviceData)) {
+		Serial.println("\tService data");
+		uint8_t UUID[2] = {serviceData.data[1], serviceData.data[0]};
+		Serial.print("\t\tUUID: "); Serial.println(UUID,2);
+		uint16_t temperature = (serviceData.data[8] << 8) | serviceData.data[9];
+		Serial.print("\t\tTemperature: "); Serial.println(temperature);
+		uint8_t humidity = serviceData.data[10];
+		Serial.print("\t\tHumidity: "); Serial.println(humidity);
+		uint16_t battery_perc = serviceData.data[11];
+		Serial.print("\t\tBattery \%: "); Serial.println(battery_perc);
 	}
 }
 
@@ -59,6 +54,7 @@ int loop() {
 
 	if (scanToggle)
 	{
+		// BLE.scan(); // unfiltered!
 		BLE.scanForAddress(myAddress);
 		// BLE.scanForName(myName);
 		// BLE.scanForUuid(myUuid);

@@ -27,8 +27,7 @@ struct BleFilter {
 };
 
 
-class Ble
-{
+class Ble {
 private:
 	Ble(){};
 
@@ -40,16 +39,19 @@ private:
 
 	uintptr_t _scanned_device_callback;
 
-	friend void handleScanEventWrapper(microapp_ble_dev_t dev); // add handleScanEvent as a friend so it can access private variables of Ble
-
+	/*
+	 * Handler for scanned devices. Called from bluenet via handleScanEventWrapper upon scanned device events if scanning
+	 */
 	void handleScanEvent(microapp_ble_dev_t dev);
 
-	bool filterScanEvent(microapp_ble_dev_t dev);
+	/*
+	 * Compares the scanned device dev against the filter and returns true upon a match
+	 */
+	bool filterScanEvent(BleDevice dev);
 
 public:
 
-	static Ble & getInstance()
-	{
+	static Ble & getInstance() {
 		// Guaranteed to be destroyed.
 		static Ble instance;
 
@@ -57,17 +59,26 @@ public:
 		return instance;
 	}
 
-	void setEventHandler(BleEventType eventType, void (*isr)(microapp_ble_dev_t)); // registers a callback function for some event triggered within bluenet
+	void setEventHandler(BleEventType eventType, void (*isr)(BleDevice)); // registers a callback function for some event triggered within bluenet
 
 	/*
 	 * Sends command to bluenet to call registered microapp callback function upon receiving advertisements
 	 */
 	bool scan(bool withDuplicates = false);
 
+	/*
+	 * Registers filter with name name and calls scan()
+	 */
 	bool scanForName(const char* name, bool withDuplicates = false);
 
+	/*
+	 * Registers filter with MAC address address and calls scan()
+	 */
 	bool scanForAddress(const char* address, bool withDuplicates = false);
 
+	/*
+	 * Registers filter with service data uuid uuid and calls scan()
+	 */
 	bool scanForUuid(const char* uuid, bool withDuplicates = false);
 
 	/*
@@ -75,6 +86,9 @@ public:
 	 */
 	void stopScan();
 
+	/*
+	 * Returns a pointer to the currently set filter for scanned devices
+	 */
 	BleFilter* getFilter();
 
 };
