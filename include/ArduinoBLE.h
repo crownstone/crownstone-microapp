@@ -40,6 +40,11 @@ private:
 	uintptr_t _scanned_device_callback;
 
 	/*
+	 * Add handleScanEventWrapper as a friend so it can access private function handleScanEvent of Ble
+	 */
+	friend void handleScanEventWrapper(microapp_ble_dev_t dev);
+
+	/*
 	 * Handler for scanned devices. Called from bluenet via handleScanEventWrapper upon scanned device events if scanning
 	 */
 	void handleScanEvent(microapp_ble_dev_t dev);
@@ -59,7 +64,10 @@ public:
 		return instance;
 	}
 
-	void setEventHandler(BleEventType eventType, void (*isr)(BleDevice)); // registers a callback function for some event triggered within bluenet
+	/*
+	 * Registers a callback function for scanned device event triggered within bluenet
+	 */
+	void setEventHandler(BleEventType eventType, void (*isr)(BleDevice));
 
 	/*
 	 * Sends command to bluenet to call registered microapp callback function upon receiving advertisements
