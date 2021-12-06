@@ -7,8 +7,8 @@ const char* myAddress = "A4:C1:38:9A:45:E3";
 const char* myName = "ATC_9A45E3";
 const char* myUuid = "181A";
 
-void my_callback_func(BleDevice dev) // callback for received peripheral advertisement
-{
+// callback for received peripheral advertisement
+void my_callback_func(BleDevice dev) {
 	Serial.println("my_callback_func: ");
 	Serial.print("\trssi: "); Serial.println(dev.rssi());
 	Serial.print("\taddress: "); Serial.println(dev.address().c_str());

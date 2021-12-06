@@ -8,7 +8,7 @@ class BleDevice {
 
 private:
 
-	microapp_ble_dev_t* _dev;
+	microapp_ble_dev_t* _dev; // pointer to the raw advertisement data
 
 	char _address[MAC_ADDRESS_STRING_LENGTH+1]; // 17 chars for address plus 1 escape char
 
@@ -22,14 +22,29 @@ public:
 
 	BleDevice(microapp_ble_dev_t* dev = nullptr) : _dev(dev) {};
 
+	/*
+	 * Returns the raw advertisement data for device-specific advertisement processing
+	 */
 	microapp_ble_dev_t* rawData();
 
+	/*
+	 * Returns device address in the format "AA:BB:CC:DD:EE:FF"
+	 */
 	String address();
 
+	/*
+	 * Returns rssi value of last scanned advertisement
+	 */
 	int8_t rssi();
 
-	bool hasLocalName(); // TODO: implement
+	/*
+	 * Returns whether the device has advertised a local name (either complete or shortened)
+	 */
+	bool hasLocalName();
 
-	String localName(); // TODO: implement
+	/*
+	 * Returns the advertised local name of the device as a string
+	 */
+	String localName();
 
 };
