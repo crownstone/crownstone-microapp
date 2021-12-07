@@ -37,7 +37,7 @@ private:
 
 	bool _isScanning = false;
 
-	uintptr_t _scanned_device_callback;
+	uintptr_t _scannedDeviceCallback;
 
 	/*
 	 * Add handleScanEventWrapper as a friend so it can access private function handleScanEvent of Ble
