@@ -47,7 +47,7 @@ void setup() {
 }
 
 // The Arduino loop function.
-int loop() {
+void loop() {
 
 	// Say something every time we loop (which is every second)
 	Serial.println("Loop");
@@ -69,6 +69,5 @@ int loop() {
 	{
 		scanToggle = !scanToggle;
 	}
-	return 1;
-
+	return;
 }

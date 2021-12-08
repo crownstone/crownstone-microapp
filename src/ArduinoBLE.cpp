@@ -12,7 +12,7 @@ void Ble::handleScanEvent(microapp_ble_dev_t dev) {
 		return; // advertisement does not match filter, so do not call user callback
 	}
 	// now call the user registered callback
-	void (*callback_func)(BleDevice) = (void (*)(BleDevice)) _scanned_device_callback;
+	void (*callback_func)(BleDevice) = (void (*)(BleDevice)) _scannedDeviceCallback;
 	callback_func(_bleDev);
 }
 
@@ -61,7 +61,7 @@ void Ble::setEventHandler(BleEventType type, void (*isr)(BleDevice)) {
 	sendMessage(&global_msg);
 
 	// Now register the user callback within the Ble object
-	_scanned_device_callback = (uintptr_t)(isr);
+	_scannedDeviceCallback = (uintptr_t)(isr);
 }
 
 bool Ble::scan(bool withDuplicates) {
