@@ -22,15 +22,20 @@ void my_callback_func(BleDevice dev) {
 	microapp_ble_dev_t* rawDev = dev.rawData(); // we need to access the raw advertisement data since service data protocol is device-specific
 	data_ptr_t serviceData;
 	if (findAdvType(GapAdvType::ServiceData,rawDev->data,rawDev->dlen,&serviceData)) {
-		Serial.println("\tService data");
-		uint8_t UUID[2] = {serviceData.data[1], serviceData.data[0]};
-		Serial.print("\t\tUUID: "); Serial.println(UUID,2);
-		uint16_t temperature = (serviceData.data[8] << 8) | serviceData.data[9];
-		Serial.print("\t\tTemperature: "); Serial.println(temperature);
-		uint8_t humidity = serviceData.data[10];
-		Serial.print("\t\tHumidity: "); Serial.println(humidity);
-		uint16_t battery_perc = serviceData.data[11];
-		Serial.print("\t\tBattery \%: "); Serial.println(battery_perc);
+		if (serviceData.len == 15) { // service data length of the Xiaomi service data advertisements
+			Serial.println("\tService data");
+			uint8_t UUID[2] = {serviceData.data[1], serviceData.data[0]};
+			Serial.print("\t\tUUID: "); Serial.println(UUID,2);
+			uint16_t temperature = (serviceData.data[8] << 8) | serviceData.data[9];
+			Serial.print("\t\tTemperature: "); Serial.println(temperature);
+			uint8_t humidity = serviceData.data[10];
+			Serial.print("\t\tHumidity: "); Serial.println(humidity);
+			uint16_t battery_perc = serviceData.data[11];
+			Serial.print("\t\tBattery \%: "); Serial.println(battery_perc);
+		}
+		else {
+			Serial.println("Service data has incorrect size");
+		}
 	}
 }
 

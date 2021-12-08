@@ -18,12 +18,12 @@ enum BleFilterType {
 
 struct BleFilter {
 	BleFilterType type;
+	uint16_t len; // length of the name
 	union {
 		MACaddress address;
 		char name[MAX_BLE_ADV_DATA_LENGTH]; // max length of name equals max advertisement length
 		uuid16_t uuid;
 	};
-	uint16_t len; // length of the name
 };
 
 

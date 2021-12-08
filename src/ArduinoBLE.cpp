@@ -20,14 +20,22 @@ bool Ble::filterScanEvent(BleDevice dev) {
 	switch (_activeFilter.type) {
 		case BleFilterAddress: {
 			// Serial.print("Scanned device MAC address "); Serial.println(dev.address().c_str());
-			if (memcmp(dev.rawData()->addr,_activeFilter.address.byte,MAC_ADDRESS_LENGTH) != 0) return false;
+			if (memcmp(dev.rawData()->addr,_activeFilter.address.byte,MAC_ADDRESS_LENGTH) != 0) { // MAC address does not match filter
+				return false;
+			}
 			break;
 		}
 		case BleFilterLocalName: {
-			if (!dev.hasLocalName()) return false; // no advertised local name
+			if (!dev.hasLocalName()) { // no advertised local name
+				return false;
+			}
 			String deviceName = dev.localName();
-			if (strlen(deviceName.c_str()) != _activeFilter.len) return false; // device name and filter name don't have same length
-			if (memcmp(deviceName.c_str(),_activeFilter.name,_activeFilter.len) != 0) return false; // local name doesn't match filter name
+			if (strlen(deviceName.c_str()) != _activeFilter.len) { // device name and filter name don't have same length
+				return false;
+			}
+			if (memcmp(deviceName.c_str(),_activeFilter.name,_activeFilter.len) != 0) { // local name doesn't match filter name
+				return false;
+			}
 			break;
 		}
 		case BleFilterUuid: {
@@ -35,9 +43,13 @@ bool Ble::filterScanEvent(BleDevice dev) {
 			// which is not the same as what the official ArduinoBLE library does
 			microapp_ble_dev_t* rawDev = dev.rawData();
 			data_ptr_t serviceData;
-			if (!findAdvType(GapAdvType::ServiceData, rawDev->data, rawDev->dlen,&serviceData)) return false;
+			if (!findAdvType(GapAdvType::ServiceData, rawDev->data, rawDev->dlen,&serviceData)) { // no service data in advertisement
+				return false;
+			}
 			uint16_t uuid = ((serviceData.data[1] << 8) | serviceData.data[0]);
-			if (uuid != _activeFilter.uuid) return false; // service data uuid does not match filter uuid
+			if (uuid != _activeFilter.uuid) { // service data uuid does not match filter uuid
+				return false;
+			}
 			break;
 		}
 		case BleFilterNone:
@@ -65,7 +77,9 @@ void Ble::setEventHandler(BleEventType type, void (*isr)(BleDevice)) {
 }
 
 bool Ble::scan(bool withDuplicates) {
-	if (_isScanning) return true; // already scanning
+	if (_isScanning) { // already scanning
+		return true;
+	}
 
 	Serial.println("Starting BLE device scanning");
 
@@ -104,7 +118,9 @@ bool Ble::scanForUuid(const char* uuid, bool withDuplicates) {
 }
 
 void Ble::stopScan() {
-	if (!_isScanning) return; // already not scanning
+	if (!_isScanning) { // already not scanning
+		return;
+	}
 
 	Serial.println("Stopping BLE device scanning");
 
