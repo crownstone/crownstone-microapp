@@ -14,9 +14,9 @@ private:
 
 	char _localName[MAX_BLE_ADV_DATA_LENGTH]; // maximum length equals max ble advertisement length (31)
 
-	bool _hasCLN; // has a complete local name field
+	bool _hasCompleteLocalName; // has a complete local name field
 
-	bool _hasSLN; // has a shortened local name field
+	bool _hasShortenedLocalName; // has a shortened local name field
 
 public:
 

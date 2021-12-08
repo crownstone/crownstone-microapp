@@ -4,16 +4,16 @@
 // Important: Do not include <string.h> / <cstring>. This bloats the binary unnecessary.
 // On Arduino there is the String class. Roll your own functions like strlen, see below.
 
-// returns size MAX_PAYLOAD for strings that are too long, note that this can still not fit in the payload
+// returns size MAX_STRING_SIZE for strings that are too long, note that this can still not fit in the payload
 // the actually supported string length depends on the opcode
 // the limit here is just to prevent looping forever
 uint8_t strlen(const char *str) {
-	for (uint8_t i = 0; i < MAX_PAYLOAD; ++i) {
+	for (size_t i = 0; i < MAX_STRING_SIZE; ++i) {
 		if (str[i] == 0) {
 			return i;
 		}
 	}
-	return MAX_PAYLOAD;
+	return MAX_STRING_SIZE;
 }
 
 // compares two buffers of length num, ptr1 and ptr2
@@ -26,7 +26,7 @@ int memcmp(const void *ptr1, const void *ptr2, size_t num) {
 	if (ptr1 == ptr2) { // point to the same address
 		return 0;
 	}
-	for (uint8_t i = 0; i<num; i++) {
+	for (size_t i = 0; i < num; ++i) {
 		if (*(p+i) < *(q+i)) {
 			return -1;
 		}
@@ -40,7 +40,7 @@ int memcmp(const void *ptr1, const void *ptr2, size_t num) {
 void* memcpy(void* dest, const void* src, size_t num) {
 	uint8_t* p = (uint8_t*) src;
 	uint8_t* q = (uint8_t*) dest;
-	for (uint8_t i = 0; i < num; i++) {
+	for (size_t i = 0; i < num; ++i) {
 		*q = *p;
 		p++;
 		q++;
@@ -50,7 +50,7 @@ void* memcpy(void* dest, const void* src, size_t num) {
 
 char* strcpy(char* dest, const char* src) {
 	char* p = (char*) src;
-	for (uint8_t i = 0; i < MAX_PAYLOAD; i++) {
+	for (size_t i = 0; i < MAX_STRING_SIZE; ++i) {
 		*(dest+i) = *p;
 		if (*p == 0) {
 			break;

@@ -18,9 +18,9 @@ int8_t BleDevice::rssi() {
 bool BleDevice::hasLocalName() {
 	data_ptr_t cln;
 	data_ptr_t sln;
-	_hasCLN = findAdvType(GapAdvType::CompleteLocalName,_dev->data,_dev->dlen,&cln);
-	_hasSLN = findAdvType(GapAdvType::ShortenedLocalName,_dev->data,_dev->dlen,&sln);
-	return (_hasCLN || _hasSLN); // either complete local name or shortened local name
+	_hasCompleteLocalName = findAdvType(GapAdvType::CompleteLocalName,_dev->data,_dev->dlen,&cln);
+	_hasShortenedLocalName = findAdvType(GapAdvType::ShortenedLocalName,_dev->data,_dev->dlen,&sln);
+	return (_hasCompleteLocalName || _hasShortenedLocalName); // either complete local name or shortened local name
 }
 
 String BleDevice::localName() {
@@ -30,10 +30,10 @@ String BleDevice::localName() {
 		return _localName;
 	}
 	data_ptr_t ln;
-	if (_hasCLN) {
+	if (_hasCompleteLocalName) {
 		findAdvType(GapAdvType::CompleteLocalName,_dev->data,_dev->dlen,&ln);
 	}
-	else { // _hasSLN
+	else { // _hasShortenedLocalName
 		findAdvType(GapAdvType::ShortenedLocalName,_dev->data,_dev->dlen,&ln);
 	}
 	memcpy(_localName,ln.data,ln.len);

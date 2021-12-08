@@ -32,7 +32,10 @@ const uint8_t HIGH = !LOW;
 // define size_t as a 16-bit unsigned int
 typedef uint16_t size_t;
 
-// returns size MAX_PAYLOAD for strings that are too long
+// set a max string size which is equal to the max payload of microapp_message_t
+const size_t MAX_STRING_SIZE = MAX_PAYLOAD;
+
+// returns size MAX_STRING_SIZE for strings that are too long
 uint8_t strlen(const char *str);
 
 // compares the first num bytes of ptr1 and ptr2 and returns zero if they match

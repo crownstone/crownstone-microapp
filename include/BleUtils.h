@@ -17,7 +17,7 @@ typedef struct {
 
 struct data_ptr_t {
 	uint8_t* data = nullptr;
-	uint16_t len = 0;
+	size_t len = 0;
 };
 
 // GAP advertisement types, see
