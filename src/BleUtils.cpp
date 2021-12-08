@@ -50,7 +50,9 @@ MACaddress convertStringToMac(const char* mac_str) {
 void convertMacToString(MACaddress mac, char* res) {
 	for (uint8_t i = 0; i < MAC_ADDRESS_LENGTH; i++) {
 		convertByteToTwoHexChars(mac.byte[i], res + 3 * i);
-		res[3*i+2] = ':';
+		if (3 * i + 2 < MAC_ADDRESS_STRING_LENGTH) { // do not add colon after last byte
+			res[3 * i + 2] = ':';
+		}
 	}
 	// replace last colon with a terminating character
 	res[MAC_ADDRESS_STRING_LENGTH] = 0;

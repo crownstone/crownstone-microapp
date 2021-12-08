@@ -10,11 +10,9 @@ private:
 
 	microapp_ble_dev_t _device; // pointer to the raw advertisement data
 
-	char _address[MAC_ADDRESS_STRING_LENGTH+1]; // 17 chars for address plus 1 escape char
-	//String _address;
+	char _address[MAC_ADDRESS_STRING_LENGTH]; // 'stringified' mac address
 
-	char _localName[MAX_BLE_ADV_DATA_LENGTH]; // maximum length equals max ble advertisement length (31)
-	//String _localName;
+	char _localName[MAX_BLE_ADV_DATA_LENGTH]; // maximum length equals max ble advertisement length (31 bytes)
 
 	bool _hasCompleteLocalName; // has a complete local name field
 

@@ -9,7 +9,7 @@ String BleDevice::address() {
 	MACaddress mac;
 	memcpy(mac.byte,_device.addr,MAC_ADDRESS_LENGTH);
 	convertMacToString(mac,_address);
-	return _address;
+	return String(_address,MAC_ADDRESS_STRING_LENGTH);
 }
 
 int8_t BleDevice::rssi() {
@@ -38,6 +38,5 @@ String BleDevice::localName() {
 		findAdvType(GapAdvType::ShortenedLocalName,_device.data,_device.dlen,&ln);
 	}
 	memcpy(_localName,ln.data,ln.len);
-	_localName[ln.len] = 0; // set escape char
-	return _localName;
+	return String(_localName,ln.len);
 }
