@@ -7,7 +7,7 @@ void handleScanEventWrapper(microapp_ble_dev_t dev) {
 
 // Filters and forwards the bluenet scanned device event interrupt to the user callback
 void Ble::handleScanEvent(microapp_ble_dev_t dev) {
-	_bleDev = BleDevice(&dev);
+	_bleDev = BleDevice(dev);
 	if (!filterScanEvent(_bleDev)) {
 		return; // advertisement does not match filter, so do not call user callback
 	}
@@ -30,7 +30,7 @@ bool Ble::filterScanEvent(BleDevice dev) {
 				return false;
 			}
 			String deviceName = dev.localName();
-			if (strlen(deviceName.c_str()) != _activeFilter.len) { // device name and filter name don't have same length
+			if (deviceName.length() != _activeFilter.len) { // device name and filter name don't have same length
 				return false;
 			}
 			if (memcmp(deviceName.c_str(),_activeFilter.name,_activeFilter.len) != 0) { // local name doesn't match filter name
@@ -98,7 +98,7 @@ bool Ble::scan(bool withDuplicates) {
 bool Ble::scanForName(const char* name, bool withDuplicates) {
 	_activeFilter.type = BleFilterLocalName;
 	_activeFilter.len = strlen(name);
-	strcpy(_activeFilter.name, name);
+	memcpy(_activeFilter.name, name, _activeFilter.len);
 	// TODO: do something with withDuplicates argument
 	return scan(withDuplicates);
 }

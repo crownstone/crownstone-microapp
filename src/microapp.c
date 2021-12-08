@@ -48,18 +48,6 @@ void* memcpy(void* dest, const void* src, size_t num) {
 	return dest;
 }
 
-char* strcpy(char* dest, const char* src) {
-	char* p = (char*) src;
-	for (size_t i = 0; i < MAX_STRING_SIZE; ++i) {
-		*(dest+i) = *p;
-		if (*p == 0) {
-			break;
-		}
-		p++;
-	}
-	return dest;
-}
-
 /*
  * A global object to send a message.
  */

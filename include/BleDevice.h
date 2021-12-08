@@ -8,11 +8,13 @@ class BleDevice {
 
 private:
 
-	microapp_ble_dev_t* _dev; // pointer to the raw advertisement data
+	microapp_ble_dev_t _device; // pointer to the raw advertisement data
 
 	char _address[MAC_ADDRESS_STRING_LENGTH+1]; // 17 chars for address plus 1 escape char
+	//String _address;
 
 	char _localName[MAX_BLE_ADV_DATA_LENGTH]; // maximum length equals max ble advertisement length (31)
+	//String _localName;
 
 	bool _hasCompleteLocalName; // has a complete local name field
 
@@ -20,7 +22,9 @@ private:
 
 public:
 
-	BleDevice(microapp_ble_dev_t* dev = nullptr) : _dev(dev) {};
+	BleDevice(){}; // default constructor
+
+	BleDevice(const microapp_ble_dev_t & dev) : _device(dev) {};
 
 	/*
 	 * Returns the raw advertisement data for device-specific advertisement processing
