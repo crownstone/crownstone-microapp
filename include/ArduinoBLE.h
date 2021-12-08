@@ -26,7 +26,6 @@ struct BleFilter {
 	};
 };
 
-
 class Ble {
 private:
 	Ble(){};
