@@ -1,5 +1,5 @@
 //
-// An example to interface with an twi/i2c sensor 
+// An example to interface with an twi/i2c sensor
 //
 
 // Show how a counter is incremented
@@ -36,7 +36,7 @@ void setup() {
 const byte TEMPERATURE_REGISTER = 5;
 
 // Loop every second
-int loop() {
+void loop() {
 
 	byte address = 0x18;
 
@@ -49,7 +49,7 @@ int loop() {
 
 		// Request 2 bytes from device at given address
 		Wire.requestFrom(address, 2, true);
-	
+
 		byte lowByte = 0, highByte = 0;
 		byte signBit = 1;
 		if (Wire.available() > 1) {
@@ -75,5 +75,5 @@ int loop() {
 
 	counter++;
 
-	return counter;
+	return;
 }

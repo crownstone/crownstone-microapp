@@ -49,7 +49,7 @@ void setup() {
 //
 // A dummy loop function.
 //
-int loop() {
+void loop() {
 	// We are able to use static variables.
 	counter++;
 
@@ -89,7 +89,7 @@ int loop() {
 
 		// See protocol definition for other options.
 		digitalWrite(1, 0);
-		
+
 		Serial.println("Done...");
 	}
 	// Show counter.
@@ -99,5 +99,5 @@ int loop() {
 	serviceDataBuf[2] = counter;
 	SerialServiceData.write(serviceDataBuf, sizeof(serviceDataBuf));
 
-	return counter;
+	return;
 }

@@ -13,7 +13,9 @@ void setup() {
 }
 
 // The Arduino loop function.
-int loop() {
+void loop() {
 	// Say high ever time we loop (which is every second)
 	Serial.println("Hi!");
+
+	return;
 }

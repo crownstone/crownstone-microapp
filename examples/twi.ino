@@ -6,7 +6,7 @@ void setup() {
 	Serial.begin();
 	if (!Serial) return;
 	Serial.println("Setup");
-	
+
 	// join the i2c bus
 	Wire.begin();
 }
@@ -14,7 +14,7 @@ void setup() {
 const byte temperature_register = 5;
 const byte address_target = 0x18;
 
-int loop() {
+void loop() {
 
 	// read something new every so many times
 	if (counter % 5 == 0) {
@@ -26,7 +26,7 @@ int loop() {
 
 		// read the response (2 bytes)
 		Wire.requestFrom(address_target, 2, true);
-	
+
 		byte lowByte = 0, highByte = 0, signBit = 1;
 
 		// parse the response
@@ -53,5 +53,5 @@ int loop() {
 
 	counter++;
 
-	return counter;
+	return;
 }
