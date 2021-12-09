@@ -8,20 +8,20 @@ const char* myName = "ATC_9A45E3";
 const char* myUuid = "181A";
 
 // callback for received peripheral advertisement
-void my_callback_func(BleDevice dev) {
+void my_callback_func(BleDevice device) {
 	Serial.println("my_callback_func: ");
-	Serial.print("\trssi: "); Serial.println(dev.rssi());
-	Serial.print("\taddress: "); Serial.println(dev.address().c_str());
+	Serial.print("\trssi: "); Serial.println(device.rssi());
+	Serial.print("\taddress: "); Serial.println(device.address().c_str());
 
-	if (dev.hasLocalName()) {
+	if (device.hasLocalName()) {
 		Serial.print("\tComplete local name: ");
-		Serial.println(dev.localName().c_str());
+		Serial.println(device.localName().c_str());
 	}
 
 	// parse service data of Xiaomi device advertisement if available
-	microapp_ble_dev_t* rawDev = dev.rawData(); // we need to access the raw advertisement data since service data protocol is device-specific
+	microapp_ble_device_t* rawDevice = device.rawData(); // we need to access the raw advertisement data since service data protocol is device-specific
 	data_ptr_t serviceData;
-	if (findAdvType(GapAdvType::ServiceData,rawDev->data,rawDev->dlen,&serviceData)) {
+	if (findAdvType(GapAdvType::ServiceData,rawDevice->data,rawDevice->dlen,&serviceData)) {
 		if (serviceData.len == 15) { // service data length of the Xiaomi service data advertisements
 			Serial.println("\tService data");
 			uint8_t UUID[2] = {serviceData.data[1], serviceData.data[0]};

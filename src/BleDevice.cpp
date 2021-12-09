@@ -1,6 +1,6 @@
 #include <BleDevice.h>
 
-microapp_ble_dev_t* BleDevice::rawData() {
+microapp_ble_device_t* BleDevice::rawData() {
 	return &_device;
 }
 

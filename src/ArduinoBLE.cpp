@@ -1,35 +1,35 @@
 #include <ArduinoBLE.h>
 
 // Wrapper for handleScanEvent since class functions can't be registered as a callback
-void handleScanEventWrapper(microapp_ble_dev_t dev) {
-	BLE.handleScanEvent(dev);
+void handleScanEventWrapper(microapp_ble_device_t device) {
+	BLE.handleScanEvent(device);
 }
 
 // Filters and forwards the bluenet scanned device event interrupt to the user callback
-void Ble::handleScanEvent(microapp_ble_dev_t dev) {
-	_bleDev = BleDevice(dev);
-	if (!filterScanEvent(_bleDev)) {
+void Ble::handleScanEvent(microapp_ble_device_t device) {
+	_bleDevice = BleDevice(device);
+	if (!filterScanEvent(_bleDevice)) {
 		return; // advertisement does not match filter, so do not call user callback
 	}
 	// now call the user registered callback
 	void (*callback_func)(BleDevice) = (void (*)(BleDevice)) _scannedDeviceCallback;
-	callback_func(_bleDev);
+	callback_func(_bleDevice);
 }
 
-bool Ble::filterScanEvent(BleDevice dev) {
+bool Ble::filterScanEvent(BleDevice device) {
 	switch (_activeFilter.type) {
 		case BleFilterAddress: {
-			// Serial.print("Scanned device MAC address "); Serial.println(dev.address().c_str());
-			if (memcmp(dev.rawData()->addr,_activeFilter.address.byte,MAC_ADDRESS_LENGTH) != 0) { // MAC address does not match filter
+			// Serial.print("Scanned device MAC address "); Serial.println(device.address().c_str());
+			if (memcmp(device.rawData()->addr,_activeFilter.address.byte,MAC_ADDRESS_LENGTH) != 0) { // MAC address does not match filter
 				return false;
 			}
 			break;
 		}
 		case BleFilterLocalName: {
-			if (!dev.hasLocalName()) { // no advertised local name
+			if (!device.hasLocalName()) { // no advertised local name
 				return false;
 			}
-			String deviceName = dev.localName();
+			String deviceName = device.localName();
 			if (deviceName.length() != _activeFilter.len) { // device name and filter name don't have same length
 				return false;
 			}
@@ -41,9 +41,9 @@ bool Ble::filterScanEvent(BleDevice dev) {
 		case BleFilterUuid: {
 			// TODO: refactor. Now filters ads of type service data with as first element the filtered uuid,
 			// which is not the same as what the official ArduinoBLE library does
-			microapp_ble_dev_t* rawDev = dev.rawData();
+			microapp_ble_device_t* rawDevice = device.rawData();
 			data_ptr_t serviceData;
-			if (!findAdvType(GapAdvType::ServiceData, rawDev->data, rawDev->dlen,&serviceData)) { // no service data in advertisement
+			if (!findAdvType(GapAdvType::ServiceData, rawDevice->data, rawDevice->dlen,&serviceData)) { // no service data in advertisement
 				return false;
 			}
 			uint16_t uuid = ((serviceData.data[1] << 8) | serviceData.data[0]);
@@ -59,7 +59,7 @@ bool Ble::filterScanEvent(BleDevice dev) {
 	return true;
 }
 
-void Ble::setEventHandler(BleEventType type, void (*isr)(BleDevice)) {
+void Ble::setEventHandler(BleEventType type, void (*callback)(BleDevice)) {
 	Serial.println("Setting event handler");
 	// TODO: do something with type. For now assume type is BleEventDeviceScanned
 	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
@@ -73,7 +73,7 @@ void Ble::setEventHandler(BleEventType type, void (*isr)(BleDevice)) {
 	sendMessage(&global_msg);
 
 	// Now register the user callback within the Ble object
-	_scannedDeviceCallback = (uintptr_t)(isr);
+	_scannedDeviceCallback = (uintptr_t)(callback);
 }
 
 bool Ble::scan(bool withDuplicates) {
