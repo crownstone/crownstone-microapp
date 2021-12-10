@@ -26,7 +26,8 @@ struct data_ptr_t {
 enum GapAdvType {
 	ShortenedLocalName = 0x08,
 	CompleteLocalName  = 0x09,
-	ServiceData        = 0x16
+	ServiceData        = 0x16,
+	ManufacturerSpecificData = 0xFF
 };
 
 /**

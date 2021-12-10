@@ -12,9 +12,9 @@ private:
 
 	BleDevice(){}; // default constructor
 
-	BleDevice(const microapp_ble_device_t & dev) : _device(dev) {}; // non-empty constructor
+	BleDevice(const microapp_ble_device_t & dev) : _device(dev) {_flags.flags.nonEmpty = true;}; // non-empty constructor
 
-	microapp_ble_device_t _device; // pointer to the raw advertisement data
+	microapp_ble_device_t _device; // the raw advertisement data
 
 	char _address[MAC_ADDRESS_STRING_LENGTH]; // 'stringified' mac address
 	uint8_t _addressLen = 0;
@@ -24,6 +24,7 @@ private:
 
 	union __attribute__((packed)) flags_t {
 		struct __attribute__((packed)) {
+			bool nonEmpty              : 1; // device is not empty
 			bool hasCompleteLocalName  : 1; // has a complete local name field
 			bool hasShortenedLocalName : 1; // has a shortened local name field
 			bool checkedLocalName      : 1; // _device has already been checked for local name field
@@ -34,6 +35,8 @@ private:
 	} _flags;
 
 public:
+	// return true if BleDevice is nontrivial, i.e. initialized from an actual advertisement
+	explicit operator bool() const {return _flags.flags.nonEmpty;}
 
 	/**
 	 * Get the raw advertisement data for device-specific advertisement processing.

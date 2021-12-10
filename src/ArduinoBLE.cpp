@@ -7,13 +7,14 @@ void handleScanEventWrapper(microapp_ble_device_t device) {
 
 // Filters and forwards the bluenet scanned device event interrupt to the user callback
 void Ble::handleScanEvent(microapp_ble_device_t device) {
-	_bleDevice = BleDevice(device);
-	if (!filterScanEvent(_bleDevice)) {
+	BleDevice newDevice = BleDevice(device);
+	if (!filterScanEvent(newDevice)) {
 		return; // advertisement does not match filter, so do not call user callback
 	}
+	_activeDevice = newDevice; // TODO: find a way to preserve cached info like device name if new ad is from same device as active device
 	// now call the user registered callback
 	void (*callback_func)(BleDevice) = (void (*)(BleDevice)) _scannedDeviceCallback;
-	callback_func(_bleDevice);
+	callback_func(newDevice);
 }
 
 bool Ble::filterScanEvent(BleDevice device) {
@@ -135,6 +136,10 @@ void Ble::stopScan() {
 	_isScanning = false;
 	// TODO: check for return message from bluenet
 	sendMessage(&global_msg);
+}
+
+BleDevice Ble::available() {
+	return _activeDevice;
 }
 
 BleFilter* Ble::getFilter() {

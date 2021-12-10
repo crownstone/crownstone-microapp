@@ -36,7 +36,7 @@ class Ble {
 private:
 	Ble(){};
 
-	BleDevice _bleDevice;
+	BleDevice _activeDevice;
 
 	BleFilter _activeFilter;
 
@@ -57,7 +57,7 @@ private:
 	/*
 	 * Compares the scanned device device against the filter and returns true upon a match
 	 */
-	bool filterScanEvent(BleDevice device);
+	bool filterScanEvent(BleDevice rawDevice);
 
 public:
 
@@ -121,6 +121,14 @@ public:
 	 */
 	void stopScan();
 
+	/**
+	 * Returns last scanned device which matched the filter
+	 *
+	 * @return                  BleDevice object representing the discovered device
+	 */
+	BleDevice available();
+
+protected:
 	/**
 	 * Get the currently set filter for scanned devices
 	 *

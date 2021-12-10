@@ -9,6 +9,7 @@ const char* myUuid = "181A";
 
 // callback for received peripheral advertisement
 void my_callback_func(BleDevice device) {
+
 	Serial.println("my_callback_func: ");
 	Serial.print("\trssi: "); Serial.println(device.rssi());
 	Serial.print("\taddress: "); Serial.println(device.address().c_str());
@@ -34,8 +35,13 @@ void my_callback_func(BleDevice device) {
 			Serial.print("\t\tBattery \%: "); Serial.println(battery_perc);
 		}
 		else {
-			Serial.println("Service data has incorrect size");
+			Serial.println("Incorrect service data size");
 		}
+	}
+
+	data_ptr_t manufacturerSpecificData;
+	if (findAdvType(GapAdvType::ManufacturerSpecificData,rawDevice->data,rawDevice->dlen,&manufacturerSpecificData)) {
+		Serial.println(manufacturerSpecificData.data,manufacturerSpecificData.len);
 	}
 }
 
@@ -56,6 +62,14 @@ void loop() {
 
 	// Say something every time we loop (which is every second)
 	Serial.println("Loop");
+
+	// See if we have something available...
+	BleDevice peripheral = BLE.available();
+	if (peripheral) {
+		Serial.println("loop BLE.available(): ");
+		Serial.print("\trssi: "); Serial.println(peripheral.rssi());
+		Serial.print("\taddress: "); Serial.println(peripheral.address().c_str());
+	}
 
 	if (scanToggle)
 	{
