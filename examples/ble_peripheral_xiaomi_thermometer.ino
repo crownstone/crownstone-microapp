@@ -35,13 +35,8 @@ void my_callback_func(BleDevice device) {
 			Serial.print("\t\tBattery \%: "); Serial.println(battery_perc);
 		}
 		else {
-			Serial.println("Incorrect service data size");
+			Serial.println("\tIncorrect service data size");
 		}
-	}
-
-	data_ptr_t manufacturerSpecificData;
-	if (findAdvType(GapAdvType::ManufacturerSpecificData,rawDevice->data,rawDevice->dlen,&manufacturerSpecificData)) {
-		Serial.println(manufacturerSpecificData.data,manufacturerSpecificData.len);
 	}
 }
 

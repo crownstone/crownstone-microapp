@@ -24,10 +24,12 @@ struct data_ptr_t {
 // GAP advertisement types, see
 // https://www.bluetooth.com/specifications/assigned-numbers/
 enum GapAdvType {
-	ShortenedLocalName = 0x08,
-	CompleteLocalName  = 0x09,
-	ServiceData        = 0x16,
-	ManufacturerSpecificData = 0xFF
+	CompleteList16BitServiceUuids  = 0x03,
+	CompleteList128BitServiceUuids = 0x07,
+	ShortenedLocalName             = 0x08,
+	CompleteLocalName              = 0x09,
+	ServiceData                    = 0x16,
+	ManufacturerSpecificData       = 0xFF
 };
 
 /**
