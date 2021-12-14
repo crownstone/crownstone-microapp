@@ -21,7 +21,7 @@ enum BleFilterType {
 // Stores the filter for filtering scanned BLE devices
 struct BleFilter {
 	BleFilterType type; // defines which property is currently being filtered on
-	MACaddress address;
+	MacAddress address;
 	char name[MAX_BLE_ADV_DATA_LENGTH]; // max length of name equals max advertisement length
 	uint16_t len; // length of the name field
 	uuid16_t uuid; // service data uuid

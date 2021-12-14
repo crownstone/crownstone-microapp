@@ -1,5 +1,55 @@
 #include <BleUtils.h>
 
+MacAddress::MacAddress(const uint8_t* mac) {
+	memcpy(_mac, mac, MAC_ADDRESS_LENGTH);
+	convertMacToString(_mac,_mac_str);
+	_initialized = true;
+}
+
+MacAddress::MacAddress(const char* mac_str) {
+	if (strlen(mac_str) != MAC_ADDRESS_STRING_LENGTH) {
+		return;
+	}
+	memcpy(_mac_str, mac_str, MAC_ADDRESS_STRING_LENGTH);
+	convertStringToMac(_mac_str,_mac);
+	_initialized = true;
+}
+
+void MacAddress::convertMacToString(const uint8_t* mac, char* mac_str) {
+	for (uint8_t i = 0; i < MAC_ADDRESS_LENGTH; i++) {
+		convertByteToTwoHexChars(mac[i], mac_str + 3 * i);
+		if (3 * i + 2 < MAC_ADDRESS_STRING_LENGTH) { // do not add colon after last byte
+			mac_str[3 * i + 2] = ':';
+		}
+	}
+}
+
+void MacAddress::convertStringToMac(const char* mac_str, uint8_t* mac) {
+	for (uint8_t i = 0; i < MAC_ADDRESS_LENGTH; i++) {
+		mac[i] = convertTwoHexCharsToByte(mac_str + 3 * i);
+	}
+}
+
+bool MacAddress::isInitialized() {
+	return _initialized;
+}
+
+String MacAddress::getString() {
+	if (!_initialized) {
+		return String("XX:XX:XX:XX:XX");
+	}
+	return String(_mac_str,MAC_ADDRESS_STRING_LENGTH);
+}
+
+uint8_t* MacAddress::getBytes() {
+	if (!_initialized) {
+		return nullptr;
+	}
+	return _mac;
+}
+
+
+
 // Convert a pair of chars to a byte, e.g. convert "A3" to 0xA3
 uint8_t convertTwoHexCharsToByte(const char* chars) {
 	uint8_t val[2] = {0, 0}; // actually two 4-bit values
@@ -33,30 +83,6 @@ void convertByteToTwoHexChars(uint8_t byte, char* res) {
 	}
 }
 
-// Convert from mac address string "aa:bb:cc:dd:ee:ff" to uint8_t array
-MACaddress convertStringToMac(const char* mac_str) {
-	// initialize return value
-	MACaddress mac = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-	uint8_t len = strlen(mac_str);
-	if (len != MAC_ADDRESS_STRING_LENGTH) {
-		return mac;  // input string not of correct size
-	}
-	for (uint8_t i = 0; i < MAC_ADDRESS_LENGTH; i++) {
-		mac.byte[i] = convertTwoHexCharsToByte(mac_str + 3 * i);
-	}
-	return mac;
-};
-
-void convertMacToString(MACaddress mac, char* res) {
-	for (uint8_t i = 0; i < MAC_ADDRESS_LENGTH; i++) {
-		convertByteToTwoHexChars(mac.byte[i], res + 3 * i);
-		if (3 * i + 2 < MAC_ADDRESS_STRING_LENGTH) { // do not add colon after last byte
-			res[3 * i + 2] = ':';
-		}
-	}
-	// replace last colon with a terminating character
-	res[MAC_ADDRESS_STRING_LENGTH] = 0;
-};
 
 uuid16_t convertStringToUuid(const char* uuid_str) {
 	uint8_t byte[2];
@@ -65,24 +91,4 @@ uuid16_t convertStringToUuid(const char* uuid_str) {
 	}
 	uuid16_t res = (byte[0] << 8) | (byte[1] & 0xFF);
 	return res;
-}
-
-bool findAdvType(GapAdvType type, uint8_t* advData, uint8_t advLen, data_ptr_t* foundData) {
-	uint8_t i = 0;
-	foundData->data = nullptr;
-	foundData->len = 0;
-	while (i < advLen-1) {
-		uint8_t fieldLen = advData[i];
-		uint8_t fieldType = advData[i+1];
-		if (fieldLen == 0 || i + 1 + fieldLen > advLen) {
-			return false;
-		}
-		if (fieldType == type) {
-			foundData->data = &advData[i+2];
-			foundData->len = fieldLen-1;
-			return true;
-		}
-		i += fieldLen+1;
-	}
-	return false;
 }

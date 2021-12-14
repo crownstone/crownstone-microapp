@@ -8,9 +8,9 @@ class String {
 	unsigned int  _len; // length of string
 
 	public:
-		String(char* str) {
+		String(const char* str) {
 			_len = strlen(str);
-			_str = str;
+			_str = (char*) str;
 		}
 
 		String(char* str, unsigned int len) {

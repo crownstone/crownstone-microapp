@@ -1,18 +1,21 @@
 #include <BleDevice.h>
 
+BleDevice::BleDevice(const microapp_ble_device_t & dev) {
+	_device = dev;
+	_address = MacAddress(_device.addr);
+	_flags.flags.nonEmpty = true;
+}
+
 microapp_ble_device_t* BleDevice::rawData() {
 	return &_device;
 }
 
 String BleDevice::address() {
-	if (_flags.flags.cachedAddress) { // if already cached address
-		return String(_address,MAC_ADDRESS_STRING_LENGTH);
+	if (_address.isInitialized()) { // if already cached address
+		return _address.getString();
 	}
-	MACaddress mac;
-	memcpy(mac.byte,_device.addr,MAC_ADDRESS_LENGTH);
-	convertMacToString(mac,_address);
-	_flags.flags.cachedAddress = true;
-	return String(_address,MAC_ADDRESS_STRING_LENGTH);
+	_address = MacAddress(_device.addr);
+	return _address.getString();
 }
 
 int8_t BleDevice::rssi() {
@@ -23,8 +26,8 @@ bool BleDevice::hasLocalName() {
 	if (!_flags.flags.checkedLocalName) { // if not yet checked
 		data_ptr_t cln;
 		data_ptr_t sln;
-		_flags.flags.hasCompleteLocalName = findAdvType(GapAdvType::CompleteLocalName,_device.data,_device.dlen,&cln);
-		_flags.flags.hasShortenedLocalName = findAdvType(GapAdvType::ShortenedLocalName,_device.data,_device.dlen,&sln);
+		_flags.flags.hasCompleteLocalName = findAdvertisementDataType(GapAdvType::CompleteLocalName,&cln);
+		_flags.flags.hasShortenedLocalName = findAdvertisementDataType(GapAdvType::ShortenedLocalName,&sln);
 		_flags.flags.checkedLocalName = true;
 	}
 	return (_flags.flags.hasCompleteLocalName || _flags.flags.hasShortenedLocalName); // either complete local name or shortened local name
@@ -43,13 +46,33 @@ String BleDevice::localName() {
 	// if local name field available but not yet cached, get it from _device.data
 	data_ptr_t ln;
 	if (_flags.flags.hasCompleteLocalName) {
-		findAdvType(GapAdvType::CompleteLocalName,_device.data,_device.dlen,&ln);
+		findAdvertisementDataType(GapAdvType::CompleteLocalName,&ln);
 	}
 	else { // hasShortenedLocalName
-		findAdvType(GapAdvType::ShortenedLocalName,_device.data,_device.dlen,&ln);
+		findAdvertisementDataType(GapAdvType::ShortenedLocalName,&ln);
 	}
 	_localNameLen = ln.len;
 	memcpy(_localName,ln.data,_localNameLen);
 	_flags.flags.cachedLocalName = true;
 	return String(_localName,_localNameLen);
+}
+
+bool BleDevice::findAdvertisementDataType(GapAdvType type, data_ptr_t* foundData) {
+	uint8_t i = 0;
+	foundData->data = nullptr;
+	foundData->len = 0;
+	while (i < _device.dlen-1) {
+		uint8_t fieldLen = _device.data[i];
+		uint8_t fieldType = _device.data[i+1];
+		if (fieldLen == 0 || i + 1 + fieldLen > _device.dlen) {
+			return false;
+		}
+		if (fieldType == type) {
+			foundData->data = &_device.data[i+2];
+			foundData->len = fieldLen-1;
+			return true;
+		}
+		i += fieldLen+1;
+	}
+	return false;
 }

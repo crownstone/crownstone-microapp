@@ -20,9 +20,8 @@ void my_callback_func(BleDevice device) {
 	}
 
 	// parse service data of Xiaomi device advertisement if available
-	microapp_ble_device_t* rawDevice = device.rawData(); // we need to access the raw advertisement data since service data protocol is device-specific
 	data_ptr_t serviceData;
-	if (findAdvType(GapAdvType::ServiceData,rawDevice->data,rawDevice->dlen,&serviceData)) {
+	if (device.findAdvertisementDataType(GapAdvType::ServiceData,&serviceData)) {
 		if (serviceData.len == 15) { // service data length of the Xiaomi service data advertisements
 			Serial.println("\tService data");
 			uint8_t UUID[2] = {serviceData.data[1], serviceData.data[0]};

@@ -21,7 +21,8 @@ bool Ble::filterScanEvent(BleDevice device) {
 	switch (_activeFilter.type) {
 		case BleFilterAddress: {
 			// Serial.print("Scanned device MAC address "); Serial.println(device.address().c_str());
-			if (memcmp(device.rawData()->addr,_activeFilter.address.byte,MAC_ADDRESS_LENGTH) != 0) { // MAC address does not match filter
+			// Serial.print("Filter MAC address "); Serial.println(_activeFilter.address.getString().c_str());
+			if (device._address != _activeFilter.address) { // MAC address does not match filter
 				return false;
 			}
 			break;
@@ -42,9 +43,8 @@ bool Ble::filterScanEvent(BleDevice device) {
 		case BleFilterUuid: {
 			// TODO: refactor. Now filters ads of type service data with as first element the filtered uuid,
 			// which is not the same as what the official ArduinoBLE library does
-			microapp_ble_device_t* rawDevice = device.rawData();
 			data_ptr_t serviceData;
-			if (!findAdvType(GapAdvType::ServiceData, rawDevice->data, rawDevice->dlen,&serviceData)) { // no service data in advertisement
+			if (!device.findAdvertisementDataType(GapAdvType::ServiceData,&serviceData)) { // no service data in advertisement
 				return false;
 			}
 			uint16_t uuid = ((serviceData.data[1] << 8) | serviceData.data[0]);
@@ -106,7 +106,7 @@ bool Ble::scanForName(const char* name, bool withDuplicates) {
 
 bool Ble::scanForAddress(const char* address, bool withDuplicates) {
 	_activeFilter.type = BleFilterAddress;
-	_activeFilter.address = convertStringToMac(address);
+	_activeFilter.address = MacAddress(address);
 	// TODO: do something with withDuplicates argument
 	return scan(withDuplicates);
 }
