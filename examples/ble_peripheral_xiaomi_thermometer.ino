@@ -59,10 +59,20 @@ void loop() {
 
 	// See if we have something available...
 	BleDevice peripheral = BLE.available();
-	if (peripheral) {
-		Serial.println("loop BLE.available(): ");
-		Serial.print("\trssi: "); Serial.println(peripheral.rssi());
-		Serial.print("\taddress: "); Serial.println(peripheral.address().c_str());
+	// if (peripheral) {
+	// 	Serial.println("loop BLE.available(): ");
+	// 	Serial.print("\trssi: "); Serial.println(peripheral.rssi());
+	// 	Serial.print("\taddress: "); Serial.println(peripheral.address().c_str());
+	// }
+
+	if (peripheral && !peripheral.connected()) {
+		Serial.println("Connecting...");
+		if (peripheral.connect()) {
+			Serial.println("Connected!");
+		}
+		else {
+			Serial.println("Failed to connect!");
+		}
 	}
 
 	if (scanToggle)

@@ -6,10 +6,6 @@ BleDevice::BleDevice(const microapp_ble_device_t & dev) {
 	_flags.flags.nonEmpty = true;
 }
 
-microapp_ble_device_t* BleDevice::rawData() {
-	return &_device;
-}
-
 String BleDevice::address() {
 	if (_address.isInitialized()) { // if already cached address
 		return _address.getString();
@@ -55,6 +51,26 @@ String BleDevice::localName() {
 	memcpy(_localName,ln.data,_localNameLen);
 	_flags.flags.cachedLocalName = true;
 	return String(_localName,_localNameLen);
+}
+
+bool BleDevice::connect() {
+	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
+	ble_cmd->cmd = CS_MICROAPP_COMMAND_BLE;
+	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_CONNECT;
+	memcpy(ble_cmd->address,_address.getBytes(),MAC_ADDRESS_LENGTH);
+
+	global_msg.length = sizeof(microapp_ble_cmd_t);
+
+	int res = (sendMessage(&global_msg) == 0);
+
+	if (res == 0) {
+		_flags.flags.connected = true;
+	}
+	return res;
+}
+
+bool BleDevice::connected() {
+	return _flags.flags.connected;
 }
 
 bool BleDevice::findAdvertisementDataType(GapAdvType type, data_ptr_t* foundData) {

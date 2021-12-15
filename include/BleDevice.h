@@ -45,6 +45,7 @@ private:
 			bool hasShortenedLocalName : 1; // has a shortened local name field
 			bool checkedLocalName      : 1; // _device has already been checked for local name field
 			bool cachedLocalName       : 1; // local name is cached in _localName
+			bool connected             : 1; // whether peripheral device is connected
 		} flags;
 		uint8_t asInt = 0; // initialize to zero
 	} _flags;
@@ -52,13 +53,6 @@ private:
 public:
 	// return true if BleDevice is nontrivial, i.e. initialized from an actual advertisement
 	explicit operator bool() const {return _flags.flags.nonEmpty;}
-
-	/**
-	 * Get the raw advertisement data for device-specific advertisement processing.
-	 *
-	 * @return        A pointer to the microapp_ble_device_t object.
-	 */
-	microapp_ble_device_t* rawData();
 
 	/**
 	 * Get device address of the last scanned advertisement which matched the filter.
@@ -89,6 +83,9 @@ public:
 	 *              Returns empty string if the device does not advertise a local name.
 	 */
 	String localName();
+
+	bool connect();
+	bool connected();
 
 	/**
 	 * Tries to find an ad of specified GAP ad data type. and if found returns true and a pointer to its location.
