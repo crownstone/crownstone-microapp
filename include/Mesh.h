@@ -1,9 +1,6 @@
 #pragma once
 
-// #include <cstring>
-// #include <string.h>
 #include <microapp.h>
-// #include <stdio.h>
 
 class Mesh{
 public:

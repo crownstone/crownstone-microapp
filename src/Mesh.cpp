@@ -1,6 +1,6 @@
 #include <Mesh.h>
 
-uint8_t CMD_SIZE = 1;
+static const uint8_t CMD_SIZE = 1;
 uint8_t mesh_header_size = sizeof(microapp_mesh_header_t);
 
 void Mesh :: sendMeshMsg(uint8_t * msg, uint8_t msg_size, uint8_t stoneId){

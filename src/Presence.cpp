@@ -1,6 +1,6 @@
 #include <Presence.h>
 
-#define MAX_ROOMS 64
+static const uint8_t MAX_ROOMS 64
 
 uint64_t Presence::getPresence(uint8_t profileId){
 
