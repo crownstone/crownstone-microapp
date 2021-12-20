@@ -1,11 +1,11 @@
 #include <Mesh.h>
 
 static const uint8_t CMD_SIZE = 1;
-uint8_t mesh_header_size      = sizeof(microapp_mesh_header_t);
+uint8_t meshHeaderSize      = sizeof(microapp_mesh_header_t);
 
-void Mesh ::sendMeshMsg(uint8_t* msg, uint8_t msg_size, uint8_t stoneId) {
+void Mesh::sendMeshMsg(uint8_t* msg, uint8_t msg_size, uint8_t stoneId) {
 
-	uint8_t mesh_header_send_size = sizeof(microapp_mesh_send_header_t);
+	uint8_t meshHeaderSendSize = sizeof(microapp_mesh_send_header_t);
 
 	global_msg.payload[0] = CS_MICROAPP_COMMAND_MESH;
 

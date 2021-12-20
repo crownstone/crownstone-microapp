@@ -10,7 +10,7 @@ void setup() {
 void loop() {
 
 	// Read Mesh
-	if(mesh.available()){
+	if (mesh.available()) {
 		uint8_t * msg_ptr = nullptr;
 		uint8_t stone_id = 0;
 		uint8_t size = mesh.readMeshMsg(&msg_ptr, &stone_id); 
@@ -19,7 +19,7 @@ void loop() {
 		Serial.print((short)stone_id);
 		Serial.print(" gave responce : ");
 
-		while(size-- != 0){
+		while (size-- != 0) {
 			Serial.print((short)*msg_ptr++);
 		}
 		Serial.println("");
