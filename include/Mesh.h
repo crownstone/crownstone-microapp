@@ -22,6 +22,10 @@ public:
 	 */
 	uint8_t readMeshMsg(uint8_t** msg, uint8_t* stoneId);
 
-	// Check if message available to read
+	/**
+	 * Check if a new message is avalable to read with the readMeshMsg function.
+	 *
+	 * @return                True if new message available, False if not.
+	 */
 	bool available();
 };

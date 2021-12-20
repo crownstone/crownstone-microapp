@@ -4,5 +4,10 @@
 
 class PowerUsage {
 public:
-	int32_t get_usage_in_milli_watt();
+	/**
+	 * Returns the powerusage in milliwatts.
+	 *
+	 * @return                Powerusage in milliwatts.
+	 */
+	int32_t getPowerUsageInMilliWatts();
 };

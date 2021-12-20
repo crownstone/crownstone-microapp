@@ -1,8 +1,6 @@
 #include <PowerUsage.h>
 
-int32_t PowerUsage::get_usage_in_milli_watt() {
-
-	// microapp_power_usage_t power_usage_cmd = {0};
+int32_t PowerUsage::getPowerUsageInMilliWatts() {
 
 	global_msg.payload[0] = CS_MICROAPP_COMMAND_POWER_USAGE;
 
