@@ -2,8 +2,7 @@
 
 #include <microapp.h>
 
-
-class PowerUsage{
+class PowerUsage {
 public:
 	int32_t get_usage_in_milli_watt();
 };
