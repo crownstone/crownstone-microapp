@@ -5,10 +5,11 @@
 class Presence {
 public:
 	/**
-	 * Check if profile is present in the sphere.
+	 * Get a bitmask containing rooms for a single profile with ID 
 	 *
 	 * @param[out] profileId  ID of the user profile we want to check.
-	 * @return                64 byte Intiger with a bit field of available rooms, in which a profile is present or not.
+	 * @return                64 bit bitmask for a single profile. If the Nth bit is set, the profile is present in the
+	 * Nth room. If bit 0 is set, the profile is present in sphere.
 	 */
 	uint64_t getPresence(uint8_t profileId);
 
