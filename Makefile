@@ -22,10 +22,16 @@ clean:
 init:
 	@echo 'Create build directory'
 	@mkdir -p $(BUILD_PATH)
+	@rm -f include/microapp_header_symbols.ld
 
 include/microapp_header_symbols.ld: $(TARGET).bin.tmp
 	@echo "Use python script to generate file with valid header symbols"
 	@scripts/microapp_make.py -i $^ $@
+
+.PHONY:
+include/microapp_header_dummy_symbols.ld:
+	@echo "Use python script to generate file with dummy values"
+	@scripts/microapp_make.py include/microapp_header_symbols.ld
 
 include/microapp_target_symbols.ld: $(TARGET_CONFIG_FILE)
 	@echo 'This script requires the presence of "bc" on the command-line'
@@ -36,18 +42,15 @@ include/microapp_target_symbols.ld: $(TARGET_CONFIG_FILE)
 	@echo "RAM_END = $(RAM_END);" >> $@
 
 include/microapp_symbols.ld: include/microapp_symbols.ld.in
-	@echo "Use python script to generate file with dummy values"
-	@scripts/microapp_make.py include/microapp_header_symbols.ld
 	@echo "Generate linker symbols using C header files (using the compiler)"
 	@$(CC) -CC -E -P -x c -Iinclude $^ -o $@
 	@echo "File $@ now up to date"
 
-$(TARGET).elf.tmp.deps: include/microapp_symbols.ld include/microapp_target_symbols.ld
+$(TARGET).elf.tmp.deps: include/microapp_header_dummy_symbols.ld include/microapp_symbols.ld include/microapp_target_symbols.ld
 	@echo "Dependencies for $(TARGET).elf.tmp fulfilled"
 
 $(TARGET).elf.tmp: include/startup.S src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c
 	@echo "Compile without firmware header"
-	@echo $(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
 	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
 
 .ALWAYS:
