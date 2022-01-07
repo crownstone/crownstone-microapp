@@ -12,11 +12,15 @@ extern "C" {
 #endif
 
 void goyield(uint16_t prefix) {
-	global_msg.payload[0] = CS_MICROAPP_COMMAND_DELAY;
 
-	global_msg.payload[1] = 0xFF & (prefix >> 8);
-	global_msg.payload[2] = 0xFF & prefix;
-	global_msg.length = 3;
+	microapp_delay_cmd_t *delay_cmd = (microapp_delay_cmd_t*)&global_msg;
+
+	// this is not anymore how it works...
+	delay_cmd->cmd = CS_MICROAPP_COMMAND_DELAY;
+	delay_cmd->period = prefix;
+//	delay_cmd->coargs = (uintptr_t)_coroutine_args;
+
+	global_msg.length = sizeof(microapp_delay_cmd_t);
 
 	sendMessage(&global_msg);
 }

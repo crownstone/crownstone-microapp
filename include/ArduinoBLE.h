@@ -1,45 +1,67 @@
 #include <Serial.h>
 #include <microapp.h>
+#include <BleUtils.h>
+#include <BleDevice.h>
 
-enum BleEventHandlerType {
-    BleEventDeviceScanned,
-    BleEventConnected,
-    BleEventDisconnected
+// Types of BLE event for which event handlers can be set
+enum BleEventType {
+	BleEventDeviceScanned,
+	BleEventConnected,
+	BleEventDisconnected
 };
 
+// Types of filters which can be used to filter scanned BLE devices
 enum BleFilterType {
-    BleFilterNone = 0, // default
-    BleFilterAddress,
-    BleFilterLocalName,
-    BleFilterServiceData
+	BleFilterNone = 0, // default
+	BleFilterAddress,
+	BleFilterLocalName,
+	BleFilterUuid
 };
 
-typedef struct {
-    uint8_t byte[MAC_ADDRESS_LENGTH];
-} MACaddress;
+// Stores the filter for filtering scanned BLE devices
+struct BleFilter {
+	BleFilterType type; // defines which property is currently being filtered on
+	MacAddress address;
+	char name[MAX_BLE_ADV_DATA_LENGTH]; // max length of name equals max advertisement length
+	uint16_t len; // length of the name field
+	uuid16_t uuid; // service data uuid
+};
 
-typedef struct {
-    BleFilterType filterType;
-    MACaddress address;
-    const char* completeLocalName;
-    uint16_t uuid;
-} BleFilter;
-
-class Ble 
-{
+/**
+ * Main class for scanning, connecting and handling Bluetooth Low Energy devices
+ *
+ * Singleton class which can be called by the user via the macro BLE.
+ */
+class Ble {
 private:
-    Ble(){};
+	Ble(){};
 
-    BleFilter _filter;
+	BleDevice _activeDevice;
 
-    bool _isScanning = false;
+	BleFilter _activeFilter;
+
+	bool _isScanning = false;
+
+	uintptr_t _scannedDeviceCallback;
+
+	/*
+	 * Add handleScanEventWrapper as a friend so it can access private function handleScanEvent of Ble
+	 */
+	friend void handleScanEventWrapper(microapp_ble_device_t device);
+
+	/*
+	 * Handler for scanned devices. Called from bluenet via handleScanEventWrapper upon scanned device events if scanning
+	 */
+	void handleScanEvent(microapp_ble_device_t device);
+
+	/*
+	 * Compares the scanned device device against the filter and returns true upon a match
+	 */
+	bool filterScanEvent(BleDevice rawDevice);
 
 public:
 
-    uint32_t _scanned_device_callback; // TODO: make this not accessible to users while still able to be called in handleEvent()
-
-    static Ble & getInstance()
-	{
+	static Ble & getInstance() {
 		// Guaranteed to be destroyed.
 		static Ble instance;
 
@@ -47,19 +69,72 @@ public:
 		return instance;
 	}
 
-    void setEventHandler(BleEventHandlerType type, void (*isr)(ble_dev_t)); // registers a callback function for some event triggered within bluenet
+	/**
+	 * Registers a callback function for scanned device event triggered within bluenet
+	 *
+	 * @param[in] eventType   Type of event to set callback for
+	 * @param[in] callback    The callback function to call upon a trigger
+	 */
+	void setEventHandler(BleEventType eventType, void (*callback)(BleDevice));
 
-    bool scan(); // starts scanning for advertisements (actually starts forwarding bluenet advertisement events to registered microapp callback function in setHandler)
+	/**
+	 * Sends command to bluenet to call registered microapp callback function upon receiving advertisements
+	 *
+	 * @param[in] withDuplicates  If true, returns duplicate advertisements. (Not implemented)
+	 *
+	 * @return                    True if successful
+	 */
+	bool scan(bool withDuplicates = false);
 
-    void stopScan(); // stops calling the registered microapp callback upon scanned bluenet advertisements
+	/**
+	 * Registers filter with name name and calls scan()
+	 *
+	 * @param[in] name            String containing the local name to filter on, advertised as either the complete or shortened local name
+	 * @param[in] withDuplicates  If true, returns duplicate advertisements. (Not implemented)
+	 *
+	 * @return                    True if successful
+	 */
+	bool scanForName(const char* name, bool withDuplicates = false);
 
-    bool isScanning();
+	/**
+	 * Registers filter with MAC address address and calls scan()
+	 *
+	 * @param[in] address         MAC address string of the format "AA:BB:CC:DD:EE:FF" to filter on, either lowercase or uppercase letters.
+	 * @param[in] withDuplicates  If true, returns duplicate advertisements. (Not implemented)
+	 *
+	 * @return                    True if successful
+	 */
+	bool scanForAddress(const char* address, bool withDuplicates = false);
 
-    void addFilter(BleFilter filter);
+	/**
+	 * Registers filter with service data uuid uuid and calls scan()
+	 *
+	 * @param[in] uuid            16-bit UUID string, e.g. "180D" (Heart Rate), either lowercase or uppercase letters. See https://www.bluetooth.com/specifications/assigned-numbers/
+	 * @param[in] withDuplicates  If true, returns duplicate advertisements. (Not implemented)
+	 *
+	 * @return                    True if successful
+	 */
+	bool scanForUuid(const char* uuid, bool withDuplicates = false);
 
-    void removeFilter();
+	/**
+	 * Sends command to bluenet to stop calling registered microapp callback function upon receiving advertisements
+	 */
+	void stopScan();
 
-    BleFilter getFilter();
+	/**
+	 * Returns last scanned device which matched the filter
+	 *
+	 * @return                  BleDevice object representing the discovered device
+	 */
+	BleDevice available();
+
+protected:
+	/**
+	 * Get the currently set filter for scanned devices
+	 *
+	 * @return                 A pointer to the BleFilter object
+	 */
+	BleFilter* getFilter();
 
 };
 

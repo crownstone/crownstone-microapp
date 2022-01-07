@@ -16,7 +16,7 @@ extern "C" {
 void setup();
 
 //
-// The loop function will be performed every so many milliseconds. Make sure your loop returns. If it has a while 
+// The loop function will be performed every so many milliseconds. Make sure your loop returns. If it has a while
 // loop that does not return, it will be checked as invalid in the Crownstone code. In the worst case, it can brick
 // your device. The same is true if processing is taking too long.
 //
@@ -28,7 +28,7 @@ void loop();
 void delay(uint16_t delay_ms);
 
 //
-// A bunch of functions that are mainly useful in either development mode, on a Crownstone that is embedded 
+// A bunch of functions that are mainly useful in either development mode, on a Crownstone that is embedded
 // electronically, etc., not so much for built-in Crownstones. It can also be the case that these functions are
 // made dummies to prevent mistakes. For example, setting the relay as an INPUT rather than an OUTPUT.
 //

@@ -89,7 +89,7 @@ void loop() {
 
 		// See protocol definition for other options.
 		digitalWrite(1, 0);
-		
+
 		Serial.println("Done...");
 	}
 	// Show counter.
