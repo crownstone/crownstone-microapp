@@ -5,10 +5,10 @@
 ###############################################################################
 
 # Path to the gcc arm none eabi compiler (do not use another one).
-GCC_PATH=/home/m/doc/sch/hr5/crown/code/bluenet/tools/gcc_arm_none_eabi/bin
+GCC_PATH=$(HOME)/workspace/bluenet/tools/gcc_arm_none_eabi/bin
 
 # The path to the bluenet repository
-BLUENET_PATH=/home/m/doc/sch/hr5/crown/code/bluenet
+BLUENET_PATH=$(HOME)/workspace/bluenet
 
 ###############################################################################
 # The variables following this section probably do not need to be changed.
