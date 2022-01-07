@@ -7,6 +7,18 @@
 extern "C" {
 #endif
 
+struct message_t {
+	uint8_t payload[20];
+	uint16_t length;
+};
+
+// Create shortened typedefs (it is obvious we are within the microapp here)
+
+typedef microapp_ble_cmd_t ble_cmd_t;
+typedef microapp_twi_cmd_t twi_cmd_t;
+typedef microapp_pin_cmd_t pin_cmd_t;
+typedef microapp_ble_device_t ble_dev_t;
+
 #define OUTPUT               CS_MICROAPP_COMMAND_PIN_WRITE
 #define INPUT                CS_MICROAPP_COMMAND_PIN_READ
 #define TOGGLE               CS_MICROAPP_COMMAND_PIN_TOGGLE

@@ -38,6 +38,11 @@ bool memcmp(const void *bufA, const void *bufB, uint8_t len)
 message_t global_msg;
 
 /*
+ * A global object for ipc data as well.
+ */
+bluenet2microapp_ipcdata_t ipc_data;
+
+/*
  * Send the actual message.
  */
 int sendMessage(message_t *msg) {
@@ -48,43 +53,32 @@ int sendMessage(message_t *msg) {
 		return result;
 	}
 
-	// QUESTION: can we cache the callback function, so we don't have to get it from ipc ram data every time?
+	// If valid is set to 1, we assume cached values are fine, otherwise load them.
+	if(!ipc_data.valid) {
+		uint8_t rd_size = 0;
+		uint8_t ret_code = 
+			getRamData(IPC_INDEX_CROWNSTONE_APP, (uint8_t*)&ipc_data, sizeof(bluenet2microapp_ipcdata_t), &rd_size);
 
-	// Clear buffer.
-	// QUESTION: why does it have to be set to zero? 
-	uint8_t buf[BLUENET_IPC_RAM_DATA_ITEM_SIZE];
-	for (int i = 0; i < BLUENET_IPC_RAM_DATA_ITEM_SIZE; ++i) {
-		buf[i] = 0;
-	}
-
-	// Write buffer with ram data.
-	uint8_t rd_size = 0;
-	uint8_t ret_code = getRamData(IPC_INDEX_CROWNSTONE_APP, buf, BLUENET_IPC_RAM_DATA_ITEM_SIZE, &rd_size);
-
-	// Check if the (right) struct exists.
-	// QUESTION: can we do this check before the getRamData call?
-	bluenet_ipc_ram_data_item_t *ramStruct = getRamStruct(IPC_INDEX_MICROAPP);
-	if (!ramStruct) {
-		return result;
-	}
-
-	// Obtain callback function from the ram data.
-	uintptr_t _callback = 0;
-	if (ret_code == IPC_RET_SUCCESS) {
-		uint8_t protocol = buf[0];
-		// Only accept protocol version 0.
-		if (protocol == 0) {
-			uint8_t offset = 1;
-			for (int i = 0; i < 4; ++i) {
-				_callback = _callback | ( (uintptr_t)(buf[i+offset]) << (i*8));
-			}
+		if (ret_code != 0) {
+			return result;
 		}
+
+		if (ipc_data.length != sizeof(bluenet2microapp_ipcdata_t)) {
+			return result;
+		}
+
+		if(ipc_data.protocol != 1) {
+			return result;
+		}
+
+		if (!ipc_data.microapp_callback) {
+			return result;
+		}
+		ipc_data.valid = true;
 	}
 
-	// The actual callback.
-	if (_callback) {
-		int (*callback_func)(char*,uint16_t) = (int (*)(char*,uint16_t)) _callback;
-		result = callback_func((char*)msg->payload, msg->length);
-	}
+	// The actual callback
+	int (*callback_func)(uint8_t*,uint16_t) = (int (*)(uint8_t*,uint16_t)) ipc_data.microapp_callback;
+	result = callback_func(msg->payload, msg->length);
 	return result;
 }

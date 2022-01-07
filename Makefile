@@ -1,5 +1,9 @@
 #!/bin/make
 
+# Adjust target config file for nrf52832 vs nrf52840
+TARGET_CONFIG_FILE=target_nrf52840.mk
+
+include $(TARGET_CONFIG_FILE)
 include config.mk
 -include private.mk
 
@@ -7,6 +11,7 @@ MAIN_SYMBOL=dummy_main
 SETUP_SYMBOL=setup
 LOOP_SYMBOL=loop
 
+# First initialize, then create .hex file, then .bin file and file end with info
 all: init $(TARGET).hex $(TARGET).bin $(TARGET).info
 	@echo "Result: $(TARGET).hex (and $(TARGET).bin)"
 
@@ -15,42 +20,66 @@ clean:
 	@echo "Cleaned build directory"
 
 init:
+	@echo 'Create build directory'
 	@mkdir -p $(BUILD_PATH)
 
-$(TARGET).elf.tmp: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c
-	@echo "Compile without firmware header"
+include/microapp_header_symbols.ld: $(TARGET).bin.tmp
+	@echo "Use python script to generate file with valid header symbols"
+	@scripts/microapp_make.py -i $^ $@
+
+include/microapp_target_symbols.ld: $(TARGET_CONFIG_FILE)
+	@echo 'This script requires the presence of "bc" on the command-line'
+	@echo 'Generate target symbols (from .mk file to .ld file)'
+	@echo '/* Auto-generated file */' > $@
+	@echo "APPLICATION_START_ADDRESS = $(START_ADDRESS);" >> $@
+	@echo '' >> $@
+	@echo "RAM_END = $(RAM_END);" >> $@
+
+include/microapp_symbols.ld: include/microapp_symbols.ld.in
+	@echo "Use python script to generate file with dummy values"
 	@scripts/microapp_make.py include/microapp_header_symbols.ld
-	@$(CC) -CC -E -P -x c -Iinclude include/microapp_symbols.ld.in -o include/microapp_symbols.ld
+	@echo "Generate linker symbols using C header files (using the compiler)"
+	@$(CC) -CC -E -P -x c -Iinclude $^ -o $@
+	@echo "File $@ now up to date"
+
+$(TARGET).elf.tmp.deps: include/microapp_symbols.ld include/microapp_target_symbols.ld
+	@echo "Dependencies for $(TARGET).elf.tmp fulfilled"
+
+$(TARGET).elf.tmp: include/startup.S src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c
+	@echo "Compile without firmware header"
+	@echo $(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
 	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
 
-$(TARGET).elf: src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c include/microapp_header_symbols.ld
+.ALWAYS:
+$(TARGET).elf.deps: include/microapp_header_symbols.ld
+	@echo "Run scripts"
+
+$(TARGET).elf: include/startup.S src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c
 	@echo "Compile with firmware header"
 	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
 
 $(TARGET).c: $(TARGET_NAME).ino
-	@echo "Get updated ino file"
+	@echo "Script from .ino file to .c file (just adding Arduino.h header)"
 	@echo '#include <Arduino.h>' > $(TARGET).c
 	@cat $(TARGET_NAME).ino >> $(TARGET).c
 
-$(TARGET).hex: $(TARGET).elf
-	@echo "Create hex file"
-	@$(OBJCOPY) -O ihex $^ $@
+$(TARGET).hex: $(TARGET).elf.deps $(TARGET).elf
+	@echo "Create hex file from elf file"
+	@$(OBJCOPY) -O ihex $(TARGET).elf $@
 
-include/microapp_header_symbols.ld: $(TARGET).bin.tmp
-	@scripts/microapp_make.py -i $^ $@
-
-$(TARGET).bin.tmp: $(TARGET).elf.tmp
-	@echo "Create temp bin file"
-	@$(OBJCOPY) -O binary $^ $@
+$(TARGET).bin.tmp: $(TARGET).elf.tmp.deps $(TARGET).elf.tmp
+	@echo "Create temporary bin file from temporary elf file"
+	@$(OBJCOPY) -O binary $(TARGET).elf.tmp $@
 
 $(TARGET).bin: $(TARGET).elf
-	@echo "Create bin file"
-	@$(OBJCOPY) -O binary $^ $@
+	@echo "Create final binary file"
+	@$(OBJCOPY) -O binary $(TARGET).elf $@
 
 $(TARGET).info:
 	@echo "$(shell cat include/microapp_header_symbols.ld)"
 
 flash: all
+	echo nrfjprog -f nrf52 --program $(TARGET).hex --sectorerase
 	nrfjprog -f nrf52 --program $(TARGET).hex --sectorerase
 
 read:
@@ -66,7 +95,9 @@ compare: dump download
 	meld $(TARGET).txt $(BUILD_PATH)/download.txt
 
 erase:
-	nrfjprog --erasepage 0x69000-0x6B000
+	$(eval STOP_ADDRESS_WITHOUT_PREFIX=$(shell echo 'obase=16;ibase=16;$(START_ADDRESS_WITHOUT_PREFIX)+$(MICROAPP_PAGES)*1000' | bc))
+	echo nrfjprog --erasepage $(START_ADDRESS)-0x$(STOP_ADDRESS_WITHOUT_PREFIX)
+	nrfjprog --erasepage $(START_ADDRESS)-0x$(STOP_ADDRESS_WITHOUT_PREFIX)
 
 reset:
 	nrfjprog --reset

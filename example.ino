@@ -49,7 +49,7 @@ void setup() {
 //
 // A dummy loop function.
 //
-int loop() {
+void loop() {
 	// We are able to use static variables.
 	counter++;
 
@@ -98,6 +98,4 @@ int loop() {
 	// Let's also advertise the latest counter value in the service data.
 	serviceDataBuf[2] = counter;
 	SerialServiceData.write(serviceDataBuf, sizeof(serviceDataBuf));
-
-	return counter;
 }

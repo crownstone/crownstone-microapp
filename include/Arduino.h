@@ -20,7 +20,7 @@ void setup();
 // loop that does not return, it will be checked as invalid in the Crownstone code. In the worst case, it can brick
 // your device. The same is true if processing is taking too long.
 //
-int loop();
+void loop();
 
 //
 // A delay in ms. Hence 1000 means a delay of one second.

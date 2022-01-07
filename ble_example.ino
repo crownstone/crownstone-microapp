@@ -56,6 +56,7 @@ void setup() {
 
     // Start scanning for BLE ads
     BLE.scan();
+
 }
 
 // The Arduino loop function.
@@ -63,6 +64,8 @@ int loop() {
 
 	// Say something every time we loop (which is every second)
 	Serial.println("Loop");
+	
+	scanToggle = BLE.isScanning();
 
     if (scanToggle)
     {

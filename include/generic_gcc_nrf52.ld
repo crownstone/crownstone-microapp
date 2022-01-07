@@ -1,12 +1,13 @@
 /* Linker script to configure memory regions. */
 
-/* This is a slightly adjusted copy from the file: 
- *    $NRF5_DIR/config/nrf52832/armgcc/generic_gcc_nrf52.ld 
+/* This is a slightly adjusted copy from the file:
+ *    $NRF5_DIR/config/nrf52832/armgcc/generic_gcc_nrf52.ld
  */
 
 SEARCH_DIR(.)
 GROUP(-lgcc -lc -lnosys)
 
+INCLUDE "microapp_target_symbols.ld"
 INCLUDE "nrf_symbols.ld"
 
 MEMORY
