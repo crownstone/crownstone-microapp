@@ -29,9 +29,12 @@ STRIP=$(GCC_PATH)/arm-none-eabi-strip
 BUILD_PATH=build
 
 # The target name
-TARGET_NAME=example
+TARGET_NAME=basic
 
-# The target itself (including build directory)
+# The target source file
+TARGET_SOURCE=examples/$(TARGET_NAME).ino
+
+# The build target (including build directory)
 TARGET=$(BUILD_PATH)/$(TARGET_NAME)
 
 # Number of pages

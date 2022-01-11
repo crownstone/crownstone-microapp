@@ -44,6 +44,10 @@ void setup() {
 	// Set interrupt handler
 	pinMode(BUTTON1_INDEX, INPUT_PULLUP);
 	attachInterrupt(digitalPinToInterrupt(BUTTON1_INDEX), blink, CHANGE);
+
+	Serial.write("Hello ");
+	Serial.write("world");
+	Serial.println("! ");
 }
 
 //
@@ -63,7 +67,7 @@ void loop() {
 		Wire.write(5);
 		Wire.endTransmission();
 
-		Serial.print("Read req: ");
+		Serial.print("I2C read request: ");
 
 		// Request a few bytes from device at given address
 		Wire.requestFrom(address, 2);
@@ -72,7 +76,7 @@ void loop() {
 			char c = Wire.read();
 			Serial.write(c);
 		}
-		Serial.println(".");
+		Serial.println(". ");
 
 		if (state == LOW) {
 			Serial.println("State up");

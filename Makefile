@@ -1,7 +1,8 @@
 #!/bin/make
 
 # Adjust target config file for nrf52832 vs nrf52840
-TARGET_CONFIG_FILE=target_nrf52840.mk
+# TARGET_CONFIG_FILE=target_nrf52840.mk
+TARGET_CONFIG_FILE=target_nrf52832.mk
 
 include $(TARGET_CONFIG_FILE)
 include config.mk
@@ -20,6 +21,7 @@ clean:
 	@echo "Cleaned build directory"
 
 init:
+	@echo "Use file: $(TARGET_CONFIG_FILE)"
 	@echo 'Create build directory'
 	@mkdir -p $(BUILD_PATH)
 	@rm -f include/microapp_header_symbols.ld
@@ -61,10 +63,10 @@ $(TARGET).elf: include/startup.S src/main.c src/microapp.c src/Arduino.c src/Wir
 	@echo "Compile with firmware header"
 	@$(CC) $(FLAGS) $^ -I$(SHARED_PATH) -Iinclude -Linclude -Tgeneric_gcc_nrf52.ld -o $@
 
-$(TARGET).c: $(TARGET_NAME).ino
+$(TARGET).c: $(TARGET_SOURCE)
 	@echo "Script from .ino file to .c file (just adding Arduino.h header)"
 	@echo '#include <Arduino.h>' > $(TARGET).c
-	@cat $(TARGET_NAME).ino >> $(TARGET).c
+	@cat $(TARGET_SOURCE) >> $(TARGET).c
 
 $(TARGET).hex: $(TARGET).elf.deps $(TARGET).elf
 	@echo "Create hex file from elf file"

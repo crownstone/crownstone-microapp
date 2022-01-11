@@ -16,6 +16,7 @@ protected:
 
 	// Write an array of bytes to serial.
 	// Returns number of bytes written.
+	// The default prints NO newline!
 	int _write(const uint8_t *buf, int length, Type type, CommandMicroappLogOption option = CS_MICROAPP_COMMAND_LOG_NO_NEWLINE);
 
 public:

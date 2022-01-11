@@ -11,22 +11,16 @@ extern "C" {
 #warning "Incorrect uintptr_t type"
 #endif
 
-void goyield(uint16_t prefix) {
-
-	microapp_delay_cmd_t *delay_cmd = (microapp_delay_cmd_t*)&global_msg;
-
-	// this is not anymore how it works...
-	delay_cmd->cmd = CS_MICROAPP_COMMAND_DELAY;
-	delay_cmd->period = prefix;
-//	delay_cmd->coargs = (uintptr_t)_coroutine_args;
-
-	global_msg.length = sizeof(microapp_delay_cmd_t);
-
-	sendMessage(&global_msg);
-}
-
 void delay(uint16_t delay_ms) {
-	goyield(delay_ms);
+	const uint8_t bluenet_ticks = 100; // 100 ms
+	uint8_t ticks = delay_ms / bluenet_ticks;
+	for (int i = 0; i < ticks; i++) {
+		microapp_delay_cmd_t *delay_cmd = (microapp_delay_cmd_t*)&global_msg;
+		delay_cmd->cmd = CS_MICROAPP_COMMAND_DELAY;
+		delay_cmd->period = ticks;
+		global_msg.length = sizeof(microapp_delay_cmd_t);
+		sendMessage(&global_msg);
+	}
 }
 
 void signalSetupEnd() {
