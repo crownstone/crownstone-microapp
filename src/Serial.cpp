@@ -7,96 +7,194 @@
 // Design choice is that strings will always be null-terminated.
 // The last byte will be overwritten at the bluenet side by a null byte even if this is not done in the microapp code.
 
-#define SERIAL_SIZE_OPCODE                           3
-#define SERIAL_MAX_PAYLOAD_LENGTH                    (MAX_PAYLOAD - SERIAL_SIZE_OPCODE)
-#define SERIAL_MAX_STRING_LENGTH                     (SERIAL_MAX_PAYLOAD_LENGTH - 1)
+void SerialBase_::begin() {
+	// does nothing
+}
 
 int SerialBase_::write(char value) {
-	const char buf[1] = { value };
-	return _write(reinterpret_cast<const uint8_t*>(buf), 1, Type::Char);
+	return _write(value);
 }
 
 int SerialBase_::write(float value) {
-	const int32_t casted = (int32_t)(value * 10000); // we just cast to 4 decimals
-	return _write(reinterpret_cast<const uint8_t*>(&casted), sizeof(value), Type::Float);
+	return _write(value);
 }
 
 int SerialBase_::write(double value) {
-	return _write(reinterpret_cast<const uint8_t*>(&value), sizeof(value), Type::Double);
+	return _write(value);
 }
 
 int SerialBase_::write(int value) {
-	return _write(reinterpret_cast<const uint8_t*>(&value), sizeof(value), Type::Int);
+	return _write(value);
 }
 
 int SerialBase_::write(short value) {
-	return _write(reinterpret_cast<const uint8_t*>(&value), sizeof(value), Type::Short);
+	return _write(value);
 }
 
 int SerialBase_::write(unsigned int value) {
-	return _write(reinterpret_cast<const uint8_t*>(&value), sizeof(value), Type::UnsignedInt);
+	return _write(value);
 }
 
 int SerialBase_::write(const char *str) {
-	return _write(reinterpret_cast<const uint8_t*>(str), strlen(str), Type::Str);
+	return _write(str);
 }
 
 int SerialBase_::write(String str, int length) {
-	return _write(reinterpret_cast<const uint8_t*>(str.c_str()), length, Type::Str);
+	return _write(str, length);
 }
 
 int SerialBase_::write(const uint8_t *buf, int length) {
-	return _write(buf, length, Type::Arr);
+	return _write(buf, length);
 }
 
-/// Just copies of above
-
-int SerialBase_::print(String str, int length) {
-	return write(str, length);
-}
-
-int SerialBase_::print(const char *str) {
-	return write(str);
-}
-
-int SerialBase_::print(const uint8_t *buf, int length) {
-	return write(buf, length);
-}
+// Copies of the above functions
 
 int SerialBase_::print(char value) {
-	return write(value);
+	return _write(value);
 }
 
 int SerialBase_::print(float value) {
-	return write(value);
+	return _write(value);
+}
+
+int SerialBase_::print(double value) {
+	return _write(value);
+}
+
+int SerialBase_::print(int value) {
+	return _write(value);
 }
 
 int SerialBase_::print(short value) {
-	return write(value);
+	return _write(value);
 }
 
-/// In principle, copies of above, but with newlines
+int SerialBase_::print(unsigned int value) {
+	return _write(value);
+}
 
-int SerialBase_::println(String str, int length) {
-	return _write(reinterpret_cast<const uint8_t*>(str.c_str()), length, Type::Str, CS_MICROAPP_COMMAND_LOG_NEWLINE);
+int SerialBase_::print(const char *str) {
+	return _write(str);
+}
+
+int SerialBase_::print(String str, int length) {
+	return _write(str, length);
+}
+
+int SerialBase_::print(const uint8_t *buf, int length) {
+	return _write(buf, length);
+}
+
+// Copies of the above functions, but with newline option enabled
+
+int SerialBase_::println(char value) {
+	return _write(value, CS_MICROAPP_COMMAND_LOG_NEWLINE);
+}
+
+int SerialBase_::println(float value) {
+	return _write(value, CS_MICROAPP_COMMAND_LOG_NEWLINE);
+}
+
+int SerialBase_::println(double value) {
+	return _write(value, CS_MICROAPP_COMMAND_LOG_NEWLINE);
+}
+
+int SerialBase_::println(int value) {
+	return _write(value, CS_MICROAPP_COMMAND_LOG_NEWLINE);
+}
+
+int SerialBase_::println(short value) {
+	return _write(value, CS_MICROAPP_COMMAND_LOG_NEWLINE);
+}
+
+int SerialBase_::println(unsigned int value) {
+	return _write(value, CS_MICROAPP_COMMAND_LOG_NEWLINE);
 }
 
 int SerialBase_::println(const char *str) {
-	return _write(reinterpret_cast<const uint8_t*>(str), strlen(str), Type::Str, CS_MICROAPP_COMMAND_LOG_NEWLINE);
+	return _write(str, CS_MICROAPP_COMMAND_LOG_NEWLINE);
+}
+
+int SerialBase_::println(String str, int length) {
+	return _write(str, length, CS_MICROAPP_COMMAND_LOG_NEWLINE);
 }
 
 int SerialBase_::println(const uint8_t *buf, int length) {
-	return _write(buf, length, Type::Arr, CS_MICROAPP_COMMAND_LOG_NEWLINE);
+	return _write(buf, length, CS_MICROAPP_COMMAND_LOG_NEWLINE);
 }
 
-/*
-int SerialBase_::println(char value) {
-	const char buf[1] = { value };
-	return _write(reinterpret_cast<const uint8_t*>(buf), 1, Type::Char, CS_MICROAPP_COMMAND_LOG_NEWLINE);
-}*/
+/// Implementations (protected)
 
-int SerialBase_::println(uint32_t value) {
-	return _write(reinterpret_cast<const uint8_t*>(&value), sizeof(value), Type::UnsignedInt, CS_MICROAPP_COMMAND_LOG_NEWLINE);
+int SerialBase_::_write(char value, CommandMicroappLogOption option) {
+	microapp_log_char_cmd_t* command = reinterpret_cast<microapp_log_char_cmd_t*>(&global_msg);
+	command->value = value;
+	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
+	cmd->length = sizeof(value);
+	return _write(cmd, Type::Char, option);
+}
+
+int SerialBase_::_write(float value, CommandMicroappLogOption option) {
+	microapp_log_float_cmd_t* command = reinterpret_cast<microapp_log_float_cmd_t*>(&global_msg);
+	command->value = value;
+	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
+	cmd->length = sizeof(value);
+	return _write(cmd, Type::Float, option);
+}
+
+int SerialBase_::_write(double value, CommandMicroappLogOption option) {
+	microapp_log_double_cmd_t* command = reinterpret_cast<microapp_log_double_cmd_t*>(&global_msg);
+	command->value = value;
+	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
+	cmd->length = sizeof(value);
+	return _write(cmd, Type::Double, option);
+}
+
+int SerialBase_::_write(int value, CommandMicroappLogOption option) {
+	microapp_log_int_cmd_t* command = reinterpret_cast<microapp_log_int_cmd_t*>(&global_msg);
+	command->value = value;
+	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
+	cmd->length = sizeof(value);
+	return _write(cmd, Type::Int, option);
+}
+
+int SerialBase_::_write(short value, CommandMicroappLogOption option) {
+	microapp_log_short_cmd_t* command = reinterpret_cast<microapp_log_short_cmd_t*>(&global_msg);
+	command->value = value;
+	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
+	cmd->length = sizeof(value);
+	return _write(cmd, Type::Short, option);
+}
+
+int SerialBase_::_write(unsigned int value, CommandMicroappLogOption option) {
+	microapp_log_int_cmd_t* command = reinterpret_cast<microapp_log_int_cmd_t*>(&global_msg);
+	command->value = value;
+	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
+	cmd->length = sizeof(value);
+	return _write(cmd, Type::UnsignedInt, option);
+}
+
+int SerialBase_::_write(const char *str, CommandMicroappLogOption option) {
+	microapp_log_string_cmd_t* command = reinterpret_cast<microapp_log_string_cmd_t*>(&global_msg);
+	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
+	cmd->length = strlen(str);
+	memcpy(command->str, str, cmd->length);
+	return _write(cmd, Type::Str, option);
+}
+
+int SerialBase_::_write(String str, int length, CommandMicroappLogOption option) {
+	microapp_log_string_cmd_t* command = reinterpret_cast<microapp_log_string_cmd_t*>(&global_msg);
+	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
+	cmd->length = strlen(str.c_str());
+	memcpy(command->str, str.c_str(), cmd->length);
+	return _write(cmd, Type::Str, option);
+}
+
+int SerialBase_::_write(const uint8_t *buf, int length, CommandMicroappLogOption option) {
+	microapp_log_array_cmd_t* command = reinterpret_cast<microapp_log_array_cmd_t*>(&global_msg);
+	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
+	cmd->length = length;
+	memcpy(command->arr, buf, cmd->length);
+	return _write(cmd, Type::Arr, option);
 }
 
 //
@@ -104,35 +202,12 @@ int SerialBase_::println(uint32_t value) {
 // For example if the string is too long, we will truncate it and return only the first portion rather
 // than silently fail.
 //
-int SerialBase_::_write(const uint8_t *buf, int length, Type type, CommandMicroappLogOption option) {
-	if (length == 0) {
-		// Nothing to send.
-		return 0;
-	}
-
-	// Set the header.
-	global_msg.payload[0] = _port;
-	global_msg.payload[1] = type;
-	global_msg.payload[2] = option;
-
-	// Make sure length is not too large. Do not silently fail.
-	if (type == Type::Str && length > SERIAL_MAX_STRING_LENGTH) {
-		length = SERIAL_MAX_STRING_LENGTH;
-	}
-
-	// Make sure that in all cases that length is truncated. Do not silently fail.
-	if (length > SERIAL_MAX_PAYLOAD_LENGTH) {
-		length = SERIAL_MAX_PAYLOAD_LENGTH;
-	}
-	
-	// Copy the data.
-	for (int i = 0; i < length; ++i) {
-		global_msg.payload[i + SERIAL_SIZE_OPCODE] = buf[i];
-	}
-	
-	global_msg.length = length + SERIAL_SIZE_OPCODE;
-
-	// TODO: check result.
+int SerialBase_::_write(microapp_log_cmd_t *cmd, Type type, CommandMicroappLogOption option) {
+	cmd->cmd = CS_MICROAPP_COMMAND_LOG;
+	cmd->port = _port;
+	cmd->type = type;
+	cmd->option = option;
 	sendMessage(&global_msg);
-	return length;
+	return cmd->length;
 }
+

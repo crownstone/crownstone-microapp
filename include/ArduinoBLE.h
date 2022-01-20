@@ -1,14 +1,24 @@
+#pragma once
+
 #include <Serial.h>
 #include <microapp.h>
 #include <BleUtils.h>
 #include <BleDevice.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <microapp.h>
+
+// Create shortened typedefs (we are within microapp scope here)
+
 // Types of BLE event for which event handlers can be set
-enum BleEventType {
-	BleEventDeviceScanned,
-	BleEventConnected,
-	BleEventDisconnected
-};
+typedef MicroappBleEventType BleEventType;
+
+#ifdef __cplusplus
+}
+#endif
 
 // Types of filters which can be used to filter scanned BLE devices
 enum BleFilterType {
@@ -75,7 +85,7 @@ public:
 	 * @param[in] eventType   Type of event to set callback for
 	 * @param[in] callback    The callback function to call upon a trigger
 	 */
-	void setEventHandler(BleEventType eventType, void (*callback)(BleDevice));
+	void setEventHandler(BleEventType eventType, void (*callback)(BleDevice*));
 
 	/**
 	 * Sends command to bluenet to call registered microapp callback function upon receiving advertisements
@@ -119,7 +129,7 @@ public:
 	/**
 	 * Sends command to bluenet to stop calling registered microapp callback function upon receiving advertisements
 	 */
-	void stopScan();
+	bool stopScan();
 
 	/**
 	 * Returns last scanned device which matched the filter

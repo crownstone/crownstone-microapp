@@ -9,9 +9,11 @@ void handleScanEventWrapper(microapp_ble_device_t device) {
 void Ble::handleScanEvent(microapp_ble_device_t device) {
 	BleDevice newDevice = BleDevice(device);
 	if (!filterScanEvent(newDevice)) {
-		return; // advertisement does not match filter, so do not call user callback
+		// advertisement does not match filter, so do not call user callback
+		return;
 	}
-	_activeDevice = newDevice; // TODO: find a way to preserve cached info like device name if new ad is from same device as active device
+	// TODO: find a way to preserve cached info like device name if new ad is from same device as active device
+	_activeDevice = newDevice;
 	// now call the user registered callback
 	void (*callback_func)(BleDevice) = (void (*)(BleDevice)) _scannedDeviceCallback;
 	callback_func(newDevice);
@@ -60,21 +62,27 @@ bool Ble::filterScanEvent(BleDevice device) {
 	return true;
 }
 
-void Ble::setEventHandler(BleEventType type, void (*callback)(BleDevice)) {
+void Ble::setEventHandler(BleEventType type, void (*callback)(BleDevice*)) {
 	Serial.println("Setting event handler");
 	// TODO: do something with type. For now assume type is BleEventDeviceScanned
 	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
 	ble_cmd->cmd = CS_MICROAPP_COMMAND_BLE;
 	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_SCAN_SET_HANDLER;
-	// Registered callback in bluenet is actually handleScanEventWrapper
-	ble_cmd->callback = (uintptr_t)(handleScanEventWrapper);
+
+	// Set identifier now to 0 (assuming a single callback)
+	ble_cmd->id = 0;
 
 	global_msg.length = sizeof(microapp_ble_cmd_t);
 
 	sendMessage(&global_msg);
 
+	callback_t cb;
+	cb.id = ble_cmd->id;
+	cb.callback = reinterpret_cast<callbackFunction>(callback);
+	registerCallback(&cb);
+
 	// Now register the user callback within the Ble object
-	_scannedDeviceCallback = (uintptr_t)(callback);
+	//_scannedDeviceCallback = (uintptr_t)(callback);
 }
 
 bool Ble::scan(bool withDuplicates) {
@@ -85,15 +93,19 @@ bool Ble::scan(bool withDuplicates) {
 	Serial.println("Starting BLE device scanning");
 
 	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
+	ble_cmd->ack = false;
 	ble_cmd->cmd = CS_MICROAPP_COMMAND_BLE;
 	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_SCAN_START;
 	global_msg.length = sizeof(microapp_ble_cmd_t);
 
 	sendMessage(&global_msg);
-	// TODO: check for return message from bluenet
-	_isScanning = true;
 
-	return true;
+	bool success = ble_cmd->ack;
+	if (!success) {
+		return success;
+	}
+	_isScanning = true;
+	return success;
 }
 
 bool Ble::scanForName(const char* name, bool withDuplicates) {
@@ -118,9 +130,9 @@ bool Ble::scanForUuid(const char* uuid, bool withDuplicates) {
 	return scan(withDuplicates);
 }
 
-void Ble::stopScan() {
+bool Ble::stopScan() {
 	if (!_isScanning) { // already not scanning
-		return;
+		return true;
 	}
 
 	Serial.println("Stopping BLE device scanning");
@@ -129,13 +141,19 @@ void Ble::stopScan() {
 
 	// send a message to bluenet commanding it to stop forwarding ads to microapp
 	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
+	ble_cmd->ack = false;
 	ble_cmd->cmd = CS_MICROAPP_COMMAND_BLE;
 	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_SCAN_STOP;
 	global_msg.length = sizeof(microapp_ble_cmd_t);
 
-	_isScanning = false;
-	// TODO: check for return message from bluenet
 	sendMessage(&global_msg);
+	
+	bool success = ble_cmd->ack;
+	if (!success) {
+		return success;
+	}
+	_isScanning = false;
+	return success;
 }
 
 BleDevice Ble::available() {

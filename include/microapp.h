@@ -8,9 +8,24 @@ extern "C" {
 #endif
 
 struct message_t {
-	uint8_t payload[20];
+	uint8_t payload[MAX_PAYLOAD];
 	uint16_t length;
 };
+
+// Callback functions
+typedef void (*callbackFunction)(void*);
+
+// Store callbacks in the microapp
+struct callback_t {
+	uint8_t id;
+	callbackFunction callback;
+	void *arg;
+	bool empty;
+};
+
+#define MAX_CALLBACKS 4
+
+extern callback_t callbacks[MAX_CALLBACKS];
 
 // Create shortened typedefs (it is obvious we are within the microapp here)
 
@@ -89,11 +104,21 @@ void* memcpy(void* dest, const void* src, size_t num);
  */
 extern microapp_message_t global_msg;
 
-/*
+/**
  * Send a message to the bluenet code. This is the function that is called - in the end - by all the functions
  * that have to reach the microapp code.
  */
 int sendMessage(microapp_message_t *msg);
+
+/**
+ * Register a callback locally so that when a message.
+ */
+void registerCallback(callback_t *cb);
+
+/**
+ * Handle callbacks.
+ */
+void handleCallbacks(microapp_cmd_t *msg);
 
 #ifdef __cplusplus
 }

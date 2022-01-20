@@ -5,24 +5,8 @@
 #include <cs_MicroappStructs.h>
 
 class SerialBase_ {
-private:
-	// Defines which serial this is. Must be equal to command number.
-	char _port;
-
-protected:
-	SerialBase_(char port) : _port(port) {}
-
-	enum Type { Char = 0, Int = 1, Str = 2, Arr = 3, Float = 4, Double = 5, UnsignedInt = 6, Short = 7};
-
-	// Write an array of bytes to serial.
-	// Returns number of bytes written.
-	// The default prints NO newline!
-	int _write(const uint8_t *buf, int length, Type type, CommandMicroappLogOption option = CS_MICROAPP_COMMAND_LOG_NO_NEWLINE);
-
 public:
-
-	// Dummy
-	void begin() {};
+	void begin();
 
 	// Returns always true for now.
 	// Can be used as
@@ -30,23 +14,6 @@ public:
 	// Might return false in release mode (when there is no logging available)
 	// However, in that case we might still want to get data out over Bluetooth
 	explicit operator bool() const { return true; }
-
-	//
-	// Write to serial. For now this becomes logs in the Crownstone firmware. That is not so useful to the
-	// microapp person though. To send it through to UART for a USB dongle is quite limited, for normal 
-	// Crownstones it is almost useless. It would be fun to write over Bluetooth RFCOMM.
-	//
-	// Returns number of bytes written.
-	int write(String str, int length);
-
-	// Write a string (as char array) to serial. The length will be obtained through searching for a null
-	// byte.
-	// Returns number of bytes written.
-	int write(const char *str);
-
-	// Write an array of bytes to serial.
-	// Returns number of bytes written.
-	int write(const uint8_t *buf, int length);
 
 	// Write a single byte to serial.
 	// Returns number of bytes written.
@@ -61,28 +28,91 @@ public:
 	int write(int value);
 
 	int write(unsigned int value);
+	
+	// Write a string (as char array) to serial. The length will be obtained through searching for a null
+	// byte.
+	// Returns number of bytes written.
+	int write(const char *str);
 
-	int print(String str, int length);
+	// Write to serial. For now this becomes logs in the Crownstone firmware. That is not so useful to the
+	// microapp person though. To send it through to UART for a USB dongle is quite limited, for normal 
+	// Crownstones it is almost useless. It would be fun to write over Bluetooth RFCOMM.
+	//
+	// Returns number of bytes written.
+	int write(String str, int length);
 
-	int print(const char *str);
+	// Write an array of bytes to serial.
+	// Returns number of bytes written.
+	int write(const uint8_t *buf, int length);
 
-	int print(const uint8_t *buf, int length);
+	// Copies of write
 
 	int print(char value);
 
 	int print(float value);
 
+	int print(double value);
+
 	int print(short value);
 
-	int println(String str, int length);
+	int print(int value);
+
+	int print(unsigned int value);
+
+	int print(const char *str);
+
+	int print(String str, int length);
+
+	int print(const uint8_t *buf, int length);
+
+	// Copies of print (but with newline)
+
+	int println(char value);
+
+	int println(float value);
+
+	int println(double value);
+
+	int println(short value);
+
+	int println(int value);
+
+	int println(unsigned int value);
 
 	int println(const char *str);
 
+	int println(String str, int length);
+
 	int println(const uint8_t *buf, int length);
 
-	//int println(char value);
+private:
+	// Defines which serial this is. Must be equal to command number.
+	char _port;
 
-	int println(uint32_t value);
+protected:
+	SerialBase_(char port) : _port(port) {}
+
+	enum Type { Char = 0, Int = 1, Str = 2, Arr = 3, Float = 4, Double = 5, UnsignedInt = 6, Short = 7};
+
+	int _write(microapp_log_cmd_t *cmd, Type type, CommandMicroappLogOption option);
+
+	int _write(String str, int length, CommandMicroappLogOption option = CS_MICROAPP_COMMAND_LOG_NO_NEWLINE);
+
+	int _write(const char *str, CommandMicroappLogOption option = CS_MICROAPP_COMMAND_LOG_NO_NEWLINE);
+
+	int _write(const uint8_t *buf, int length, CommandMicroappLogOption option = CS_MICROAPP_COMMAND_LOG_NO_NEWLINE);
+
+	int _write(char value, CommandMicroappLogOption option = CS_MICROAPP_COMMAND_LOG_NO_NEWLINE);
+
+	int _write(float value, CommandMicroappLogOption option = CS_MICROAPP_COMMAND_LOG_NO_NEWLINE);
+
+	int _write(double value, CommandMicroappLogOption option = CS_MICROAPP_COMMAND_LOG_NO_NEWLINE);
+
+	int _write(short value, CommandMicroappLogOption option = CS_MICROAPP_COMMAND_LOG_NO_NEWLINE);
+
+	int _write(int value, CommandMicroappLogOption option = CS_MICROAPP_COMMAND_LOG_NO_NEWLINE);
+
+	int _write(unsigned int value, CommandMicroappLogOption option = CS_MICROAPP_COMMAND_LOG_NO_NEWLINE);
 };
 
 class Serial_: public SerialBase_ {

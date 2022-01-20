@@ -1,6 +1,9 @@
 #include <microapp.h>
 #include <ipc/cs_IpcRamData.h>
 
+// Define array with callbacks
+callback_t callbacks[MAX_CALLBACKS];
+
 // Important: Do not include <string.h> / <cstring>. This bloats the binary unnecessary.
 // On Arduino there is the String class. Roll your own functions like strlen, see below.
 
@@ -93,8 +96,57 @@ int sendMessage(microapp_message_t *msg) {
 		ipc_data.valid = true;
 	}
 
-	// The actual callback
+	// The callback will yield control to bluenet.
 	int (*callback_func)(uint8_t*,uint16_t) = (int (*)(uint8_t*,uint16_t)) ipc_data.microapp_callback;
 	result = callback_func(msg->payload, msg->length);
+
+	// Here the microapp resumes execution
+	microapp_cmd_t *buf = reinterpret_cast<microapp_cmd_t*>(msg->payload);
+
+	// A command is indicated as being processed by CS_MICROAPP_COMMAND_NONE.
+	if(buf->cmd != CS_MICROAPP_COMMAND_NONE) {
+		// This is probably a callback.
+		//handleCallbacks(buf);
+		return -2;
+	}
+
+	if(buf->ack) {
+		buf->ack = false;
+		
+	}
+
 	return result;
+}
+
+void registerCallback(callback_t *cb) {
+	for (int i = 0; i < MAX_CALLBACKS; ++i) {
+		if (callbacks[i].empty) {
+			callbacks[i].empty = false;
+			callbacks[i].callback = cb->callback;
+			callbacks[i].id = cb->id;
+			callbacks[i].arg = cb->arg;
+		}
+	}
+}
+
+void handleCallbacks(microapp_cmd_t *msg) {
+	switch(msg->cmd) {
+	case CS_MICROAPP_COMMAND_BLE_DEVICE:
+		// get somehow callback id
+		for (int i = 0; i < MAX_CALLBACKS; ++i) {
+			if (callbacks[i].empty) {
+				continue;
+			}
+			if (callbacks[i].id == msg->id) {
+				if (callbacks[i].callback) {
+					callbacks[i].callback(callbacks[i].arg);
+				}
+			}
+		}
+		break;
+	case CS_MICROAPP_COMMAND_PIN:
+		// 
+
+		break;
+	}
 }

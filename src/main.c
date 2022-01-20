@@ -41,7 +41,10 @@ void signalLoopEnd() {
  * [version] [setup] [coloop]
  *
  * Version is only one byte. The addresses of setup and loop are of size uniptr_t.
- * Note that you are not allowed to change the signature of those functions! 
+ * Note that you are not allowed to change the signature of those functions.
+ *
+ * It is absolutely essential that sendMessage is called regularly. Hence this is added to the end of setup and the end
+ * of each loop call. If this is not done the coroutine finishes and bluenet will crash.
  */
 int __attribute__((optimize("O0"))) dummy_main() {
 	setup();

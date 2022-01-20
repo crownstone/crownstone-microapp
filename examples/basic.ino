@@ -19,14 +19,12 @@ const uint8_t BUTTON1_INDEX=4;
 // A dummy setup function.
 //
 void setup() {
+
 	// We can "start" serial.
 	Serial.begin();
 
 	// We can use if(Serial), although this will always return true now (might be different in release mode).
 	if (!Serial) return;
-
-	// Write something to the log (will be shown in the bluenet code as print statement).
-	Serial.println("Setup started");
 
 	// We can also write integers.
 	Serial.println(counter);
@@ -75,6 +73,7 @@ void loop() {
 		while (Wire.available()) {
 			char c = Wire.read();
 			Serial.write(c);
+			Serial.write("  ");
 		}
 		Serial.println(". ");
 
@@ -83,6 +82,9 @@ void loop() {
 		} else {
 			Serial.println("State down");
 		}
+
+		float blah = 0.2342;
+		Serial.println(blah);
 	}
 
 	if (counter % 10 == 0) {

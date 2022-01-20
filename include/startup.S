@@ -48,7 +48,7 @@ Reset_Handler:
 #endif
 
 // execute main
-    bl main
+//    bl main
 
 // call _start (define yourself if no libs are used)
 #ifndef __START
