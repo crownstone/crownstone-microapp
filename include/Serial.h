@@ -115,12 +115,15 @@ protected:
 	int _write(unsigned int value, CommandMicroappLogOption option = CS_MICROAPP_COMMAND_LOG_NO_NEWLINE);
 };
 
+/**
+ * Uses a SerialBase_ instance internally with port number 1.
+ */
 class Serial_: public SerialBase_ {
 public:
 	static Serial_& getInstance()
 	{
 		// Guaranteed to be destroyed.
-		static Serial_ instance(1);
+		static Serial_ instance(MICROAPP_SERIAL_DEFAULT_PORT_NUMBER);
 
 		// Instantiated on first use.
 		return instance;
@@ -132,21 +135,26 @@ private:
 	void operator=(Serial_ const&)  = delete;
 };
 
+/**
+ * Uses a SerialBase_ instance internally with port number 4.
+ */
 class SerialServiceData_: public SerialBase_ {
 public:
 	static SerialServiceData_& getInstance()
 	{
 		// Guaranteed to be destroyed.
-		static SerialServiceData_ instance(4);
+		static SerialServiceData_ instance(MICROAPP_SERIAL_SERVICE_DATA_PORT_NUMBER);
 
 		// Instantiated on first use.
 		return instance;
 	}
 
+	int write(microapp_service_data_t *data);
+
 private:
 	SerialServiceData_(char port) : SerialBase_(port) {}
-	SerialServiceData_(SerialServiceData_ const&)         = delete;
-	void operator=(SerialServiceData_ const&)  = delete;
+	SerialServiceData_(SerialServiceData_ const&) = delete;
+	void operator=(SerialServiceData_ const&)     = delete;
 };
 
 #define Serial Serial_::getInstance()

@@ -5,18 +5,21 @@
 // Show how a counter is incremented
 static int counter = 100;
 
-uint8_t serviceDataBuf[12] = {0};
+microapp_service_data_t serviceData;
+
+//uint8_t serviceDataBuf[12] = {0};
 
 volatile byte state = LOW;
 
 void blink() {
+	Serial.println("Toggle");
 	state = !state;
 }
 
-const uint8_t BUTTON1_INDEX=4;
+const uint8_t BUTTON1_INDEX = 4;
 
 //
-// A dummy setup function.
+// An example of a setup function.
 //
 void setup() {
 
@@ -30,8 +33,7 @@ void setup() {
 	Serial.println(counter);
 
 	// Set the UUID of this microapp.
-	serviceDataBuf[0] = 12;
-	serviceDataBuf[1] = 34;
+	serviceData.appUuid = 0x1234;
 
 	// Set digital port 1 to OUTPUT, so we can write.
 	pinMode(1, OUTPUT);
@@ -41,11 +43,34 @@ void setup() {
 
 	// Set interrupt handler
 	pinMode(BUTTON1_INDEX, INPUT_PULLUP);
-	attachInterrupt(digitalPinToInterrupt(BUTTON1_INDEX), blink, CHANGE);
+	int result = attachInterrupt(digitalPinToInterrupt(BUTTON1_INDEX), blink, CHANGE);
 
-	Serial.write("Hello ");
-	Serial.write("world");
+	Serial.write("Interrupt handler: ");
+	Serial.write(result);
 	Serial.println("! ");
+}
+
+void i2c() {
+	// We can use local variables, also before and after delay() calls.
+	// int test = 1;
+	const byte address = 0x18;
+
+	// Start transmission over i2c bus
+	Wire.beginTransmission(address);
+	Wire.write(5);
+	Wire.endTransmission();
+
+	Serial.print("I2C read request: ");
+
+	// Request a few bytes from device at given address
+	Wire.requestFrom(address, 2);
+
+	while (Wire.available()) {
+		char c = Wire.read();
+		Serial.write(c);
+		Serial.write("  ");
+	}
+	Serial.println(". ");
 }
 
 //
@@ -55,36 +80,16 @@ void loop() {
 	// We are able to use static variables.
 	counter++;
 
-	// We can use local variables, also before and after delay() calls.
-	// int test = 1;
-	byte address = 0x18;
-
 	if (counter % 5 == 0) {
-		// Start transmission over i2c bus
-		Wire.beginTransmission(address);
-		Wire.write(5);
-		Wire.endTransmission();
-
-		Serial.print("I2C read request: ");
-
-		// Request a few bytes from device at given address
-		Wire.requestFrom(address, 2);
-
-		while (Wire.available()) {
-			char c = Wire.read();
-			Serial.write(c);
-			Serial.write("  ");
-		}
-		Serial.println(". ");
-
+#ifdef CHECK_TWI
+		i2c();
+#endif
 		if (state == LOW) {
 			Serial.println("State up");
 		} else {
 			Serial.println("State down");
 		}
 
-		float blah = 0.2342;
-		Serial.println(blah);
 	}
 
 	if (counter % 10 == 0) {
@@ -94,14 +99,14 @@ void loop() {
 		delay(10000);
 
 		// See protocol definition for other options.
-		digitalWrite(1, 0);
+		//digitalWrite(1, 0);
 
 		Serial.println("Done...");
 	}
 	// Show counter.
-	Serial.println(counter);
+	//Serial.println(counter);
 
-	// Let's also advertise the latest counter value in the service data.
-	serviceDataBuf[2] = counter;
-	SerialServiceData.write(serviceDataBuf, sizeof(serviceDataBuf));
+	// Let's advertise the counter value in the service data.
+	serviceData.data[0] = counter;
+	SerialServiceData.write(&serviceData);
 }

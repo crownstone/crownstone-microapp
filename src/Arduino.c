@@ -54,9 +54,9 @@ int digitalRead(uint8_t pin) {
 	return value;
 }
 
-void attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode) {
-	if (!pinExists(pin)) return;
-	
+int attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode) {
+	if (!pinExists(pin)) return -1;
+
 	microapp_pin_cmd_t *pin_cmd = (microapp_pin_cmd_t*)&global_msg;
 	pin_cmd->cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
@@ -65,7 +65,14 @@ void attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode) {
 	pin_cmd->value = mode;
 	global_msg.length = sizeof(microapp_pin_cmd_t);
 	
-	sendMessage(&global_msg);
+	callback_t cb;
+	cb.type = CALLBACK_TYPE_PIN;
+	cb.id = pin_cmd->pin;
+	cb.callback = reinterpret_cast<callbackFunction>(isr);
+	registerCallback(&cb);
+	
+	int result = sendMessage(&global_msg);
+	return result;
 }
 
 
@@ -83,7 +90,7 @@ void analogWrite(uint8_t pin, int val) {
 }
 
 uint8_t digitalPinToInterrupt(uint8_t pin) {
-	return pin;
+	return pin + 1;
 }
 
 void init() {

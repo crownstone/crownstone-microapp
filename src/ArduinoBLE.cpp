@@ -78,6 +78,7 @@ void Ble::setEventHandler(BleEventType type, void (*callback)(BleDevice*)) {
 
 	callback_t cb;
 	cb.id = ble_cmd->id;
+	cb.type = CALLBACK_TYPE_BLE;
 	cb.callback = reinterpret_cast<callbackFunction>(callback);
 	registerCallback(&cb);
 

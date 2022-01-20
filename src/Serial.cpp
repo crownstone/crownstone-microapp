@@ -203,11 +203,25 @@ int SerialBase_::_write(const uint8_t *buf, int length, CommandMicroappLogOption
 // than silently fail.
 //
 int SerialBase_::_write(microapp_log_cmd_t *cmd, Type type, CommandMicroappLogOption option) {
-	cmd->cmd = CS_MICROAPP_COMMAND_LOG;
 	cmd->port = _port;
+	switch(_port) {
+	case MICROAPP_SERIAL_SERVICE_DATA_PORT_NUMBER:
+		cmd->cmd = CS_MICROAPP_COMMAND_SERVICE_DATA;
+		break;
+	case MICROAPP_SERIAL_DEFAULT_PORT_NUMBER:
+	default:
+		cmd->cmd = CS_MICROAPP_COMMAND_LOG;
+		break;
+	}
 	cmd->type = type;
 	cmd->option = option;
 	sendMessage(&global_msg);
 	return cmd->length;
 }
+
+int SerialServiceData_::write(microapp_service_data_t *data) {
+	uint8_t *arr = reinterpret_cast<uint8_t*>(data);
+	return SerialBase_::write(arr, (int)sizeof(microapp_service_data_t));
+}
+
 

@@ -15,8 +15,12 @@ struct message_t {
 // Callback functions
 typedef void (*callbackFunction)(void*);
 
+const uint8_t CALLBACK_TYPE_BLE = 1;
+const uint8_t CALLBACK_TYPE_PIN = 2;
+
 // Store callbacks in the microapp
 struct callback_t {
+	uint8_t type;
 	uint8_t id;
 	callbackFunction callback;
 	void *arg;
@@ -118,7 +122,7 @@ void registerCallback(callback_t *cb);
 /**
  * Handle callbacks.
  */
-void handleCallbacks(microapp_cmd_t *msg);
+int handleCallbacks(microapp_cmd_t *msg);
 
 #ifdef __cplusplus
 }
