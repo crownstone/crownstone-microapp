@@ -66,7 +66,7 @@ void Ble::setEventHandler(BleEventType type, void (*callback)(BleDevice*)) {
 	Serial.println("Setting event handler");
 	// TODO: do something with type. For now assume type is BleEventDeviceScanned
 	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
-	ble_cmd->cmd = CS_MICROAPP_COMMAND_BLE;
+	ble_cmd->header.cmd = CS_MICROAPP_COMMAND_BLE;
 	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_SCAN_SET_HANDLER;
 
 	// Set identifier now to 0 (assuming a single callback)
@@ -94,14 +94,14 @@ bool Ble::scan(bool withDuplicates) {
 	Serial.println("Starting BLE device scanning");
 
 	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
-	ble_cmd->ack = false;
-	ble_cmd->cmd = CS_MICROAPP_COMMAND_BLE;
+	ble_cmd->header.ack = false;
+	ble_cmd->header.cmd = CS_MICROAPP_COMMAND_BLE;
 	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_SCAN_START;
 	global_msg.length = sizeof(microapp_ble_cmd_t);
 
 	sendMessage(&global_msg);
 
-	bool success = ble_cmd->ack;
+	bool success = ble_cmd->header.ack;
 	if (!success) {
 		return success;
 	}
@@ -142,14 +142,14 @@ bool Ble::stopScan() {
 
 	// send a message to bluenet commanding it to stop forwarding ads to microapp
 	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
-	ble_cmd->ack = false;
-	ble_cmd->cmd = CS_MICROAPP_COMMAND_BLE;
+	ble_cmd->header.ack = false;
+	ble_cmd->header.cmd = CS_MICROAPP_COMMAND_BLE;
 	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_SCAN_STOP;
 	global_msg.length = sizeof(microapp_ble_cmd_t);
 
 	sendMessage(&global_msg);
 	
-	bool success = ble_cmd->ack;
+	bool success = ble_cmd->header.ack;
 	if (!success) {
 		return success;
 	}

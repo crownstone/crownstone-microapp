@@ -41,10 +41,10 @@ int WireBase_::send(const uint8_t *buf, int length) {
 
 void WireBase_::begin() {
 	microapp_twi_cmd_t *twi_cmd = (microapp_twi_cmd_t*)&global_msg;
-	twi_cmd->cmd = CS_MICROAPP_COMMAND_TWI;
+	twi_cmd->header.cmd = CS_MICROAPP_COMMAND_TWI;
+	twi_cmd->header.ack = 0;
 	twi_cmd->address = 0;
 	twi_cmd->opcode = I2C_INIT;
-	twi_cmd->ack = 0;
 	twi_cmd->stop = true;
 	sendMessage(&global_msg);
 }
@@ -62,11 +62,11 @@ void WireBase_::endTransmission() {
 
 void WireBase_::requestFrom(const uint8_t address, const int size, bool stop) {
 	microapp_twi_cmd_t *twi_cmd = (microapp_twi_cmd_t*)&global_msg;
-	twi_cmd->cmd = CS_MICROAPP_COMMAND_TWI;
+	twi_cmd->header.cmd = CS_MICROAPP_COMMAND_TWI;
+	twi_cmd->header.ack = 0;
 	twi_cmd->address = address;
 	twi_cmd->opcode = I2C_READ;
 	twi_cmd->length = size;
-	twi_cmd->ack = 0;
 	twi_cmd->stop = stop;
 	sendMessage(&global_msg);
 
@@ -106,10 +106,10 @@ int WireBase_::_write(const uint8_t *buf, int length, Type type) {
 	}
 	
 	microapp_twi_cmd_t *twi_cmd = (microapp_twi_cmd_t*)&global_msg;
-	twi_cmd->cmd = CS_MICROAPP_COMMAND_TWI;
+	twi_cmd->header.cmd = CS_MICROAPP_COMMAND_TWI;
+	twi_cmd->header.ack = 0;
 	twi_cmd->address = _address;
 	twi_cmd->opcode = I2C_WRITE;
-	twi_cmd->ack = 0;
 	twi_cmd->stop = true;
 
 	// Make sure length is not too large.

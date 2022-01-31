@@ -10,10 +10,14 @@ microapp_service_data_t serviceData;
 //uint8_t serviceDataBuf[12] = {0};
 
 volatile byte state = LOW;
+volatile byte state2 = LOW;
 
 void blink() {
 	Serial.println("Toggle");
-	state = !state;
+	state2 = !state2;
+	if (state2 == LOW) {
+		state = !state;
+	}
 }
 
 const uint8_t BUTTON1_INDEX = 4;
@@ -45,9 +49,11 @@ void setup() {
 	pinMode(BUTTON1_INDEX, INPUT_PULLUP);
 	int result = attachInterrupt(digitalPinToInterrupt(BUTTON1_INDEX), blink, CHANGE);
 
-	Serial.write("Interrupt handler: ");
+	Serial.write("attachInterrupt returns ");
 	Serial.write(result);
-	Serial.println("! ");
+	Serial.println(" ");
+
+	blink();
 }
 
 void i2c() {
@@ -93,15 +99,12 @@ void loop() {
 	}
 
 	if (counter % 10 == 0) {
-		Serial.println("Delay 10 sec");
-
-		// We delay 10 seconds.
+		Serial.println("Delay");
+		// This is in ms
 		delay(10000);
 
 		// See protocol definition for other options.
 		//digitalWrite(1, 0);
-
-		Serial.println("Done...");
 	}
 	// Show counter.
 	//Serial.println(counter);

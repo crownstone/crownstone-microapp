@@ -12,7 +12,7 @@ void pinMode(uint8_t pin, uint8_t mode) {
 	if (!pinExists(pin)) return;
 
 	microapp_pin_cmd_t *pin_cmd = (microapp_pin_cmd_t*)&global_msg;
-	pin_cmd->cmd = CS_MICROAPP_COMMAND_PIN;
+	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_MODE;
 	pin_cmd->opcode2 = mode;
@@ -26,7 +26,7 @@ void digitalWrite(uint8_t pin, uint8_t val) {
 	if (!pinExists(pin)) return;
 
 	microapp_pin_cmd_t *pin_cmd = (microapp_pin_cmd_t*)&global_msg;
-	pin_cmd->cmd = CS_MICROAPP_COMMAND_PIN;
+	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_ACTION;
 	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_WRITE;
@@ -40,7 +40,7 @@ int digitalRead(uint8_t pin) {
 	if (!pinExists(pin)) return -1;
 	
 	microapp_pin_cmd_t *pin_cmd = (microapp_pin_cmd_t*)&global_msg;
-	pin_cmd->cmd = CS_MICROAPP_COMMAND_PIN;
+	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_ACTION;
 	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_READ;
@@ -58,7 +58,7 @@ int attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode) {
 	if (!pinExists(pin)) return -1;
 
 	microapp_pin_cmd_t *pin_cmd = (microapp_pin_cmd_t*)&global_msg;
-	pin_cmd->cmd = CS_MICROAPP_COMMAND_PIN;
+	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_MODE;
 	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_INPUT_PULLUP;
@@ -70,7 +70,7 @@ int attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode) {
 	cb.id = pin_cmd->pin;
 	cb.callback = reinterpret_cast<callbackFunction>(isr);
 	registerCallback(&cb);
-	
+
 	int result = sendMessage(&global_msg);
 	return result;
 }

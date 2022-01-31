@@ -26,6 +26,7 @@ init:
 	@mkdir -p $(BUILD_PATH)
 	@rm -f include/microapp_header_symbols.ld
 
+.PHONY:
 include/microapp_header_symbols.ld: $(TARGET).bin.tmp
 	@echo "Use python script to generate file with valid header symbols"
 	@scripts/microapp_make.py -i $^ $@

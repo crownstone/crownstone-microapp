@@ -24,7 +24,7 @@ struct callback_t {
 	uint8_t id;
 	callbackFunction callback;
 	void *arg;
-	bool empty;
+	bool registered;
 };
 
 #define MAX_CALLBACKS 4
@@ -118,6 +118,11 @@ int sendMessage(microapp_message_t *msg);
  * Register a callback locally so that when a message.
  */
 void registerCallback(callback_t *cb);
+
+/**
+ * Evoke a previously registered callback.
+ */
+int evokeCallback(uint8_t type, uint8_t id);
 
 /**
  * Handle callbacks.

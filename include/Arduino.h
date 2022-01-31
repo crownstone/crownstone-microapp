@@ -25,7 +25,7 @@ void loop();
 //
 // A delay in ms. Hence 1000 means a delay of one second.
 //
-void delay(uint16_t delay_ms);
+void delay(uint32_t delay_ms);
 
 //
 // A bunch of functions that are mainly useful in either development mode, on a Crownstone that is embedded
