@@ -13,7 +13,7 @@ struct message_t {
 };
 
 // Callback functions
-typedef void (*callbackFunction)(void*);
+typedef void (*callbackFunction)(void*, void*);
 
 const uint8_t CALLBACK_TYPE_BLE = 1;
 const uint8_t CALLBACK_TYPE_PIN = 2;
@@ -122,7 +122,7 @@ void registerCallback(callback_t *cb);
 /**
  * Evoke a previously registered callback.
  */
-int evokeCallback(uint8_t type, uint8_t id);
+int evokeCallback(uint8_t type, uint8_t id, uint8_t *msg);
 
 /**
  * Handle callbacks.

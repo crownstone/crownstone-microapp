@@ -25,11 +25,9 @@ class BleDevice {
 
 private:
 
-	friend class Ble; // allows only the BLE class to construct BleDevice objects
+	friend class Ble; // exceptions for Ble class
 
 	BleDevice(){}; // default constructor
-
-	BleDevice(const microapp_ble_device_t & dev); // non-empty constructor
 
 	microapp_ble_device_t _device; // the raw advertisement data
 
@@ -51,6 +49,9 @@ private:
 	} _flags;
 
 public:
+
+	BleDevice(const microapp_ble_device_t & dev); // non-empty constructor
+
 	// return true if BleDevice is nontrivial, i.e. initialized from an actual advertisement
 	explicit operator bool() const {return _flags.flags.nonEmpty;}
 

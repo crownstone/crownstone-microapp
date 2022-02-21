@@ -1,18 +1,28 @@
 #include <ArduinoBLE.h>
 
 // A ble microapp example for reading advertisements from a Xiaomi Thermometer with custom firmware: https://github.com/atc1441/ATC_MiThermometer
-uint16_t counter = 0;
+
+static uint16_t counter = 0;
+
 bool scanToggle = true;
-const char* myAddress = "A4:C1:38:9A:45:E3";
-const char* myName = "ATC_9A45E3";
+
+//const char* myAddress = "A4:C1:38:9A:45:E3";
+//const char* myName = "ATC_9A45E3";
+//const char* myUuid = "181A";
+
+const char* myAddress = "DC:9F:FE:40:F3:1B";
+const char* myName = "CRWN";
 const char* myUuid = "181A";
 
 // callback for received peripheral advertisement
 void my_callback_func(BleDevice device) {
 
-	Serial.println("my_callback_func: ");
-	Serial.print("\trssi: "); Serial.println(device.rssi());
-	Serial.print("\taddress: "); Serial.println(device.address().c_str());
+	Serial.println("BLE device");
+	Serial.print("\trssi: ");
+	Serial.println(device.rssi());
+
+	Serial.print("\taddress: ");
+	Serial.println(device.address().c_str());
 
 	if (device.hasLocalName()) {
 		Serial.print("\tComplete local name: ");
@@ -37,6 +47,8 @@ void my_callback_func(BleDevice device) {
 			Serial.println("\tIncorrect service data size");
 		}
 	}
+
+//	delay(1000);
 }
 
 // The Arduino setup function.
@@ -55,7 +67,7 @@ void setup() {
 void loop() {
 
 	// Say something every time we loop (which is every second)
-	Serial.println("Loop");
+	//Serial.println("Loop");
 
 	// See if we have something available...
 	BleDevice peripheral = BLE.available();
@@ -75,22 +87,22 @@ void loop() {
 		}
 	}
 
-	if (scanToggle)
-	{
-		// BLE.scan(); // unfiltered!
-		BLE.scanForAddress(myAddress);
-		// BLE.scanForName(myName);
-		// BLE.scanForUuid(myUuid);
-	}
-	else
-	{
-		BLE.stopScan();
-	}
-
-	counter++;
-	if ((counter % 10) == 0) // every 10 loops, toggle scanning
+	// every 100 ms we loop, 100 loops should be 10 seconds
+	if ((counter % 20) == 0) // every 100 loops, toggle scanning
 	{
 		scanToggle = !scanToggle;
+		Serial.println("Toggle");
+		if (scanToggle)
+		{
+			// BLE.scan(); // unfiltered!
+			BLE.scanForAddress(myAddress);
+			// BLE.scanForName(myName);
+			// BLE.scanForUuid(myUuid);
+		}
+		else
+		{
+			BLE.stopScan();
+		}
 	}
-	return;
+	counter++;
 }

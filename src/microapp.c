@@ -96,25 +96,37 @@ int sendMessage(microapp_message_t *msg) {
 		ipc_data.valid = true;
 	}
 
-	// The callback will yield control to bluenet.
-	int (*callback_func)(uint8_t*,uint16_t) = (int (*)(uint8_t*,uint16_t)) ipc_data.microapp_callback;
-	result = callback_func(msg->payload, msg->length);
+	bool callbacksDone = false;
 
-	// Here the microapp resumes execution
-	microapp_cmd_t *buf = reinterpret_cast<microapp_cmd_t*>(msg->payload);
+	do {
 
-	// A command is indicated as being processed by CS_MICROAPP_COMMAND_NONE.
-	// Somehow this is often NOT set to COMMAND_NONE!
-	if(buf->cmd != CS_MICROAPP_COMMAND_NONE) {
+		// The callback will yield control to bluenet.
+		int (*callback_func)(uint8_t*) = (int (*)(uint8_t*)) ipc_data.microapp_callback;
+		result = callback_func(msg->payload);
 
-		// We ack the request, but continue execution with handling callbacks, we don't immediately return.
-		if (buf->ack == CS_ACK_BLUENET_MICROAPP_REQUEST) {
-			buf->ack = CS_ACK_BLUENET_MICROAPP_REQ_ACK;
+		// Here the microapp resumes execution
+		microapp_cmd_t *buf = reinterpret_cast<microapp_cmd_t*>(msg->payload);
+
+		// A command is indicated as being processed by CS_MICROAPP_COMMAND_NONE.
+		// Somehow this is often NOT set to COMMAND_NONE!
+		if(buf->callbackCmd != CS_MICROAPP_COMMAND_NONE) {
+			
+			// We ack the request, but continue execution with handling callbacks, we don't immediately return.
+			if (buf->ack == CS_ACK_BLUENET_MICROAPP_REQUEST) {
+				buf->ack = CS_ACK_BLUENET_MICROAPP_REQ_ACK;
+
+				// Continue execution, this will end up with a call to sendMessage and callback_func() at some time.
+				result = handleCallbacks(buf);
+			}
+
+			// Only now indicate that we have done the callback
+			// Now there's time for a new callback
+			buf->callbackCmd = CS_MICROAPP_COMMAND_NONE;
 		}
-		
-		// Continue execution, this will end up with a call to sendMessage and callback_func() at some time.
-		result = handleCallbacks(buf);
-	}
+		else {
+			callbacksDone = true;
+		}
+	} while(!callbacksDone);
 
 	return result;
 }
@@ -132,14 +144,14 @@ void registerCallback(callback_t *cb) {
 	}
 }
 
-int evokeCallback(uint8_t type, uint8_t id) {
+int evokeCallback(uint8_t type, uint8_t id, uint8_t *msg) {
 	for (int i = 0; i < MAX_CALLBACKS; ++i) {
 		if (!callbacks[i].registered || callbacks[i].type != type) {
 			continue;
 		}
 		if (callbacks[i].id == id) {
 			if (callbacks[i].callback) {
-				callbacks[i].callback(callbacks[i].arg);
+				callbacks[i].callback(callbacks[i].arg, msg);
 				return id;
 			}
 			return -2;
@@ -169,19 +181,18 @@ int countRegisteredCallbacks(uint8_t type) {
 }
 
 int handleCallbacks(microapp_cmd_t *msg) {
-	int result = -4;
-	switch(msg->cmd) {
+	int result = 0;
+	switch(msg->callbackCmd) {
 	case CS_MICROAPP_COMMAND_BLE_DEVICE: {
-		result = evokeCallback(CALLBACK_TYPE_BLE, msg->id);
+		result = evokeCallback(CALLBACK_TYPE_BLE, msg->id, (uint8_t*)msg);
 		break;
 	}
 	case CS_MICROAPP_COMMAND_PIN: {
 		microapp_pin_cmd_t* cmd = reinterpret_cast<microapp_pin_cmd_t*>(msg);
 		if (cmd->value != CS_MICROAPP_COMMAND_VALUE_CHANGE) {
-			result = -3;
 			break;
 		}
-		result = evokeCallback(CALLBACK_TYPE_PIN, cmd->pin);
+		result = evokeCallback(CALLBACK_TYPE_PIN, cmd->pin, (uint8_t*)msg);
 		break;
 	}
 	}

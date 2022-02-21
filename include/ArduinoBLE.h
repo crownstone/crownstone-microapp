@@ -37,6 +37,15 @@ struct BleFilter {
 	uuid16_t uuid; // service data uuid
 };
 
+typedef void (*bleCallbackFunction)(BleDevice);
+
+// Context for the callback that can be kept local.
+struct bleCallbackContext {
+	bleCallbackFunction callback;
+	bool filled;
+	uint8_t id;
+};
+
 /**
  * Main class for scanning, connecting and handling Bluetooth Low Energy devices
  *
@@ -44,7 +53,7 @@ struct BleFilter {
  */
 class Ble {
 private:
-	Ble(){};
+	Ble();
 
 	BleDevice _activeDevice;
 
@@ -52,22 +61,27 @@ private:
 
 	bool _isScanning = false;
 
-	uintptr_t _scannedDeviceCallback;
+	//uintptr_t _scannedDeviceCallback;
 
 	/*
 	 * Add handleScanEventWrapper as a friend so it can access private function handleScanEvent of Ble
 	 */
-	friend void handleScanEventWrapper(microapp_ble_device_t device);
+	//friend void handleScanEventWrapper(microapp_ble_device_t device);
 
 	/*
 	 * Handler for scanned devices. Called from bluenet via handleScanEventWrapper upon scanned device events if scanning
 	 */
-	void handleScanEvent(microapp_ble_device_t device);
+	//void handleScanEvent(microapp_ble_device_t device);
 
 	/*
 	 * Compares the scanned device device against the filter and returns true upon a match
 	 */
 	bool filterScanEvent(BleDevice rawDevice);
+
+	/*
+	 * Store callback contexts up to MAX_CALLBACKS;
+	 */
+	bleCallbackContext callbackContext[MAX_CALLBACKS];
 
 public:
 
@@ -85,7 +99,7 @@ public:
 	 * @param[in] eventType   Type of event to set callback for
 	 * @param[in] callback    The callback function to call upon a trigger
 	 */
-	void setEventHandler(BleEventType eventType, void (*callback)(BleDevice*));
+	void setEventHandler(BleEventType eventType, void (*callback)(BleDevice));
 
 	/**
 	 * Sends command to bluenet to call registered microapp callback function upon receiving advertisements

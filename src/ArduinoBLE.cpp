@@ -1,11 +1,20 @@
 #include <ArduinoBLE.h>
 
-// Wrapper for handleScanEvent since class functions can't be registered as a callback
-void handleScanEventWrapper(microapp_ble_device_t device) {
-	BLE.handleScanEvent(device);
+
+Ble::Ble() {
+	for (int i = 0; i < MAX_CALLBACKS; i++) {
+		callbackContext[i].callback = nullptr;
+		callbackContext[i].filled = false;
+	}
 }
 
+// Wrapper for handleScanEvent since class functions can't be registered as a callback
+//void handleScanEventWrapper(microapp_ble_device_t device) {
+//	BLE.handleScanEvent(device);
+//}
+
 // Filters and forwards the bluenet scanned device event interrupt to the user callback
+/*
 void Ble::handleScanEvent(microapp_ble_device_t device) {
 	BleDevice newDevice = BleDevice(device);
 	if (!filterScanEvent(newDevice)) {
@@ -17,7 +26,7 @@ void Ble::handleScanEvent(microapp_ble_device_t device) {
 	// now call the user registered callback
 	void (*callback_func)(BleDevice) = (void (*)(BleDevice)) _scannedDeviceCallback;
 	callback_func(newDevice);
-}
+}*/
 
 bool Ble::filterScanEvent(BleDevice device) {
 	switch (_activeFilter.type) {
@@ -62,10 +71,93 @@ bool Ble::filterScanEvent(BleDevice device) {
 	return true;
 }
 
-void Ble::setEventHandler(BleEventType type, void (*callback)(BleDevice*)) {
+/*
+void BLEmapping(microapp_ble_device_t *deviceIn, BleDevice *deviceOut) {
+	deviceOut->rssi = deviceIn->rssi;
+}*/
+
+/*
+ * In the code for ArduinoBLE there are setEventHandler's for events like BLEConnected and BLEDisconnected. These are
+ * formatted like:
+ *
+ * ```
+ *     BLE.setEventHandler(BLEConnected, blePeripheralConnectHandler);
+ *     void blePeripheralConnectHandler(BLEDevice central) { }
+ * ```
+ *
+ * These events do not happen very often, hence this might be fine. However, in our case we want to get device info
+ * for every scan request. This means we should not pass by value such a large object as BLEDevice. The smallest change
+ * for the user is to use pass by reference instead:
+ * ```
+ *     BLE.setEventHandler(BLEDeviceScanned, bleDeviceScannedHandler);
+ *     void bleDeviceScannedHandler(BLEDevice & central) { }
+ * ```
+ * Apart from this each advertisement can in theory passed through the bluenet code towards the microapp, but not in
+ * practice. This is because handling the advertisement in the handler takes time. Especially if the microapp user
+ * logs for example all kind of info like RSSI values, MAC address, etc. This means that we need to throttle.
+ * The smartest way to throttle is by limiting the number of callbacks coming back to bluenet from the microapp within
+ * a single tick. Hence, if the microapp implements a very efficient handler without roundtrips towards bluenet it can
+ * receive many advertisements.
+ *
+ * In either way, we can't just immediately set the event handler and evoke it later. We need one level of indirection.
+ * We write a struct in which the event handler is written, then we register our own event handler which will call the
+ * user-facing one. After the user-facing handler is done it falls back to our library event handler upon which we can
+ * send a SOFT_INTERRUPT_END message. Alternatively, we can keep this information local and update the  lock-state
+ * locally as well.
+ *
+ * Mmm... Perhaps just keep it this way. Yes, the callback handler gets a copy of the object, but that means that it
+ * is completely reentrant.
+ *
+ * References:
+ * - https://www.arduino.cc/en/Reference/ArduinoBLEBLEsetEventHandler
+ */
+
+/*
+ * An ordinary C function to keep the callback simple.
+ */
+void bleCallback(void *args, void* buf) {
+	microapp_ble_device_t *dev = (microapp_ble_device_t*)buf;
+	bleCallbackContext *context = (bleCallbackContext*)args;
+
+	if (!context->callback) {
+		return;
+	}
+
+	// Create temporary object on the stack
+	BleDevice bleDevice = BleDevice(*dev);
+	// Call the callback with a copy of this object
+	context->callback(bleDevice);
+	
+	microapp_cmd_t *cmd = (microapp_cmd_t*)&global_msg;
+	cmd->cmd = CS_MICROAPP_COMMAND_CALLBACK_END;
+	cmd->id = context->id;
+	sendMessage(&global_msg);
+}
+
+/*
+ * Set callback, but not directly... We register a wrapper function that calls this callback so we have the possibility
+ * to send a "callback end" command after the callback has been executed.
+ */
+void Ble::setEventHandler(BleEventType type, void (*callback)(BleDevice)) {
+
+	int callbackContextId = -1;
+	for (int i = 0; i < MAX_CALLBACKS; ++i) {
+		if (callbackContext[i].filled == false) {
+			callbackContextId = i;
+			break;
+		}
+	}
+	if (callbackContextId < 0) {
+		Serial.println("No space for new event handler");
+		return;
+	}
+	bleCallbackContext & context = callbackContext[callbackContextId];
+
 	Serial.println("Setting event handler");
 	// TODO: do something with type. For now assume type is BleEventDeviceScanned
 	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
+	//Serial.print("Write command to address: ");
+	//Serial.println((unsigned int)ble_cmd);
 	ble_cmd->header.cmd = CS_MICROAPP_COMMAND_BLE;
 	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_SCAN_SET_HANDLER;
 
@@ -74,13 +166,21 @@ void Ble::setEventHandler(BleEventType type, void (*callback)(BleDevice*)) {
 
 	global_msg.length = sizeof(microapp_ble_cmd_t);
 
-	sendMessage(&global_msg);
+	context.callback = callback;
+	context.filled = true;
+	context.id = ble_cmd->id;
 
 	callback_t cb;
 	cb.id = ble_cmd->id;
 	cb.type = CALLBACK_TYPE_BLE;
-	cb.callback = reinterpret_cast<callbackFunction>(callback);
+	cb.callback = bleCallback;
+	cb.arg = &callbackContext[callbackContextId];
+//	cb.callback = reinterpret_cast<callbackFunction>(callback);
+	//cb.arg = _device[ble_cmd->id]; // if there are more than 1 device
+	//cb.arg = (void*)&_activeDevice;
 	registerCallback(&cb);
+	
+	sendMessage(&global_msg);
 
 	// Now register the user callback within the Ble object
 	//_scannedDeviceCallback = (uintptr_t)(callback);
@@ -91,7 +191,7 @@ bool Ble::scan(bool withDuplicates) {
 		return true;
 	}
 
-	Serial.println("Starting BLE device scanning");
+	//Serial.println("Starting BLE device scanning");
 
 	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
 	ble_cmd->header.ack = false;
@@ -136,7 +236,7 @@ bool Ble::stopScan() {
 		return true;
 	}
 
-	Serial.println("Stopping BLE device scanning");
+	//Serial.println("Stopping BLE device scanning");
 
 	_activeFilter.type = BleFilterNone; // reset filter
 

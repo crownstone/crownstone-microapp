@@ -55,12 +55,19 @@ String BleDevice::localName() {
 
 bool BleDevice::connect() {
 	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
-	ble_cmd->cmd = CS_MICROAPP_COMMAND_BLE;
+	ble_cmd->header.cmd = CS_MICROAPP_COMMAND_BLE;
 	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_CONNECT;
-	memcpy(ble_cmd->address,_address.getBytes(),MAC_ADDRESS_LENGTH);
+	memcpy(ble_cmd->addr, _address.getBytes(), MAC_ADDRESS_LENGTH);
 
 	global_msg.length = sizeof(microapp_ble_cmd_t);
 
+	// TODO: sendMessage should return ERR_SUCCESS (0) on success
+	//       More importantly, this only communicates the intent of a connection.
+	//       A connection is an asynchronous sequence of events not under the control of the microapp.
+	//       This has to be captured on the microapp side (in this library).
+	//       See e.g. the implementation of delay. There we call sendMessage until we are satisfied
+	//       (in this case a simple loop). Here we have to call sendMessage until we are satisfied
+	//       with the result.
 	int res = (sendMessage(&global_msg) == 0);
 
 	if (res == 0) {

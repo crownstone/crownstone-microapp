@@ -28,15 +28,30 @@ void delay(uint32_t delay_ms) {
 }
 
 void signalSetupEnd() {
-	global_msg.payload[0] = CS_MICROAPP_COMMAND_SETUP_END;
-	global_msg.length = 1;
+	microapp_cmd_t *cmd = (microapp_cmd_t*)&global_msg;
+	cmd->cmd = CS_MICROAPP_COMMAND_SETUP_END;
+	cmd->callbackCmd = CS_MICROAPP_COMMAND_NONE;
 	sendMessage(&global_msg);
 }
 
 void signalLoopEnd() {
-	global_msg.payload[0] = CS_MICROAPP_COMMAND_LOOP_END;
-	global_msg.length = 1;
+	microapp_cmd_t *cmd = (microapp_cmd_t*)&global_msg;
+	cmd->cmd = CS_MICROAPP_COMMAND_LOOP_END;
 	sendMessage(&global_msg);
+	/*
+	bool resume = false;
+	do {
+		sendMessage(&global_msg);
+		// It can be that we receive callbacks in the meantime than the payload will have changed
+		if (cmd->cmd != CS_MICROAPP_COMMAND_NONE && cmd->prev == CS_MICROAPP_COMMAND_LOOP_END) {
+			// Make sure the loop-end command is sent again
+			cmd->cmd = CS_MICROAPP_COMMAND_LOOP_END;
+			cmd->prev = CS_MICROAPP_COMMAND_NONE;
+		}
+		else {
+			resume = true;
+		}
+	} while (resume); */
 }
 
 /*

@@ -31,6 +31,8 @@ BUILD_PATH=build
 # The target name
 TARGET_NAME=basic
 
+TARGET_NAME=ble_peripheral_xiaomi_thermometer
+
 # The target source file
 TARGET_SOURCE=examples/$(TARGET_NAME).ino
 
