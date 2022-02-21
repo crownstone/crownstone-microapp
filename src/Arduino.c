@@ -10,44 +10,44 @@ bool pinExists(uint8_t pin) {
 
 void pinMode(uint8_t pin, uint8_t mode) {
 	if (!pinExists(pin)) return;
-
-	microapp_pin_cmd_t *pin_cmd = (microapp_pin_cmd_t*)&global_msg;
+	
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(&buffer->payload);
 	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_MODE;
 	pin_cmd->opcode2 = mode;
 	pin_cmd->value = 0;
-	global_msg.length = sizeof(microapp_pin_cmd_t);
 
-	sendMessage(&global_msg);
+	sendMessage();
 }
 
 void digitalWrite(uint8_t pin, uint8_t val) {
 	if (!pinExists(pin)) return;
 
-	microapp_pin_cmd_t *pin_cmd = (microapp_pin_cmd_t*)&global_msg;
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(&buffer->payload);
 	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_ACTION;
 	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_WRITE;
 	pin_cmd->value = val;
-	global_msg.length = sizeof(microapp_pin_cmd_t);
 
-	sendMessage(&global_msg);
+	sendMessage();
 }
 
 int digitalRead(uint8_t pin) {
 	if (!pinExists(pin)) return -1;
 	
-	microapp_pin_cmd_t *pin_cmd = (microapp_pin_cmd_t*)&global_msg;
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(&buffer->payload);
 	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_ACTION;
 	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_READ;
 	pin_cmd->value = 0;
-	global_msg.length = sizeof(microapp_pin_cmd_t);
 	
-	sendMessage(&global_msg);
+	sendMessage();
 
 	// TODO, perhaps a larger type then uint8_t is required / desired
 	uint8_t value = pin_cmd->value;
@@ -57,13 +57,13 @@ int digitalRead(uint8_t pin) {
 int attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode) {
 	if (!pinExists(pin)) return -1;
 
-	microapp_pin_cmd_t *pin_cmd = (microapp_pin_cmd_t*)&global_msg;
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(&buffer->payload);
 	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_MODE;
 	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_INPUT_PULLUP;
 	pin_cmd->value = mode;
-	global_msg.length = sizeof(microapp_pin_cmd_t);
 	
 	callback_t cb;
 	cb.type = CALLBACK_TYPE_PIN;
@@ -71,7 +71,7 @@ int attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode) {
 	cb.callback = reinterpret_cast<callbackFunction>(isr);
 	registerCallback(&cb);
 
-	int result = sendMessage(&global_msg);
+	int result = sendMessage();
 	return result;
 }
 

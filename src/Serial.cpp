@@ -126,7 +126,8 @@ int SerialBase_::println(const uint8_t *buf, int length) {
 /// Implementations (protected)
 
 int SerialBase_::_write(char value, CommandMicroappLogOption option) {
-	microapp_log_char_cmd_t* command = reinterpret_cast<microapp_log_char_cmd_t*>(&global_msg);
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_log_char_cmd_t* command = reinterpret_cast<microapp_log_char_cmd_t*>(&buffer->payload);
 	command->value = value;
 	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
 	cmd->length = sizeof(value);
@@ -134,7 +135,8 @@ int SerialBase_::_write(char value, CommandMicroappLogOption option) {
 }
 
 int SerialBase_::_write(float value, CommandMicroappLogOption option) {
-	microapp_log_float_cmd_t* command = reinterpret_cast<microapp_log_float_cmd_t*>(&global_msg);
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_log_float_cmd_t* command = reinterpret_cast<microapp_log_float_cmd_t*>(&buffer->payload);
 	command->value = value;
 	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
 	cmd->length = sizeof(value);
@@ -142,7 +144,8 @@ int SerialBase_::_write(float value, CommandMicroappLogOption option) {
 }
 
 int SerialBase_::_write(double value, CommandMicroappLogOption option) {
-	microapp_log_double_cmd_t* command = reinterpret_cast<microapp_log_double_cmd_t*>(&global_msg);
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_log_double_cmd_t* command = reinterpret_cast<microapp_log_double_cmd_t*>(&buffer->payload);
 	command->value = value;
 	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
 	cmd->length = sizeof(value);
@@ -150,7 +153,8 @@ int SerialBase_::_write(double value, CommandMicroappLogOption option) {
 }
 
 int SerialBase_::_write(int value, CommandMicroappLogOption option) {
-	microapp_log_int_cmd_t* command = reinterpret_cast<microapp_log_int_cmd_t*>(&global_msg);
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_log_int_cmd_t* command = reinterpret_cast<microapp_log_int_cmd_t*>(&buffer->payload);
 	command->value = value;
 	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
 	cmd->length = sizeof(value);
@@ -158,7 +162,8 @@ int SerialBase_::_write(int value, CommandMicroappLogOption option) {
 }
 
 int SerialBase_::_write(short value, CommandMicroappLogOption option) {
-	microapp_log_short_cmd_t* command = reinterpret_cast<microapp_log_short_cmd_t*>(&global_msg);
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_log_short_cmd_t* command = reinterpret_cast<microapp_log_short_cmd_t*>(&buffer->payload);
 	command->value = value;
 	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
 	cmd->length = sizeof(value);
@@ -166,7 +171,8 @@ int SerialBase_::_write(short value, CommandMicroappLogOption option) {
 }
 
 int SerialBase_::_write(unsigned int value, CommandMicroappLogOption option) {
-	microapp_log_int_cmd_t* command = reinterpret_cast<microapp_log_int_cmd_t*>(&global_msg);
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_log_int_cmd_t* command = reinterpret_cast<microapp_log_int_cmd_t*>(&buffer->payload);
 	command->value = value;
 	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
 	cmd->length = sizeof(value);
@@ -174,7 +180,8 @@ int SerialBase_::_write(unsigned int value, CommandMicroappLogOption option) {
 }
 
 int SerialBase_::_write(const char *str, CommandMicroappLogOption option) {
-	microapp_log_string_cmd_t* command = reinterpret_cast<microapp_log_string_cmd_t*>(&global_msg);
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_log_string_cmd_t* command = reinterpret_cast<microapp_log_string_cmd_t*>(&buffer->payload);
 	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
 	cmd->length = strlen(str);
 	memcpy(command->str, str, cmd->length);
@@ -182,7 +189,8 @@ int SerialBase_::_write(const char *str, CommandMicroappLogOption option) {
 }
 
 int SerialBase_::_write(String str, int length, CommandMicroappLogOption option) {
-	microapp_log_string_cmd_t* command = reinterpret_cast<microapp_log_string_cmd_t*>(&global_msg);
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_log_string_cmd_t* command = reinterpret_cast<microapp_log_string_cmd_t*>(&buffer->payload);
 	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
 	cmd->length = strlen(str.c_str());
 	memcpy(command->str, str.c_str(), cmd->length);
@@ -190,7 +198,8 @@ int SerialBase_::_write(String str, int length, CommandMicroappLogOption option)
 }
 
 int SerialBase_::_write(const uint8_t *buf, int length, CommandMicroappLogOption option) {
-	microapp_log_array_cmd_t* command = reinterpret_cast<microapp_log_array_cmd_t*>(&global_msg);
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_log_array_cmd_t* command = reinterpret_cast<microapp_log_array_cmd_t*>(&buffer->payload);
 	microapp_log_cmd_t *cmd = reinterpret_cast<microapp_log_cmd_t*>(command);
 	cmd->length = length;
 	memcpy(command->arr, buf, cmd->length);
@@ -215,7 +224,7 @@ int SerialBase_::_write(microapp_log_cmd_t *cmd, Type type, CommandMicroappLogOp
 	}
 	cmd->type = type;
 	cmd->option = option;
-	sendMessage(&global_msg);
+	sendMessage();
 	return cmd->length;
 }
 

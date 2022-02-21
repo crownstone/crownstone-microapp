@@ -128,10 +128,12 @@ void bleCallback(void *args, void* buf) {
 	// Call the callback with a copy of this object
 	context->callback(bleDevice);
 	
-	microapp_cmd_t *cmd = (microapp_cmd_t*)&global_msg;
+	//microapp_cmd_t *cmd = (microapp_cmd_t*)&global_buf_out;
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_cmd_t *cmd = (microapp_cmd_t*)&buffer->payload;
 	cmd->cmd = CS_MICROAPP_COMMAND_CALLBACK_END;
 	cmd->id = context->id;
-	sendMessage(&global_msg);
+	sendMessage();
 }
 
 /*
@@ -155,7 +157,9 @@ void Ble::setEventHandler(BleEventType type, void (*callback)(BleDevice)) {
 
 	Serial.println("Setting event handler");
 	// TODO: do something with type. For now assume type is BleEventDeviceScanned
-	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&buffer->payload;
+	//microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_buf_out;
 	//Serial.print("Write command to address: ");
 	//Serial.println((unsigned int)ble_cmd);
 	ble_cmd->header.cmd = CS_MICROAPP_COMMAND_BLE;
@@ -164,7 +168,7 @@ void Ble::setEventHandler(BleEventType type, void (*callback)(BleDevice)) {
 	// Set identifier now to 0 (assuming a single callback)
 	ble_cmd->id = 0;
 
-	global_msg.length = sizeof(microapp_ble_cmd_t);
+//	global_buf_out.length = sizeof(microapp_ble_cmd_t);
 
 	context.callback = callback;
 	context.filled = true;
@@ -180,7 +184,7 @@ void Ble::setEventHandler(BleEventType type, void (*callback)(BleDevice)) {
 	//cb.arg = (void*)&_activeDevice;
 	registerCallback(&cb);
 	
-	sendMessage(&global_msg);
+	sendMessage();
 
 	// Now register the user callback within the Ble object
 	//_scannedDeviceCallback = (uintptr_t)(callback);
@@ -193,13 +197,16 @@ bool Ble::scan(bool withDuplicates) {
 
 	//Serial.println("Starting BLE device scanning");
 
-	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&buffer->payload;
+	//microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_buf_out;
 	ble_cmd->header.ack = false;
 	ble_cmd->header.cmd = CS_MICROAPP_COMMAND_BLE;
 	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_SCAN_START;
-	global_msg.length = sizeof(microapp_ble_cmd_t);
+	//global_buf_out.length = sizeof(microapp_ble_cmd_t);
 
-	sendMessage(&global_msg);
+	//sendMessage(&global_buf_out);
+	sendMessage();
 
 	bool success = ble_cmd->header.ack;
 	if (!success) {
@@ -241,13 +248,15 @@ bool Ble::stopScan() {
 	_activeFilter.type = BleFilterNone; // reset filter
 
 	// send a message to bluenet commanding it to stop forwarding ads to microapp
-	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_msg;
+	//microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_buf_out;
+	io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&buffer->payload;
+
 	ble_cmd->header.ack = false;
 	ble_cmd->header.cmd = CS_MICROAPP_COMMAND_BLE;
 	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_SCAN_STOP;
-	global_msg.length = sizeof(microapp_ble_cmd_t);
 
-	sendMessage(&global_msg);
+	sendMessage();
 	
 	bool success = ble_cmd->header.ack;
 	if (!success) {

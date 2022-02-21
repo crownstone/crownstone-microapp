@@ -7,24 +7,24 @@
 extern "C" {
 #endif
 
-struct message_t {
-	uint8_t payload[MAX_PAYLOAD];
-	uint16_t length;
-};
+// struct message_t {
+//	uint8_t payload[MAX_PAYLOAD];
+//	uint16_t length;
+//};
 
 // Callback functions
-typedef void (*callbackFunction)(void*, void*);
+typedef void (*callbackFunction)(void *, void *);
 
 const uint8_t CALLBACK_TYPE_BLE = 1;
 const uint8_t CALLBACK_TYPE_PIN = 2;
 
 // Store callbacks in the microapp
 struct callback_t {
-	uint8_t type;
-	uint8_t id;
-	callbackFunction callback;
-	void *arg;
-	bool registered;
+    uint8_t type;
+    uint8_t id;
+    callbackFunction callback;
+    void *arg;
+    bool registered;
 };
 
 #define MAX_CALLBACKS 4
@@ -40,20 +40,20 @@ typedef microapp_ble_device_t ble_dev_t;
 
 // Create long-form version for who wants
 
-typedef message_t microapp_message_t;
+// typedef message_t microapp_message_t;
 
-#define OUTPUT               CS_MICROAPP_COMMAND_PIN_WRITE
-#define INPUT                CS_MICROAPP_COMMAND_PIN_READ
-#define TOGGLE               CS_MICROAPP_COMMAND_PIN_TOGGLE
-#define INPUT_PULLUP         CS_MICROAPP_COMMAND_PIN_INPUT_PULLUP
+#define OUTPUT CS_MICROAPP_COMMAND_PIN_WRITE
+#define INPUT CS_MICROAPP_COMMAND_PIN_READ
+#define TOGGLE CS_MICROAPP_COMMAND_PIN_TOGGLE
+#define INPUT_PULLUP CS_MICROAPP_COMMAND_PIN_INPUT_PULLUP
 
-#define CHANGE               CS_MICROAPP_COMMAND_VALUE_CHANGE
-#define RISING               CS_MICROAPP_COMMAND_VALUE_RISING
-#define FALLING              CS_MICROAPP_COMMAND_VALUE_FALLING
+#define CHANGE CS_MICROAPP_COMMAND_VALUE_CHANGE
+#define RISING CS_MICROAPP_COMMAND_VALUE_RISING
+#define FALLING CS_MICROAPP_COMMAND_VALUE_FALLING
 
-#define I2C_INIT             CS_MICROAPP_COMMAND_TWI_INIT
-#define I2C_READ             CS_MICROAPP_COMMAND_TWI_READ
-#define I2C_WRITE            CS_MICROAPP_COMMAND_TWI_WRITE
+#define I2C_INIT CS_MICROAPP_COMMAND_TWI_INIT
+#define I2C_READ CS_MICROAPP_COMMAND_TWI_READ
+#define I2C_WRITE CS_MICROAPP_COMMAND_TWI_WRITE
 
 //#define HIGH                 CS_MICROAPP_COMMAND_SWITCH_ON
 //#define LOW                  CS_MICROAPP_COMMAND_SWITCH_OFF
@@ -87,8 +87,10 @@ uint8_t strlen(const char *str);
  * @param[in] num    The number of bytes to compare
  *
  * @return 0         if ptr1 and ptr2 are equal
- * @return -1        if for the first unmatching byte i we have ptr1[i] < ptr2[i]
- * @return 1         if for the first unmatching byte i we have ptr1[i] > ptr2[i]
+ * @return -1        if for the first unmatching byte i we have ptr1[i] <
+ * ptr2[i]
+ * @return 1         if for the first unmatching byte i we have ptr1[i] >
+ * ptr2[i]
  */
 int memcmp(const void *ptr1, const void *ptr2, size_t num);
 
@@ -101,18 +103,20 @@ int memcmp(const void *ptr1, const void *ptr2, size_t num);
  *
  * @return           A pointer to dest
  */
-void* memcpy(void* dest, const void* src, size_t num);
+void *memcpy(void *dest, const void *src, size_t num);
 
 /*
- * To save space have a single global message object.
+ * Get outgoing message buffer (can be used for sendMessage);
  */
-extern microapp_message_t global_msg;
+io_buffer_t *getOutgoingMessageBuffer();
+
+io_buffer_t *getIncomingMessageBuffer();
 
 /**
- * Send a message to the bluenet code. This is the function that is called - in the end - by all the functions
- * that have to reach the microapp code.
+ * Send a message to the bluenet code. This is the function that is called - in
+ * the end - by all the functions that have to reach the microapp code.
  */
-int sendMessage(microapp_message_t *msg);
+int sendMessage();
 
 /**
  * Register a callback locally so that when a message.

@@ -54,23 +54,41 @@ void* memcpy(void* dest, const void* src, size_t num) {
 /*
  * A global object to send a message.
  */
-microapp_message_t global_msg;
+//microapp_message_t global_buf_out;
+
+/*
+ * A global object to communicate with the bluenet code.
+ */
+
+/*
+ * A global object for messages in and out.
+ */
+bluenet_io_buffer_t io_buffer;
 
 /*
  * A global object for ipc data as well.
  */
 bluenet2microapp_ipcdata_t ipc_data;
 
+io_buffer_t *getOutgoingMessageBuffer() {
+	return &io_buffer.microapp2bluenet;
+}
+
+io_buffer_t *getIncomingMessageBuffer() {
+	return &io_buffer.bluenet2microapp;
+}
+
 /*
  * Send the actual message.
  */
-int sendMessage(microapp_message_t *msg) {
+//int sendmessage(microapp_message_t *msg) {
+int sendMessage() {
 	int result = -1;
 
 	// Check length.
-	if (msg->length > MAX_PAYLOAD) {
-		return result;
-	}
+//	if (msg->length > MAX_PAYLOAD) {
+//		return result;
+//	}
 
 	// If valid is set to 1, we assume cached values are fine, otherwise load them.
 	if(!ipc_data.valid) {
@@ -101,11 +119,13 @@ int sendMessage(microapp_message_t *msg) {
 	do {
 
 		// The callback will yield control to bluenet.
-		int (*callback_func)(uint8_t*) = (int (*)(uint8_t*)) ipc_data.microapp_callback;
-		result = callback_func(msg->payload);
+//		int (*callback_func)(uint8_t*) = (int (*)(uint8_t*)) ipc_data.microapp_callback;
+//		result = callback_func(msg->payload);
+		microappCallbackFunc callback_func = ipc_data.microapp_callback;
+		result = callback_func(&io_buffer);
 
-		// Here the microapp resumes execution
-		microapp_cmd_t *buf = reinterpret_cast<microapp_cmd_t*>(msg->payload);
+		// Here the microapp resumes execution, check for incoming messages
+		microapp_cmd_t *buf = reinterpret_cast<microapp_cmd_t*>(io_buffer.bluenet2microapp.payload);
 
 		// A command is indicated as being processed by CS_MICROAPP_COMMAND_NONE.
 		// Somehow this is often NOT set to COMMAND_NONE!
