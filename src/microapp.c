@@ -52,15 +52,6 @@ void* memcpy(void* dest, const void* src, size_t num) {
 }
 
 /*
- * A global object to send a message.
- */
-//microapp_message_t global_buf_out;
-
-/*
- * A global object to communicate with the bluenet code.
- */
-
-/*
  * A global object for messages in and out.
  */
 bluenet_io_buffer_t io_buffer;
@@ -70,25 +61,44 @@ bluenet_io_buffer_t io_buffer;
  */
 bluenet2microapp_ipcdata_t ipc_data;
 
+/*
+ * Get the outgoing message buffer.
+ */
 io_buffer_t *getOutgoingMessageBuffer() {
 	return &io_buffer.microapp2bluenet;
 }
 
+/*
+ * Get the incoming message buffer.
+ */
 io_buffer_t *getIncomingMessageBuffer() {
 	return &io_buffer.bluenet2microapp;
 }
 
 /*
- * Send the actual message.
+ * Have a queue with a couple of buffers. Incoming messages can be placed in the first empty spot and afterwards
+ * being handled.
  */
-//int sendmessage(microapp_message_t *msg) {
+struct queue_t {
+	uint8_t buffer[MAX_PAYLOAD];
+	uint8_t filled;
+};
+
+static const uint8_t MAX_QUEUE = 2;
+
+/*
+ * A set of local buffers for incoming messages.
+ */
+static queue_t localQueue[MAX_QUEUE];
+
+/*
+ * Send the actual message.
+ *
+ * This method will also obtain information for callbacks and execute those callbacks if necessary. If there are no
+ * callbacks it will just return and at some later time be called again.
+ */
 int sendMessage() {
 	int result = -1;
-
-	// Check length.
-//	if (msg->length > MAX_PAYLOAD) {
-//		return result;
-//	}
 
 	// If valid is set to 1, we assume cached values are fine, otherwise load them.
 	if(!ipc_data.valid) {
@@ -114,39 +124,56 @@ int sendMessage() {
 		ipc_data.valid = true;
 	}
 
-	bool callbacksDone = false;
+	// The callback will yield control to bluenet.
+	microappCallbackFunc callback_func = ipc_data.microapp_callback;
+	result = callback_func(&io_buffer);
 
-	do {
+	// Here the microapp resumes execution, check for incoming messages
+	microapp_cmd_t *buf_in = reinterpret_cast<microapp_cmd_t*>(io_buffer.bluenet2microapp.payload);
 
-		// The callback will yield control to bluenet.
-//		int (*callback_func)(uint8_t*) = (int (*)(uint8_t*)) ipc_data.microapp_callback;
-//		result = callback_func(msg->payload);
-		microappCallbackFunc callback_func = ipc_data.microapp_callback;
+	// We ack the request, but continue execution with handling callbacks, we don't immediately return.
+	if (buf_in->ack == CS_ACK_BLUENET_MICROAPP_REQUEST) {
+
+		queue_t *localCopy = nullptr;
+		int8_t nextIndex = -1;
+		for (int8_t i = 0; i < MAX_QUEUE; ++i) {
+			localCopy = &localQueue[i];
+			if (!localCopy->filled) {
+				nextIndex = i;
+				localCopy->filled = true;
+				break;
+			}
+		}
+		// overwrite in both scenarios the REQUEST
+		if (nextIndex < 0) {
+			buf_in->ack = CS_ACK_BLUENET_MICROAPP_REQ_BUSY;
+		} else {
+			buf_in->ack = CS_ACK_BLUENET_MICROAPP_REQ_ACK;
+		}
+
+		// First indicate we have received the callback
+		microapp_cmd_t *buf_out = reinterpret_cast<microapp_cmd_t*>(io_buffer.microapp2bluenet.payload);
+		if (nextIndex < 0) {
+			buf_out->cmd = CS_MICROAPP_COMMAND_CALLBACK_FAILURE;
+		} else {
+			buf_out->cmd = CS_MICROAPP_COMMAND_CALLBACK_RECEIVED;
+		}
 		result = callback_func(&io_buffer);
 
-		// Here the microapp resumes execution, check for incoming messages
-		microapp_cmd_t *buf = reinterpret_cast<microapp_cmd_t*>(io_buffer.bluenet2microapp.payload);
-
-		// A command is indicated as being processed by CS_MICROAPP_COMMAND_NONE.
-		// Somehow this is often NOT set to COMMAND_NONE!
-		if(buf->callbackCmd != CS_MICROAPP_COMMAND_NONE) {
-			
-			// We ack the request, but continue execution with handling callbacks, we don't immediately return.
-			if (buf->ack == CS_ACK_BLUENET_MICROAPP_REQUEST) {
-				buf->ack = CS_ACK_BLUENET_MICROAPP_REQ_ACK;
-
-				// Continue execution, this will end up with a call to sendMessage and callback_func() at some time.
-				result = handleCallbacks(buf);
-			}
-
-			// Only now indicate that we have done the callback
-			// Now there's time for a new callback
-			buf->callbackCmd = CS_MICROAPP_COMMAND_NONE;
+		if (nextIndex < 0) {
+			// TODO: Make sure that this return is not screwing up counters at the bluenet side.
+			return -1;
 		}
-		else {
-			callbacksDone = true;
-		}
-	} while(!callbacksDone);
+
+		// Continue execution, this will end up with a call to this function (sendMessage) and then a call to
+		// callback_func() above. However, it won't enter again due to buf_in->ack != REQUEST.
+		// Except if there is a new callback while this one is being processed.
+
+		memcpy(localCopy->buffer, buf_in, MAX_PAYLOAD);
+		microapp_cmd_t* callback_cmd = reinterpret_cast<microapp_cmd_t*>(localCopy->buffer);
+		result = handleCallbacks(callback_cmd);
+		localCopy->filled = false;
+	}
 
 	return result;
 }

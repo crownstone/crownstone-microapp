@@ -50,6 +50,7 @@ FLAGS=-std=c++17 -mthumb -ffunction-sections -fdata-sections -Wall -Werror \
 	  -fno-exceptions -fdelete-dead-exceptions -fno-unwind-tables -fno-non-call-exceptions \
 	  -nostdlib -fno-threadsafe-statics \
 	  -Wl,--gc-sections -Wl,-eReset_Handler \
+	  -g \
 	  -Wno-error=unused-function -Os -fomit-frame-pointer -Wl,-z,nocopyreloc --specs=nano.specs \
 	  -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -u _printf_float
 

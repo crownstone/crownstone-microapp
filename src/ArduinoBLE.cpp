@@ -120,6 +120,11 @@ void bleCallback(void *args, void* buf) {
 	bleCallbackContext *context = (bleCallbackContext*)args;
 
 	if (!context->callback) {
+		io_buffer_t *buffer = getOutgoingMessageBuffer();
+		microapp_cmd_t *cmd = (microapp_cmd_t*)&buffer->payload;
+		cmd->cmd = CS_MICROAPP_COMMAND_CALLBACK_FAILURE;
+		cmd->id = context->id;
+		sendMessage();
 		return;
 	}
 
@@ -128,7 +133,6 @@ void bleCallback(void *args, void* buf) {
 	// Call the callback with a copy of this object
 	context->callback(bleDevice);
 	
-	//microapp_cmd_t *cmd = (microapp_cmd_t*)&global_buf_out;
 	io_buffer_t *buffer = getOutgoingMessageBuffer();
 	microapp_cmd_t *cmd = (microapp_cmd_t*)&buffer->payload;
 	cmd->cmd = CS_MICROAPP_COMMAND_CALLBACK_END;

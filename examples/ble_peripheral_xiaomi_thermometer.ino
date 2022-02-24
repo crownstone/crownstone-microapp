@@ -17,7 +17,7 @@ const char* myUuid = "181A";
 // callback for received peripheral advertisement
 void my_callback_func(BleDevice device) {
 
-	Serial.println("BLE device");
+	Serial.println("BLE");
 	Serial.print("\trssi: ");
 	Serial.println(device.rssi());
 
@@ -44,11 +44,9 @@ void my_callback_func(BleDevice device) {
 			Serial.print("\t\tBattery \%: "); Serial.println(battery_perc);
 		}
 		else {
-			Serial.println("\tIncorrect service data size");
+			Serial.println("\tIncorrect thermometer service");
 		}
 	}
-
-//	delay(1000);
 }
 
 // The Arduino setup function.
@@ -87,8 +85,8 @@ void loop() {
 		}
 	}
 
-	// every 100 ms we loop, 100 loops should be 10 seconds
-	if ((counter % 20) == 0) // every 100 loops, toggle scanning
+	// we would like to loop every 10000 ms (10 seconds)
+	if ((counter % (10000 / MICROAPP_LOOP_INTERVAL_MS)) == 0) // every 100 loops, toggle scanning
 	{
 		scanToggle = !scanToggle;
 		Serial.println("Toggle");
