@@ -7,29 +7,24 @@
 extern "C" {
 #endif
 
-// struct message_t {
-//	uint8_t payload[MAX_PAYLOAD];
-//	uint16_t length;
-//};
+// SoftInterrupt functions
+typedef void (*softInterruptFunction)(void *, void *);
 
-// Callback functions
-typedef void (*callbackFunction)(void *, void *);
+const uint8_t SOFT_INTERRUPT_TYPE_BLE = 1;
+const uint8_t SOFT_INTERRUPT_TYPE_PIN = 2;
 
-const uint8_t CALLBACK_TYPE_BLE = 1;
-const uint8_t CALLBACK_TYPE_PIN = 2;
-
-// Store callbacks in the microapp
-struct callback_t {
+// Store softInterrupts in the microapp
+struct soft_interrupt_t {
     uint8_t type;
     uint8_t id;
-    callbackFunction callback;
+    softInterruptFunction softInterruptFunc;
     void *arg;
     bool registered;
 };
 
-#define MAX_CALLBACKS 4
+#define MAX_SOFT_INTERRUPTS 4
 
-extern callback_t callbacks[MAX_CALLBACKS];
+extern soft_interrupt_t softInterrupt[MAX_SOFT_INTERRUPTS];
 
 // Create shortened typedefs (it is obvious we are within the microapp here)
 
@@ -119,19 +114,19 @@ io_buffer_t *getIncomingMessageBuffer();
 int sendMessage();
 
 /**
- * Register a callback locally so that when a message.
+ * Register a softInterrupt locally so that when a message.
  */
-void registerCallback(callback_t *cb);
+void registerSoftInterrupt(soft_interrupt_t *interrupt);
 
 /**
- * Evoke a previously registered callback.
+ * Evoke a previously registered softInterrupt.
  */
-int evokeCallback(uint8_t type, uint8_t id, uint8_t *msg);
+int evokeSoftInterrupt(uint8_t type, uint8_t id, uint8_t *msg);
 
 /**
- * Handle callbacks.
+ * Handle softInterrupts.
  */
-int handleCallbacks(microapp_cmd_t *msg);
+int handleSoftInterrupt(microapp_cmd_t *msg);
 
 #ifdef __cplusplus
 }

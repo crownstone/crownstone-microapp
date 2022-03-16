@@ -65,11 +65,11 @@ int attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode) {
 	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_INPUT_PULLUP;
 	pin_cmd->value = mode;
 	
-	callback_t cb;
-	cb.type = CALLBACK_TYPE_PIN;
-	cb.id = pin_cmd->pin;
-	cb.callback = reinterpret_cast<callbackFunction>(isr);
-	registerCallback(&cb);
+	soft_interrupt_t interrupt;
+	interrupt.type = SOFT_INTERRUPT_TYPE_PIN;
+	interrupt.id = pin_cmd->pin;
+	interrupt.softInterruptFunc = reinterpret_cast<softInterruptFunction>(isr);
+	registerSoftInterrupt(&interrupt);
 
 	int result = sendMessage();
 	return result;

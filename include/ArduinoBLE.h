@@ -37,11 +37,11 @@ struct BleFilter {
 	uuid16_t uuid; // service data uuid
 };
 
-typedef void (*bleCallbackFunction)(BleDevice);
+typedef void (*BleEventHandler)(BleDevice);
 
 // Context for the callback that can be kept local.
-struct bleCallbackContext {
-	bleCallbackFunction callback;
+struct BleSoftInterruptContext {
+	BleEventHandler eventHandler;
 	bool filled;
 	uint8_t id;
 };
@@ -61,27 +61,15 @@ private:
 
 	bool _isScanning = false;
 
-	//uintptr_t _scannedDeviceCallback;
-
-	/*
-	 * Add handleScanEventWrapper as a friend so it can access private function handleScanEvent of Ble
-	 */
-	//friend void handleScanEventWrapper(microapp_ble_device_t device);
-
-	/*
-	 * Handler for scanned devices. Called from bluenet via handleScanEventWrapper upon scanned device events if scanning
-	 */
-	//void handleScanEvent(microapp_ble_device_t device);
-
 	/*
 	 * Compares the scanned device device against the filter and returns true upon a match
 	 */
 	bool filterScanEvent(BleDevice rawDevice);
 
 	/*
-	 * Store callback contexts up to MAX_CALLBACKS;
+	 * Store callback contexts.
 	 */
-	bleCallbackContext callbackContext[MAX_CALLBACKS];
+	BleSoftInterruptContext _bleSoftInterruptContext[MAX_SOFT_INTERRUPTS];
 
 public:
 

@@ -30,7 +30,7 @@ void signalSetupEnd() {
 	io_buffer_t *buffer = getOutgoingMessageBuffer();
 	microapp_cmd_t *cmd = (microapp_cmd_t*)&buffer->payload;
 	cmd->cmd = CS_MICROAPP_COMMAND_SETUP_END;
-	cmd->callbackCmd = CS_MICROAPP_COMMAND_NONE;
+	cmd->interruptCmd = CS_MICROAPP_COMMAND_NONE;
 	sendMessage();
 }
 
