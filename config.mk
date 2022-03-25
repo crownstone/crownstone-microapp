@@ -24,6 +24,7 @@ OBJDUMP=$(GCC_PATH)/arm-none-eabi-objdump
 NM=$(GCC_PATH)/arm-none-eabi-nm
 SIZE=$(GCC_PATH)/arm-none-eabi-size
 STRIP=$(GCC_PATH)/arm-none-eabi-strip
+READELF=$(GCC_PATH)/arm-none-eabi-readelf
 
 # The build directory
 BUILD_PATH=build
@@ -40,7 +41,7 @@ TARGET_SOURCE=examples/$(TARGET_NAME).ino
 TARGET=$(BUILD_PATH)/$(TARGET_NAME)
 
 # Number of pages
-MICROAPP_PAGES=1
+MICROAPP_PAGES=2
 
 # For c++
 # I have removed nanolib as well. Now I have to check if for e.g. memset I

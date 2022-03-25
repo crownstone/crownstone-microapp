@@ -40,8 +40,9 @@ int WireBase_::send(const uint8_t *buf, int length) {
 }
 
 void WireBase_::begin() {
-	io_buffer_t *buffer = getOutgoingMessageBuffer();
-	microapp_twi_cmd_t* twi_cmd = reinterpret_cast<microapp_twi_cmd_t*>(&buffer->payload);
+	uint8_t *payload = getOutgoingMessagePayload();
+	//io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_twi_cmd_t* twi_cmd = reinterpret_cast<microapp_twi_cmd_t*>(payload);
 	twi_cmd->header.cmd = CS_MICROAPP_COMMAND_TWI;
 	twi_cmd->header.ack = 0;
 	twi_cmd->address = 0;
@@ -62,8 +63,9 @@ void WireBase_::endTransmission() {
 }
 
 void WireBase_::requestFrom(const uint8_t address, const int size, bool stop) {
-	io_buffer_t *buffer = getOutgoingMessageBuffer();
-	microapp_twi_cmd_t* twi_cmd = reinterpret_cast<microapp_twi_cmd_t*>(&buffer->payload);
+	uint8_t *payload = getOutgoingMessagePayload();
+	//io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_twi_cmd_t* twi_cmd = reinterpret_cast<microapp_twi_cmd_t*>(payload);
 	twi_cmd->header.cmd = CS_MICROAPP_COMMAND_TWI;
 	twi_cmd->header.ack = 0;
 	twi_cmd->address = address;
@@ -72,8 +74,9 @@ void WireBase_::requestFrom(const uint8_t address, const int size, bool stop) {
 	twi_cmd->stop = stop;
 	sendMessage();
 
-	io_buffer_t *bufferIn = getIncomingMessageBuffer();
-	microapp_twi_cmd_t* twi_in_cmd = reinterpret_cast<microapp_twi_cmd_t*>(&bufferIn->payload);
+	uint8_t *payloadIn = getIncomingMessagePayload();
+	//io_buffer_t *bufferIn = getIncomingMessageBuffer();
+	microapp_twi_cmd_t* twi_in_cmd = reinterpret_cast<microapp_twi_cmd_t*>(payloadIn);
 	_readPtr = 0;
 	_readLen = twi_in_cmd->length;
 	if (_readLen > WIRE_MAX_PAYLOAD_LENGTH) {
@@ -109,8 +112,9 @@ int WireBase_::_write(const uint8_t *buf, int length, Type type) {
 		return 0;
 	}
 	
-	io_buffer_t *buffer = getOutgoingMessageBuffer();
-	microapp_twi_cmd_t* twi_cmd = reinterpret_cast<microapp_twi_cmd_t*>(&buffer->payload);
+	uint8_t *payload = getOutgoingMessagePayload();
+	//io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_twi_cmd_t* twi_cmd = reinterpret_cast<microapp_twi_cmd_t*>(payload);
 	twi_cmd->header.cmd = CS_MICROAPP_COMMAND_TWI;
 	twi_cmd->header.ack = 0;
 	twi_cmd->address = _address;

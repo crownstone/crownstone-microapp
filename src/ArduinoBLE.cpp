@@ -57,8 +57,9 @@ void softInterruptBle(void* args, void* buf) {
 	BleSoftInterruptContext* context = (BleSoftInterruptContext*)args;
 
 	if (!context->eventHandler) {
-		io_buffer_t* buffer = getOutgoingMessageBuffer();
-		microapp_cmd_t* cmd = (microapp_cmd_t*)&buffer->payload;
+		uint8_t *payload = getOutgoingMessagePayload();
+		//io_buffer_t* buffer = getOutgoingMessageBuffer();
+		microapp_cmd_t* cmd = (microapp_cmd_t*)(payload);
 		cmd->cmd            = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_ERROR;
 		cmd->id             = context->id;
 		sendMessage();
@@ -70,8 +71,9 @@ void softInterruptBle(void* args, void* buf) {
 	// Call the event handler with a copy of this object
 	context->eventHandler(bleDevice);
 
-	io_buffer_t* buffer = getOutgoingMessageBuffer();
-	microapp_cmd_t* cmd = (microapp_cmd_t*)&buffer->payload;
+	uint8_t *payload = getOutgoingMessagePayload();
+	//io_buffer_t* buffer = getOutgoingMessageBuffer();
+	microapp_cmd_t* cmd = (microapp_cmd_t*)(payload);
 	cmd->cmd            = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_END;
 	cmd->id             = context->id;
 	sendMessage();
@@ -98,8 +100,9 @@ void Ble::setEventHandler(BleEventType type, void (*eventHandler)(BleDevice)) {
 
 	Serial.println("Setting event handler");
 	// TODO: do something with type. For now assume type is BleEventDeviceScanned
-	io_buffer_t* buffer         = getOutgoingMessageBuffer();
-	microapp_ble_cmd_t* ble_cmd = (microapp_ble_cmd_t*)&buffer->payload;
+	uint8_t *payload = getOutgoingMessagePayload();
+	//io_buffer_t* buffer         = getOutgoingMessageBuffer();
+	microapp_ble_cmd_t* ble_cmd = (microapp_ble_cmd_t*)(payload);
 	ble_cmd->header.cmd         = CS_MICROAPP_COMMAND_BLE;
 	ble_cmd->opcode             = CS_MICROAPP_COMMAND_BLE_SCAN_SET_HANDLER;
 
@@ -125,8 +128,9 @@ bool Ble::scan(bool withDuplicates) {
 		return true;
 	}
 
-	io_buffer_t* buffer         = getOutgoingMessageBuffer();
-	microapp_ble_cmd_t* ble_cmd = (microapp_ble_cmd_t*)&buffer->payload;
+	uint8_t *payload = getOutgoingMessagePayload();
+	//io_buffer_t* buffer         = getOutgoingMessageBuffer();
+	microapp_ble_cmd_t* ble_cmd = (microapp_ble_cmd_t*)(payload);
 	ble_cmd->header.ack         = false;
 	ble_cmd->header.cmd         = CS_MICROAPP_COMMAND_BLE;
 	ble_cmd->opcode             = CS_MICROAPP_COMMAND_BLE_SCAN_START;
@@ -175,8 +179,9 @@ bool Ble::stopScan() {
 	// send a message to bluenet commanding it to stop forwarding ads to
 	// microapp
 	// microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_buf_out;
-	io_buffer_t* buffer         = getOutgoingMessageBuffer();
-	microapp_ble_cmd_t* ble_cmd = (microapp_ble_cmd_t*)&buffer->payload;
+	uint8_t *payload = getOutgoingMessagePayload();
+	//io_buffer_t* buffer         = getOutgoingMessageBuffer();
+	microapp_ble_cmd_t* ble_cmd = (microapp_ble_cmd_t*)(payload);
 
 	ble_cmd->header.ack = false;
 	ble_cmd->header.cmd = CS_MICROAPP_COMMAND_BLE;

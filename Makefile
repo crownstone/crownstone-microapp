@@ -10,7 +10,7 @@ include $(TARGET_CONFIG_FILE)
 include config.mk
 -include private.mk
 
-SOURCE_FILES=include/startup.S src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp src/BleUtils.cpp src/BleDevice.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c
+SOURCE_FILES=include/startup.S src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp src/BleUtils.cpp src/BleDevice.cpp src/Mesh.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c
 
 # First initialize, then create .hex file, then .bin file and file end with info
 all: init $(TARGET).hex $(TARGET).bin $(TARGET).info
@@ -20,7 +20,7 @@ clean:
 	@rm -f $(TARGET).*
 	@echo "Cleaned build directory"
 
-init:
+init: $(TARGET_CONFIG_FILE)
 	@echo "Use file: $(TARGET_CONFIG_FILE)"
 	@echo 'Create build directory'
 	@mkdir -p $(BUILD_PATH)
@@ -28,7 +28,7 @@ init:
 
 .PHONY:
 include/microapp_header_symbols.ld: $(TARGET).bin.tmp
-	@echo "Use python script to generate file with valid header symbols"
+	@echo "Use python script to generate $@ file with valid header symbols"
 	@scripts/microapp_make.py -i $^ $@
 
 .PHONY:

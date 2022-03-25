@@ -103,9 +103,13 @@ void *memcpy(void *dest, const void *src, size_t num);
 /*
  * Get outgoing message buffer (can be used for sendMessage);
  */
-io_buffer_t *getOutgoingMessageBuffer();
+//io_buffer_t *getOutgoingMessageBuffer();
 
-io_buffer_t *getIncomingMessageBuffer();
+//io_buffer_t *getIncomingMessageBuffer();
+
+uint8_t *getOutgoingMessagePayload();
+
+uint8_t *getIncomingMessagePayload();
 
 /**
  * Send a message to the bluenet code. This is the function that is called - in

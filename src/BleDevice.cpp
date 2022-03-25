@@ -54,9 +54,8 @@ String BleDevice::localName() {
 }
 
 bool BleDevice::connect() {
-	io_buffer_t *buffer = getOutgoingMessageBuffer();
-	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&buffer->payload;
-	//microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)&global_buf_out;
+	uint8_t *payload = getOutgoingMessagePayload();
+	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)(payload);
 	ble_cmd->header.cmd = CS_MICROAPP_COMMAND_BLE;
 	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_CONNECT;
 	memcpy(ble_cmd->addr, _address.getBytes(), MAC_ADDRESS_LENGTH);

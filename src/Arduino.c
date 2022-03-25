@@ -11,8 +11,9 @@ bool pinExists(uint8_t pin) {
 void pinMode(uint8_t pin, uint8_t mode) {
 	if (!pinExists(pin)) return;
 	
-	io_buffer_t *buffer = getOutgoingMessageBuffer();
-	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(&buffer->payload);
+	uint8_t *payload = getOutgoingMessagePayload();
+	//io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
 	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_MODE;
@@ -25,8 +26,9 @@ void pinMode(uint8_t pin, uint8_t mode) {
 void digitalWrite(uint8_t pin, uint8_t val) {
 	if (!pinExists(pin)) return;
 
-	io_buffer_t *buffer = getOutgoingMessageBuffer();
-	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(&buffer->payload);
+	uint8_t *payload = getOutgoingMessagePayload();
+	//io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
 	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_ACTION;
@@ -39,8 +41,9 @@ void digitalWrite(uint8_t pin, uint8_t val) {
 int digitalRead(uint8_t pin) {
 	if (!pinExists(pin)) return -1;
 	
-	io_buffer_t *buffer = getOutgoingMessageBuffer();
-	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(&buffer->payload);
+	uint8_t *payload = getOutgoingMessagePayload();
+	//io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
 	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_ACTION;
@@ -57,8 +60,9 @@ int digitalRead(uint8_t pin) {
 int attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode) {
 	if (!pinExists(pin)) return -1;
 
-	io_buffer_t *buffer = getOutgoingMessageBuffer();
-	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(&buffer->payload);
+	uint8_t *payload = getOutgoingMessagePayload();
+	//io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
 	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_MODE;

@@ -54,25 +54,19 @@ void* memcpy(void* dest, const void* src, size_t num) {
 /*
  * A global object for messages in and out.
  */
-bluenet_io_buffer_t io_buffer;
+static bluenet_io_buffer_t io_buffer;
 
 /*
  * A global object for ipc data as well.
  */
-bluenet2microapp_ipcdata_t ipc_data;
+static bluenet2microapp_ipcdata_t ipc_data;
 
-/*
- * Get the outgoing message buffer.
- */
-io_buffer_t* getOutgoingMessageBuffer() {
-	return &io_buffer.microapp2bluenet;
+uint8_t* getOutgoingMessagePayload() {
+	return io_buffer.microapp2bluenet.payload;
 }
 
-/*
- * Get the incoming message buffer.
- */
-io_buffer_t* getIncomingMessageBuffer() {
-	return &io_buffer.bluenet2microapp;
+uint8_t* getIncomingMessagePayload() {
+	return io_buffer.bluenet2microapp.payload;
 }
 
 /*
@@ -84,12 +78,14 @@ struct queue_t {
 	uint8_t filled;
 };
 
-static const uint8_t MAX_QUEUE = 2;
+static const uint8_t MAX_QUEUE = 3;
 
 /*
  * A set of local buffers for incoming messages.
  */
 static queue_t localQueue[MAX_QUEUE];
+
+static int buffer_initialized = false;
 
 /*
  * Function checkRamData is used in sendMessage.
@@ -97,12 +93,20 @@ static queue_t localQueue[MAX_QUEUE];
 int checkRamData(bool checkOnce) {
 	int result = -1;
 
+	if (!buffer_initialized) {
+		for (int8_t i = 0; i < MAX_QUEUE; ++i) {
+			localQueue[i].filled = false;
+		}
+		buffer_initialized = true;
+	}
+
 	if (checkOnce) {
 		// If valid is set, we assume cached values are fine, otherwise load them.
 		if (ipc_data.valid) {
 			return 0;
 		}
 	}
+
 	uint8_t rd_size = 0;
 	uint8_t ret_code =
 			getRamData(IPC_INDEX_CROWNSTONE_APP, (uint8_t*)&ipc_data, sizeof(bluenet2microapp_ipcdata_t), &rd_size);
@@ -137,11 +141,9 @@ int checkRamData(bool checkOnce) {
  * Returns the number of empty slots for bluenet. Access and counting of empty slots can be improved.
  */
 int8_t emptySlotsInQueue() {
-	queue_t* localCopy = nullptr;
-	int8_t totalEmpty  = 0;
+	int8_t totalEmpty = 0;
 	for (int8_t i = 0; i < MAX_QUEUE; ++i) {
-		localCopy = &localQueue[i];
-		if (!localCopy->filled) {
+		if (!localQueue[i].filled) {
 			totalEmpty++;
 		}
 	}
@@ -152,13 +154,11 @@ int8_t emptySlotsInQueue() {
  * Gets a new slide.
  */
 int8_t getNewItemInQueue() {
-	queue_t* localCopy = nullptr;
-	int8_t queueIndex  = -1;
+	int8_t queueIndex = -1;
 	for (int8_t i = 0; i < MAX_QUEUE; ++i) {
-		localCopy = &localQueue[i];
-		if (!localCopy->filled) {
-			queueIndex        = i;
-			localCopy->filled = true;
+		if (!localQueue[i].filled) {
+			queueIndex           = i;
+			localQueue[i].filled = true;
 			break;
 		}
 	}
@@ -179,12 +179,15 @@ int handleBluenetRequest(microapp_cmd_t* cmd) {
 	microapp_soft_interrupt_cmd_t* request = reinterpret_cast<microapp_soft_interrupt_cmd_t*>(cmd);
 
 	// Check if there are empty slots
-	int8_t emptySlots            = emptySlotsInQueue();
-	request->emptyInterruptSlots = emptySlots;
+	int8_t emptySlots = emptySlotsInQueue();
 
 	int8_t queueIndex = -1;
 	if (emptySlots > 0) {
-		queueIndex = getNewItemInQueue();
+		queueIndex                   = getNewItemInQueue();
+		request->emptyInterruptSlots = emptySlots - 1;
+	}
+	else {
+		request->emptyInterruptSlots = emptySlots;
 	}
 
 	// overwrite in both scenarios the REQUEST
@@ -196,13 +199,15 @@ int handleBluenetRequest(microapp_cmd_t* cmd) {
 	}
 
 	// First indicate we have received the callback
-	microapp_cmd_t* outputBuffer = reinterpret_cast<microapp_cmd_t*>(io_buffer.microapp2bluenet.payload);
+	uint8_t* outputPayloadRaw     = getOutgoingMessagePayload();
+	microapp_cmd_t* outputPayload = reinterpret_cast<microapp_cmd_t*>(outputPayloadRaw);
 	if (queueIndex < 0) {
-		outputBuffer->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_ERROR;
+		outputPayload->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_ERROR;
 	}
 	else {
-		outputBuffer->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_RECEIVED;
+		outputPayload->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_RECEIVED;
 	}
+
 	microappCallbackFunc callbackFunctionIntoBluenet = ipc_data.microappCallback;
 	result = callbackFunctionIntoBluenet(CS_MICROAPP_CALLBACK_SIGNAL, &io_buffer);
 
@@ -228,14 +233,16 @@ int handleBluenetRequest(microapp_cmd_t* cmd) {
  * soft interrupts it will just return and at some later time be called again.
  */
 int sendMessage() {
-	int result = checkRamData(true);
+	bool checkOnce = true;
+	int result     = checkRamData(checkOnce);
 	if (result < 0) {
 		return result;
 	}
 
 	// The callback will yield control to bluenet.
 	microappCallbackFunc callbackFunctionIntoBluenet = ipc_data.microappCallback;
-	result = callbackFunctionIntoBluenet(CS_MICROAPP_CALLBACK_SIGNAL, &io_buffer);
+	uint8_t opcode = checkOnce ? CS_MICROAPP_CALLBACK_SIGNAL : CS_MICROAPP_CALLBACK_UPDATE_IO_BUFFER;
+	result         = callbackFunctionIntoBluenet(opcode, &io_buffer);
 
 	// Here the microapp resumes execution, check for incoming messages
 	microapp_cmd_t* inputBuffer = reinterpret_cast<microapp_cmd_t*>(io_buffer.bluenet2microapp.payload);

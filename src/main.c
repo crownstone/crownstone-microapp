@@ -18,8 +18,9 @@ void delay(uint32_t delay_ms) {
 	const uint8_t bluenet_ticks = 100;
 	uint32_t ticks = delay_ms / bluenet_ticks;
 	for (uint32_t i = 0; i < ticks; i++) {
-		io_buffer_t *buffer = getOutgoingMessageBuffer();
-		microapp_delay_cmd_t *delay_cmd = (microapp_delay_cmd_t*)&buffer->payload;
+		uint8_t *payload = getOutgoingMessagePayload();
+//		io_buffer_t *buffer = getOutgoingMessageBuffer();
+		microapp_delay_cmd_t *delay_cmd = (microapp_delay_cmd_t*)(payload);
 		delay_cmd->header.cmd = CS_MICROAPP_COMMAND_DELAY;
 		delay_cmd->period = ticks;
 		sendMessage();
@@ -27,16 +28,18 @@ void delay(uint32_t delay_ms) {
 }
 
 void signalSetupEnd() {
-	io_buffer_t *buffer = getOutgoingMessageBuffer();
-	microapp_cmd_t *cmd = (microapp_cmd_t*)&buffer->payload;
+	uint8_t *payload = getOutgoingMessagePayload();
+	//io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_cmd_t *cmd = (microapp_cmd_t*)(payload);
 	cmd->cmd = CS_MICROAPP_COMMAND_SETUP_END;
 	cmd->interruptCmd = CS_MICROAPP_COMMAND_NONE;
 	sendMessage();
 }
 
 void signalLoopEnd() {
-	io_buffer_t *buffer = getOutgoingMessageBuffer();
-	microapp_cmd_t *cmd = (microapp_cmd_t*)&buffer->payload;
+	uint8_t *payload = getOutgoingMessagePayload();
+	//io_buffer_t *buffer = getOutgoingMessageBuffer();
+	microapp_cmd_t *cmd = (microapp_cmd_t*)(payload);
 	cmd->cmd = CS_MICROAPP_COMMAND_LOOP_END;
 	sendMessage();
 }
