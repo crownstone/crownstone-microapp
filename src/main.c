@@ -15,8 +15,8 @@ extern "C" {
  * A tick takes 100 ms. Hence the loop should be the delay in ms divided by 100.
  */
 void delay(uint32_t delay_ms) {
-	const uint8_t bluenet_ticks = 100;
-	uint32_t ticks = delay_ms / (bluenet_ticks * MICROAPP_LOOP_FREQUENCY);
+	const uint8_t bluenet_tick_duration_ms = 100;
+	uint32_t ticks = delay_ms / (bluenet_tick_duration_ms * MICROAPP_LOOP_FREQUENCY);
 	for (uint32_t i = 0; i < ticks; i++) {
 		uint8_t *payload = getOutgoingMessagePayload();
 		microapp_delay_cmd_t *delay_cmd = (microapp_delay_cmd_t*)(payload);
