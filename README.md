@@ -4,7 +4,7 @@ Create a microapp that can be run on top of the bluenet firmware on a Crownstone
 
 # Organization
 
-The files can be found in `include` and `src`. There is an example file in the root directory called `example.c`. The
+The files can be found in `include` and `src`. There are some basic examples in `examples`. The
 results can be found in the `build` directory.
 
 # Targets
