@@ -36,7 +36,11 @@ include/microapp_header_dummy_symbols.ld:
 	@echo "Use python script to generate file with dummy values"
 	@scripts/microapp_make.py include/microapp_header_symbols.ld
 
-include/microapp_target_symbols.ld: $(TARGET_CONFIG_FILE)
+.tmp.TARGET_CONFIG_FILE.$(TARGET_CONFIG_FILE):
+	@rm -f .tmp.TARGET_CONFIG_FILE.*
+	touch $@
+
+include/microapp_target_symbols.ld: $(TARGET_CONFIG_FILE) .tmp.TARGET_CONFIG_FILE.$(TARGET_CONFIG_FILE)
 	@echo 'This script requires the presence of "bc" on the command-line'
 	@echo 'Generate target symbols (from .mk file to .ld file)'
 	@echo '/* Auto-generated file */' > $@
