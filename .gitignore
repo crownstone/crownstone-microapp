@@ -5,3 +5,4 @@ include/microapp_header_symbols.ld
 include/microapp_target_symbols.ld
 __pycache__/
 tags
+.vscode/
