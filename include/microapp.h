@@ -56,8 +56,8 @@ typedef microapp_ble_device_t ble_dev_t;
 const uint8_t LOW = 0;
 const uint8_t HIGH = !LOW;
 
-// 1 virtual pin, 4 GPIO pins, 4 buttons, and 4 leds
-#define NUMBER_OF_PINS 13
+// 10 GPIO pins, 4 buttons, and 4 leds
+#define NUMBER_OF_PINS 18
 
 // define size_t as a 16-bit unsigned int
 typedef uint16_t size_t;
@@ -118,9 +118,9 @@ uint8_t *getIncomingMessagePayload();
 int sendMessage();
 
 /**
- * Register a softInterrupt locally so that when a message.
+ * Register a softInterrupt locally.
  */
-void registerSoftInterrupt(soft_interrupt_t *interrupt);
+int registerSoftInterrupt(soft_interrupt_t *interrupt);
 
 /**
  * Evoke a previously registered softInterrupt.

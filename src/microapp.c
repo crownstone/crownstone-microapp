@@ -252,7 +252,7 @@ int sendMessage() {
 	return result;
 }
 
-void registerSoftInterrupt(soft_interrupt_t* interrupt) {
+int registerSoftInterrupt(soft_interrupt_t* interrupt) {
 	for (int i = 0; i < MAX_SOFT_INTERRUPTS; ++i) {
 		if (!softInterrupt[i].registered) {
 			softInterrupt[i].registered        = true;
@@ -260,9 +260,10 @@ void registerSoftInterrupt(soft_interrupt_t* interrupt) {
 			softInterrupt[i].id                = interrupt->id;
 			softInterrupt[i].arg               = interrupt->arg;
 			softInterrupt[i].type              = interrupt->type;
-			break;
+			return i; // success
 		}
 	}
+	return -1; // no more space
 }
 
 int countRegisteredSoftInterrupts() {
@@ -309,11 +310,18 @@ int handleSoftInterrupt(microapp_cmd_t* msg) {
 			break;
 		}
 		case CS_MICROAPP_COMMAND_PIN: {
-			microapp_pin_cmd_t* cmd = reinterpret_cast<microapp_pin_cmd_t*>(msg);
-			if (cmd->value != CS_MICROAPP_COMMAND_VALUE_CHANGE) {
+			microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(msg);
+			if (pin_cmd->value != CS_MICROAPP_COMMAND_VALUE_CHANGE) {
 				break;
 			}
-			result = handleSoftInterruptInternal(SOFT_INTERRUPT_TYPE_PIN, cmd->pin, (uint8_t*)msg);
+			result = handleSoftInterruptInternal(SOFT_INTERRUPT_TYPE_PIN, pin_cmd->header.id, (uint8_t*)msg);
+
+			// After handling the interrupt, yield control back to bluenet
+			uint8_t *payload = getOutgoingMessagePayload();
+			microapp_cmd_t* cmd = (microapp_cmd_t*)(payload);
+			cmd->cmd            = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_END;
+			cmd->id             = msg->id;
+			sendMessage();
 			break;
 		}
 	}

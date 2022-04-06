@@ -2,6 +2,8 @@
 // An example to show a few functions being implemented.
 //
 
+#include <Arduino.h>
+
 // Show how a counter is incremented
 static int counter = 100;
 
@@ -19,8 +21,6 @@ void blink() {
 		state = !state;
 	}
 }
-
-const uint8_t BUTTON1_INDEX = 4;
 
 //
 // An example of a setup function.
@@ -40,20 +40,22 @@ void setup() {
 	serviceData.appUuid = 0x1234;
 
 	// Set digital port 1 to OUTPUT, so we can write.
-	pinMode(1, OUTPUT);
+	pinMode(LED3_PIN, OUTPUT);
 
 	// Join the i2c bus
 	Wire.begin();
 
 	// Set interrupt handler
-	pinMode(BUTTON1_INDEX, INPUT_PULLUP);
-	int result = attachInterrupt(digitalPinToInterrupt(BUTTON1_INDEX), blink, CHANGE);
+	pinMode(BUTTON2_PIN, INPUT_PULLUP);
+	int result = attachInterrupt(BUTTON2_PIN, blink, CHANGE);
 
 	Serial.write("attachInterrupt returns ");
 	Serial.write(result);
 	Serial.println(" ");
 
 	blink();
+
+	digitalWrite(LED3_PIN, LOW);
 }
 
 void i2c() {
@@ -103,11 +105,9 @@ void loop() {
 		// This is in ms
 		delay(10000);
 
-		// See protocol definition for other options.
-		//digitalWrite(1, 0);
 	}
 	// Show counter.
-	//Serial.println(counter);
+	Serial.println(counter);
 
 	// Let's advertise the counter value in the service data.
 	serviceData.data[0] = counter;

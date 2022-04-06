@@ -1,16 +1,18 @@
 #include <Arduino.h>
 #include <microapp.h>
 
+#include <Serial.h>
+
 #include <ipc/cs_IpcRamData.h>
 
 bool pinExists(uint8_t pin) {
-	// very basic, should be roundtrip as well
+	// first check, more checks on bluenet side
 	return (pin < NUMBER_OF_PINS);
 }
 
 void pinMode(uint8_t pin, uint8_t mode) {
 	if (!pinExists(pin)) return;
-	
+
 	uint8_t *payload = getOutgoingMessagePayload();
 	//io_buffer_t *buffer = getOutgoingMessageBuffer();
 	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
@@ -40,7 +42,7 @@ void digitalWrite(uint8_t pin, uint8_t val) {
 
 int digitalRead(uint8_t pin) {
 	if (!pinExists(pin)) return -1;
-	
+
 	uint8_t *payload = getOutgoingMessagePayload();
 	//io_buffer_t *buffer = getOutgoingMessageBuffer();
 	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
@@ -49,7 +51,7 @@ int digitalRead(uint8_t pin) {
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_ACTION;
 	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_READ;
 	pin_cmd->value = 0;
-	
+
 	sendMessage();
 
 	// TODO, perhaps a larger type then uint8_t is required / desired
@@ -60,22 +62,23 @@ int digitalRead(uint8_t pin) {
 int attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode) {
 	if (!pinExists(pin)) return -1;
 
+	soft_interrupt_t interrupt;
+	interrupt.type = SOFT_INTERRUPT_TYPE_PIN;
+	interrupt.id = pin;
+	interrupt.softInterruptFunc = reinterpret_cast<softInterruptFunction>(isr);
+	int result = registerSoftInterrupt(&interrupt);
+	Serial.print("registerSoftInterrupt res: ");
+	Serial.println(result);
+
 	uint8_t *payload = getOutgoingMessagePayload();
-	//io_buffer_t *buffer = getOutgoingMessageBuffer();
 	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
 	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_MODE;
 	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_INPUT_PULLUP;
 	pin_cmd->value = mode;
-	
-	soft_interrupt_t interrupt;
-	interrupt.type = SOFT_INTERRUPT_TYPE_PIN;
-	interrupt.id = pin_cmd->pin;
-	interrupt.softInterruptFunc = reinterpret_cast<softInterruptFunction>(isr);
-	registerSoftInterrupt(&interrupt);
 
-	int result = sendMessage();
+	result = sendMessage();
 	return result;
 }
 
@@ -93,9 +96,9 @@ void analogWrite(uint8_t pin, int val) {
 	digitalWrite(pin, val);
 }
 
-uint8_t digitalPinToInterrupt(uint8_t pin) {
-	return pin + 1;
-}
+// uint8_t digitalPinToInterrupt(uint8_t pin) {
+// 	return pin + 1;
+// }
 
 void init() {
 }
