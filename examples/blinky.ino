@@ -22,7 +22,7 @@ void loop() {
 	uint8_t ledIndex = counter % nrLEDs;
 
 	// toggle the led state of the given led
-	ledState[ledIndex] = ! ledState[ledIndex];
+	ledState[ledIndex] = !ledState[ledIndex];
 
 	// write the new led state
 	digitalWrite(ledPins[ledIndex], ledState[ledIndex]);

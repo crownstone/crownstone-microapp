@@ -310,11 +310,7 @@ int handleSoftInterrupt(microapp_cmd_t* msg) {
 			break;
 		}
 		case CS_MICROAPP_COMMAND_PIN: {
-			microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(msg);
-			if (pin_cmd->value != CS_MICROAPP_COMMAND_VALUE_CHANGE) {
-				break;
-			}
-			result = handleSoftInterruptInternal(SOFT_INTERRUPT_TYPE_PIN, pin_cmd->header.id, (uint8_t*)msg);
+			result = handleSoftInterruptInternal(SOFT_INTERRUPT_TYPE_PIN, msg->id, (uint8_t*)msg);
 
 			// After handling the interrupt, yield control back to bluenet
 			uint8_t *payload = getOutgoingMessagePayload();
