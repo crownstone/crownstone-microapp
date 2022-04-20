@@ -1,8 +1,6 @@
 #include <Arduino.h>
 #include <microapp.h>
 
-#include <Serial.h>
-
 #include <ipc/cs_IpcRamData.h>
 
 bool pinExists(uint8_t pin) {
@@ -67,8 +65,9 @@ int attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode) {
 	interrupt.id = pin;
 	interrupt.softInterruptFunc = reinterpret_cast<softInterruptFunction>(isr);
 	int result = registerSoftInterrupt(&interrupt);
-	Serial.print("registerSoftInterrupt res: ");
-	Serial.println(result);
+	if (result < 0) {
+		return result;
+	}
 
 	uint8_t *payload = getOutgoingMessagePayload();
 	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
@@ -95,10 +94,6 @@ void analogReference(uint8_t mode) {
 void analogWrite(uint8_t pin, int val) {
 	digitalWrite(pin, val);
 }
-
-// uint8_t digitalPinToInterrupt(uint8_t pin) {
-// 	return pin + 1;
-// }
 
 void init() {
 }
