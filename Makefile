@@ -10,7 +10,7 @@ include $(TARGET_CONFIG_FILE)
 include config.mk
 -include private.mk
 
-SOURCE_FILES=include/startup.S src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp src/BleUtils.cpp src/BleDevice.cpp src/Mesh.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c
+SOURCE_FILES=include/startup.S src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp src/BleUtils.cpp src/BleDevice.cpp src/Mesh.cpp src/CrownstoneDimmer.cpp src/CrownstoneRelay.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c
 
 # First initialize, then create .hex file, then .bin file and file end with info
 all: init $(TARGET).hex $(TARGET).bin $(TARGET).info
