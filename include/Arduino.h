@@ -89,6 +89,9 @@ void analogWrite(uint8_t pin, int val);
 //
 int attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode);
 
+// Mapping from digital pins to interrupts.
+uint8_t digitalPinToInterrupt(uint8_t pin);
+
 typedef bool boolean;
 typedef uint8_t byte;
 

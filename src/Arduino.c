@@ -95,6 +95,10 @@ void analogWrite(uint8_t pin, int val) {
 	digitalWrite(pin, val);
 }
 
+uint8_t digitalPinToInterrupt(uint8_t pin) {
+	return pin;
+}
+
 void init() {
 }
 
