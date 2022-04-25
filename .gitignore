@@ -6,3 +6,4 @@ include/microapp_target_symbols.ld
 __pycache__/
 tags
 .vscode/
+.tmp*
