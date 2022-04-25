@@ -5,13 +5,14 @@
 #include <Arduino.h>
 
 const uint8_t nrLEDs = 3;
-boolean ledState[nrLEDs] = {LOW};
+boolean ledState[nrLEDs];
 const uint8_t ledPins[nrLEDs] = {LED1_PIN, LED2_PIN, LED3_PIN};
 uint8_t counter = 0;
 
 void setup() {
 	// Set LEDs to OUTPUT, so we can write.
 	for (int i = 0; i < nrLEDs; i++) {
+		ledState[i] = false;
 		pinMode(ledPins[i], OUTPUT);
 	}
 }
@@ -30,3 +31,4 @@ void loop() {
 	// increment the loop counter
 	counter++;
 }
+

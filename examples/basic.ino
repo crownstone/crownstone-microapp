@@ -9,16 +9,18 @@ static int counter = 100;
 
 microapp_service_data_t serviceData;
 
-//uint8_t serviceDataBuf[12] = {0};
-
 volatile byte state = LOW;
 volatile byte state2 = LOW;
 
+//
+// The blink function will be called on interrupt CHANGE. This means when you press and when you release a button.
+// Therefore two state variables are used to only toggle the state every two interrupts.
 void blink() {
 	Serial.println("Toggle");
 	state2 = !state2;
 	if (state2 == LOW) {
 		state = !state;
+		digitalWrite(LED2_PIN, state);
 	}
 }
 
@@ -39,8 +41,8 @@ void setup() {
 	// Set the UUID of this microapp.
 	serviceData.appUuid = 0x1234;
 
-	// Set digital port 1 to OUTPUT, so we can write.
-	pinMode(LED3_PIN, OUTPUT);
+	// Set LED pin to OUTPUT, so we can write.
+	pinMode(LED2_PIN, OUTPUT);
 
 	// Join the i2c bus
 	Wire.begin();
@@ -53,9 +55,6 @@ void setup() {
 	Serial.write(result);
 	Serial.println(" ");
 
-	blink();
-
-	digitalWrite(LED3_PIN, LOW);
 }
 
 void i2c() {
@@ -93,9 +92,9 @@ void loop() {
 		i2c();
 #endif
 		if (state == LOW) {
-			Serial.println("State up");
-		} else {
 			Serial.println("State down");
+		} else {
+			Serial.println("State up");
 		}
 
 	}
