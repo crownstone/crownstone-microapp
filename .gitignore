@@ -7,3 +7,5 @@ __pycache__/
 tags
 .vscode/
 .tmp*
+.direnv/
+.envrc
