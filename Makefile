@@ -89,8 +89,8 @@ $(TARGET).info:
 	@echo "$(shell cat include/microapp_header_symbols.ld)"
 
 flash: all
-	echo nrfjprog -f nrf52 --program $(TARGET).hex --sectorerase
-	nrfjprog -f nrf52 --program $(TARGET).hex --sectorerase
+	echo nrfjprog -f nrf52 --program $(TARGET).hex --sectorerase --verify
+	nrfjprog -f nrf52 --program $(TARGET).hex --sectorerase --verify
 
 read:
 	nrfjprog -f nrf52 --memrd $(START_ADDRESS) --w 8 --n 400
