@@ -8,11 +8,11 @@ bool pinExists(uint8_t pin) {
 	return (pin < NUMBER_OF_PINS);
 }
 
+// The mode here is INPUT, OUTPUT, INPUT_PULLUP, etc.
 void pinMode(uint8_t pin, uint8_t mode) {
 	if (!pinExists(pin)) return;
 
 	uint8_t *payload = getOutgoingMessagePayload();
-	//io_buffer_t *buffer = getOutgoingMessageBuffer();
 	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
 	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
@@ -27,7 +27,6 @@ void digitalWrite(uint8_t pin, uint8_t val) {
 	if (!pinExists(pin)) return;
 
 	uint8_t *payload = getOutgoingMessagePayload();
-	//io_buffer_t *buffer = getOutgoingMessageBuffer();
 	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
 	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
@@ -57,6 +56,12 @@ int digitalRead(uint8_t pin) {
 	return value;
 }
 
+/**
+ * The mode here is LOW, CHANGE, RISING, FALLING, HIGH.
+ *
+ * Actually, this again sets also the values that are set with pinMode. That's redundant.
+ * For now, just keep it like this because it doesn't hurt to have a pin configured twice.
+ */
 int attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode) {
 	if (!pinExists(pin)) return -1;
 

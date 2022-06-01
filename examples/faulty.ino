@@ -15,6 +15,7 @@ void introduceFaultInInterruptHandler() {
 #if GENERATE_FAULT_IN_INTERRUPT_HANDLER == 1
 	while(true) {};
 #endif
+	Serial.println("Interrupt triggered");
 }
 
 void setup() {
