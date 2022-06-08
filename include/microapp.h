@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 // SoftInterrupt functions
-typedef void (*softInterruptFunction)(void *, void *);
+typedef int (*softInterruptFunction)(void *, void *);
 
 const uint8_t SOFT_INTERRUPT_TYPE_BLE = 1;
 const uint8_t SOFT_INTERRUPT_TYPE_PIN = 2;

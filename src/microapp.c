@@ -202,7 +202,7 @@ int handleBluenetRequest(microapp_cmd_t* cmd) {
 	uint8_t* outputPayloadRaw     = getOutgoingMessagePayload();
 	microapp_cmd_t* outputPayload = reinterpret_cast<microapp_cmd_t*>(outputPayloadRaw);
 	if (queueIndex < 0) {
-		outputPayload->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_ERROR;
+		outputPayload->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_DROPPED;
 	}
 	else {
 		outputPayload->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_RECEIVED;
@@ -212,17 +212,29 @@ int handleBluenetRequest(microapp_cmd_t* cmd) {
 	result = callbackFunctionIntoBluenet(CS_MICROAPP_CALLBACK_SIGNAL, &io_buffer);
 
 	if (queueIndex < 0) {
-		return -1;
+		result = -1;
+	}
+	else { // call handleSoftInterrupt and mark the localQueue entry as empty again
+		queue_t* localCopy = &localQueue[queueIndex];
+		memcpy(localCopy->buffer, request, MAX_PAYLOAD);
+		microapp_cmd_t* msg = reinterpret_cast<microapp_cmd_t*>(localCopy->buffer);
+		result              = handleSoftInterrupt(msg);
+		localCopy->filled   = false;
 	}
 
-	// Continue execution, this will end up with a call to sendMessage() but it will not enter this function because
+	// End with a call to sendMessage(). It will not enter this function again because
 	// the microapp itself changed request->ack to something else than CS_ACK_BLUENET_MICROAPP_REQUEST.
 
-	queue_t* localCopy = &localQueue[queueIndex];
-	memcpy(localCopy->buffer, request, MAX_PAYLOAD);
-	microapp_cmd_t* msg = reinterpret_cast<microapp_cmd_t*>(localCopy->buffer);
-	result              = handleSoftInterrupt(msg);
-	localCopy->filled   = false;
+	uint8_t *payload = getOutgoingMessagePayload();
+	microapp_cmd_t* outCmd = (microapp_cmd_t*)(payload);
+	if (result < 0) {
+		outCmd->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_ERROR;
+	}
+	else {
+		outCmd->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_END;
+	}
+	outCmd->id = request->header.id;
+	sendMessage();
 	return result;
 }
 
@@ -293,11 +305,11 @@ int handleSoftInterruptInternal(uint8_t type, uint8_t id, uint8_t* msg) {
 		}
 		if (softInterrupt[i].id == id) {
 			if (softInterrupt[i].softInterruptFunc) {
-				softInterrupt[i].softInterruptFunc(softInterrupt[i].arg, msg);
-				return id;
+				return softInterrupt[i].softInterruptFunc(softInterrupt[i].arg, msg);
 			}
-			return -2;
+			return -3;
 		}
+		return -2;
 	}
 	return -1;
 }
@@ -311,13 +323,6 @@ int handleSoftInterrupt(microapp_cmd_t* msg) {
 		}
 		case CS_MICROAPP_COMMAND_PIN: {
 			result = handleSoftInterruptInternal(SOFT_INTERRUPT_TYPE_PIN, msg->id, (uint8_t*)msg);
-
-			// After handling the interrupt, yield control back to bluenet
-			uint8_t *payload = getOutgoingMessagePayload();
-			microapp_cmd_t* cmd = (microapp_cmd_t*)(payload);
-			cmd->cmd            = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_END;
-			cmd->id             = msg->id;
-			sendMessage();
 			break;
 		}
 	}

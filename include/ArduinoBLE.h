@@ -62,11 +62,6 @@ private:
 	bool _isScanning = false;
 
 	/*
-	 * Compares the scanned device device against the filter and returns true upon a match
-	 */
-	bool filterScanEvent(BleDevice rawDevice);
-
-	/*
 	 * Store callback contexts.
 	 */
 	BleSoftInterruptContext _bleSoftInterruptContext[MAX_SOFT_INTERRUPTS];
@@ -140,7 +135,14 @@ public:
 	 */
 	BleDevice available();
 
-protected:
+	/**
+	 * Compares the scanned device device against the filter and returns true upon a match
+	 *
+	 * @param[in] rawDevice  the scanned BLE device
+	 *
+	 */
+	bool filterScanEvent(BleDevice rawDevice);
+
 	/**
 	 * Get the currently set filter for scanned devices
 	 *

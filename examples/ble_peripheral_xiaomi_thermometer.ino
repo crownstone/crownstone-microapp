@@ -2,22 +2,22 @@
 
 // A ble microapp example for reading advertisements from a Xiaomi Thermometer with custom firmware: https://github.com/atc1441/ATC_MiThermometer
 
-static uint16_t counter = 0;
+static uint16_t counter = 1;
 
-bool scanToggle = true;
+bool scanToggle = false;
 
-//const char* myAddress = "A4:C1:38:9A:45:E3";
+const char* myAddress = "A4:C1:38:9A:45:E3";
 //const char* myName = "ATC_9A45E3";
 //const char* myUuid = "181A";
 
-const char* myAddress = "DC:9F:FE:40:F3:1B";
-const char* myName = "CRWN";
-const char* myUuid = "181A";
+// const char* myAddress = "DC:9F:FE:40:F3:1B";
+// const char* myName = "CRWN";
+// const char* myUuid = "181A";
 
 // callback for received peripheral advertisement
 void my_callback_func(BleDevice device) {
 
-	Serial.println("BLE");
+	Serial.println("BLE device scanned");
 	Serial.print("\trssi: ");
 	Serial.println(device.rssi());
 
@@ -31,7 +31,7 @@ void my_callback_func(BleDevice device) {
 
 	// parse service data of Xiaomi device advertisement if available
 	data_ptr_t serviceData;
-	if (device.findAdvertisementDataType(GapAdvType::ServiceData,&serviceData)) {
+	if (device.findAdvertisementDataType(GapAdvType::ServiceData, &serviceData)) {
 		if (serviceData.len == 15) { // service data length of the Xiaomi service data advertisements
 			Serial.println("\tService data");
 			uint8_t UUID[2] = {serviceData.data[1], serviceData.data[0]};
@@ -44,7 +44,7 @@ void my_callback_func(BleDevice device) {
 			Serial.print("\t\tBattery \%: "); Serial.println(battery_perc);
 		}
 		else {
-			Serial.println("\tIncorrect thermometer service");
+			Serial.println("\tIncorrect thermometer service data length");
 		}
 	}
 }
@@ -65,28 +65,10 @@ void setup() {
 void loop() {
 
 	// Say something every time we loop (which is every second)
-	//Serial.println("Loop");
-
-	// See if we have something available...
-	BleDevice peripheral = BLE.available();
-	// if (peripheral) {
-	// 	Serial.println("loop BLE.available(): ");
-	// 	Serial.print("\trssi: "); Serial.println(peripheral.rssi());
-	// 	Serial.print("\taddress: "); Serial.println(peripheral.address().c_str());
-	// }
-
-	if (peripheral && !peripheral.connected()) {
-		Serial.println("Connecting...");
-		if (peripheral.connect()) {
-			Serial.println("Connected!");
-		}
-		else {
-			Serial.println("Failed to connect!");
-		}
-	}
+	Serial.println(counter);
 
 	// we would like to loop every 10000 ms (10 seconds)
-	if ((counter % (10000 / MICROAPP_LOOP_INTERVAL_MS)) == 0) // every 100 loops, toggle scanning
+	if ((counter >= (10000 / MICROAPP_LOOP_INTERVAL_MS)))
 	{
 		scanToggle = !scanToggle;
 		Serial.println("Toggle");
@@ -101,6 +83,7 @@ void loop() {
 		{
 			BLE.stopScan();
 		}
+		counter = 0;
 	}
 	counter++;
 }
