@@ -54,6 +54,23 @@ make ota-upload
 
 See below for how to set that up.
 
+## Python
+
+This used to be enough... However, a python dependency has been introduced.
+
+What's recommended is to use `direnv`:
+
+```
+sudo apt install direnv
+cd $THIS_REPOSITORY
+echo 'layout python3' > .envrc
+direnv allow
+pip3 install crownstone-core
+```
+
+There's on the moment no other dependency than on `crownstone-core`. However, in the future we will move the python
+scripts to a separate devtools repository so they can be properly versioned.
+
 # Configuration
 
 Create a `private.mk` file with a link to a file somewhere private (say `~/.crownstone/keys`) which contains your keys and the Crownstone with a particular Bluetooth address:
