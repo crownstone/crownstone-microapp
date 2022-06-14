@@ -11,9 +11,24 @@ static int counter = 0;
 #define GENERATE_FAULT_IN_SETUP_FUNCTION    0
 #define GENERATE_FAULT_IN_LOOP_FUNCTION     1
 
+#define GENERATE_INFINITE_LOOP              0
+#define GENERATE_ILLEGAL_INSTRUCTION        0
+
+
+void generate_fault() {
+#if GENERATE_INFINITE_LOOP == 1
+	while(true) {};
+#endif
+#if GENERATE_ILLEGAL_INSTRUCTION == 1
+  void (*bad_instruction)(void) = (void (*)())0xE0000000;
+  bad_instruction();
+#endif
+}
+
+
 void introduceFaultInInterruptHandler() {
 #if GENERATE_FAULT_IN_INTERRUPT_HANDLER == 1
-	while(true) {};
+	generate_fault();
 #endif
 	Serial.println("Interrupt triggered");
 }
@@ -21,10 +36,10 @@ void introduceFaultInInterruptHandler() {
 void setup() {
 	Serial.begin();
 	if (!Serial) return;
-	Serial.println("Faulty microapp");
+	Serial.println("Faulty microapp! Keep tight!");
 
 #if GENERATE_FAULT_IN_SETUP_FUNCTION == 1
-	while(true) {};
+	generate_fault();
 #endif
 
 	// TODO: the following is now overwritten by setting the interrupt handler
@@ -35,7 +50,7 @@ void setup() {
 
 void loop() {
 #if GENERATE_FAULT_IN_LOOP_FUNCTION == 1
-	while(true) {};
+	generate_fault();
 #endif
 
 	// Show counter.
