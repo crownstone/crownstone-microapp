@@ -215,6 +215,10 @@ int handleBluenetRequest(microapp_cmd_t* cmd) {
 		result = -1;
 	}
 	else { // call handleSoftInterrupt and mark the localQueue entry as empty again
+		// Q: Under what circumstances will the queue grow beyond 1 entry?
+		// A: If bluenet comes with a second request before the first softInterrupt is handled
+		// That only seems possible if handleSoftInterrupt yields back to bluenet
+		// which tbh I don't see happening easily, maybe with a delay call in a user softInterrupt handler?
 		queue_t* localCopy = &localQueue[queueIndex];
 		memcpy(localCopy->buffer, request, MAX_PAYLOAD);
 		microapp_cmd_t* msg = reinterpret_cast<microapp_cmd_t*>(localCopy->buffer);
