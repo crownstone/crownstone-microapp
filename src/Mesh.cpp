@@ -13,6 +13,27 @@ Mesh::Mesh() {
 	_registeredIncomingMeshMsgHandler = nullptr;
 }
 
+bool Mesh::begin() {
+	// Register soft interrupt
+	soft_interrupt_t softInterrupt;
+	softInterrupt.id = 23;
+	softInterrupt.type = SOFT_INTERRUPT_TYPE_MESH;
+	softInterrupt.softInterruptFunc = softInterruptMesh;
+	registerSoftInterrupt(&softInterrupt);
+
+	// Also send a command to bluenet that we want to listen to mesh
+	uint8_t* payload = getOutgoingMessagePayload();
+	microapp_mesh_cmd_t* cmd = (microapp_mesh_cmd_t*)(payload);
+	cmd->header.ack = false;
+	cmd->header.cmd = CS_MICROAPP_COMMAND_MESH;
+	cmd->header.id = softInterrupt.id;
+	cmd->opcode = CS_MICROAPP_COMMAND_MESH_READ_SET_HANDLER;
+
+	sendMessage();
+
+	return cmd->header.ack;
+}
+
 int Mesh::handleIncomingMeshMsg(microapp_mesh_read_cmd_t* msg) {
 	// If a handler is registered, we do not need to copy anything to the buffer,
 	// since the handler will deal with it right away.
@@ -20,7 +41,7 @@ int Mesh::handleIncomingMeshMsg(microapp_mesh_read_cmd_t* msg) {
 	// so there is no worry of overwriting the msg upon a bluenet roundtrip
 	if (_hasRegisteredIncomingMeshMsgHandler) {
 		MeshMsg handlerMsg = MeshMsg(msg->stoneId, msg->data, msg->dlen);
-		_registeredIncomingMeshMsgHandler(&handlerMsg);
+		_registeredIncomingMeshMsgHandler(handlerMsg);
 		return 0;
 	}
 	// Add msg to buffer or discard if full
@@ -47,25 +68,31 @@ int Mesh::handleIncomingMeshMsg(microapp_mesh_read_cmd_t* msg) {
 	return 0;
 }
 
-void Mesh::setIncomingMeshMsgHandler(void (*handler)(MeshMsg*)) {
+void Mesh::setIncomingMeshMsgHandler(void (*handler)(MeshMsg)) {
 	_hasRegisteredIncomingMeshMsgHandler = true;
 	_registeredIncomingMeshMsgHandler = handler;
 }
 
-MeshMsg* Mesh::readMeshMsg() {
+bool Mesh::available() {
+	for (int i=0; i<MESH_MSG_BUFFER_LEN; i++) {
+		if (_incomingMeshMsgBuffer[i].filled) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void Mesh::readMeshMsg(MeshMsg* msg) {
 	for (int i=MESH_MSG_BUFFER_LEN-1; i>=0; i--) {
 		if (_incomingMeshMsgBuffer[i].filled) {
 			_incomingMeshMsgBuffer[i].filled = false;
-			MeshMsg msg = MeshMsg(	_incomingMeshMsgBuffer[i].stoneId,
-									_incomingMeshMsgBuffer[i].data,
-									_incomingMeshMsgBuffer[i].dlen);
-			return &msg;
+			*msg = MeshMsg(	_incomingMeshMsgBuffer[i].stoneId,
+							_incomingMeshMsgBuffer[i].data,
+							_incomingMeshMsgBuffer[i].dlen);
+			return;
 		}
 	}
 }
-
-///////////////////////////////////////////////////////////////////
-// old
 
 void Mesh::sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId) {
 	uint8_t* payload = getOutgoingMessagePayload();
@@ -83,35 +110,4 @@ void Mesh::sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId) {
 	memcpy(cmd->data, msg, msgSizeSent);
 
 	sendMessage();
-}
-
-uint8_t Mesh::readMeshMsg(uint8_t** msgPtr, uint8_t* stoneIdPtr) {
-	uint8_t* payloadOut              = getOutgoingMessagePayload();
-	microapp_mesh_read_cmd_t* cmdOut = (microapp_mesh_read_cmd_t*)(payloadOut);
-	cmdOut->mesh_header.header.cmd   = CS_MICROAPP_COMMAND_MESH;
-	cmdOut->mesh_header.opcode       = CS_MICROAPP_COMMAND_MESH_READ;
-
-	sendMessage();
-
-	// Actually the mesh message is written into the wrong buffer by bluenet...
-	microapp_mesh_read_cmd_t* cmdIn = cmdOut;
-
-	// uint8_t* payloadIn              = getIncomingMessagePayload();
-	// microapp_mesh_read_cmd_t* cmdIn = (microapp_mesh_read_cmd_t*)(payloadIn);
-
-	*stoneIdPtr = cmdIn->stoneId;
-	*msgPtr     = cmdIn->data;
-
-	return cmdIn->dlen;
-}
-
-bool Mesh::available() {
-	uint8_t* payload = getOutgoingMessagePayload();
-	microapp_mesh_read_available_cmd_t* cmd = (microapp_mesh_read_available_cmd_t*)(payload);
-	cmd->mesh_header.header.cmd             = CS_MICROAPP_COMMAND_MESH;
-	cmd->mesh_header.opcode                 = CS_MICROAPP_COMMAND_MESH_READ_AVAILABLE;
-
-	sendMessage();
-
-	return cmd->available;
 }

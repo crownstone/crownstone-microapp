@@ -4,8 +4,6 @@
 
 #define MESH_MSG_BUFFER_LEN 3
 
-typedef void (*ReceivedMeshMsgHandler)(MeshMsg);
-
 struct MeshMsgBufferEntry {
 	bool filled;
 	uint8_t stoneId;
@@ -22,20 +20,20 @@ struct MeshMsgBufferEntry {
  * is only guaranteed for the lifetime of the actual message data.
  */
 class MeshMsg {
-private:
-	MeshMsg(){};
-
-	uint8_t _stoneId;
-	uint8_t* _dataPtr;
-	uint8_t _dlen;
-
 public:
-	MeshMsg(uint8_t stoneId, uint8_t* dataPtr, uint8_t dlen) {
-		_stoneId = stoneId;
-		_dataPtr = dataPtr;
-		_dlen = dlen;
-	}
-}
+	uint8_t stoneId;
+	uint8_t* dataPtr;
+	uint8_t dlen;
+
+	MeshMsg(){};
+	MeshMsg(uint8_t stoneId_, uint8_t* dataPtr_, uint8_t dlen_) {
+		stoneId = stoneId_;
+		dataPtr = dataPtr_;
+		dlen = dlen_;
+	};
+};
+
+typedef void (*ReceivedMeshMsgHandler)(MeshMsg);
 
 // wrapper for class method
 int softInterruptMesh(void* args, void* buf);
@@ -77,6 +75,15 @@ public:
 	}
 
 	/**
+	 * Initialize the mesh object. Bluenet will start forwarding microapp mesh messages
+	 * after calling this function.
+	 *
+	 * @return true if bluenet successfully registered an interrupt service routine
+	 * @return false if registering an interrupt service routine failed
+	 */
+	bool begin();
+
+	/**
 	 * Place a mesh message
 	 */
 	int handleIncomingMeshMsg(microapp_mesh_read_cmd_t* msg);
@@ -84,7 +91,14 @@ public:
 	/**
 	 * Register a handler that will be called upon incoming mesh messages
 	 */
-	void setIncomingMeshMsgHandler(void (*handler)(MeshMsg*));
+	void setIncomingMeshMsgHandler(ReceivedMeshMsgHandler handler);
+
+	/**
+	 * Check if a new message is avalable to read with the readMeshMsg function.
+	 *
+	 * @return                True if new message available, False if not.
+	 */
+	bool available();
 
 	/**
 	 * Pop a message from the incoming mesh message buffer.
@@ -93,9 +107,9 @@ public:
 	 * If the message content needs to be saved, the caller
 	 * is responsible for copying the data to some memory-safe location.
 	 *
-	 * @return Pointer to a message
+	 * @param[in] msg   Pointer to the message.
 	 */
-	MeshMsg* readMeshMsg();
+	void readMeshMsg(MeshMsg* msg);
 
 	/**
 	 * Send a mesh message.
@@ -106,21 +120,6 @@ public:
 	 */
 	void sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId);
 
-	/**
-	 * Read a mesh message.
-	 *
-	 * @param[out] msg        Pointer that will be set to point to the message.
-	 * @param[out] stoneId    Pointer that will be set to point to the stone ID of the sender.
-	 * @return                Size of the message.
-	 */
-	uint8_t readMeshMsg(uint8_t** msg, uint8_t* stoneId);
-
-	/**
-	 * Check if a new message is avalable to read with the readMeshMsg function.
-	 *
-	 * @return                True if new message available, False if not.
-	 */
-	bool available();
 };
 
 #define MESH Mesh::getInstance()

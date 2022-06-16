@@ -15,7 +15,7 @@ const char* myAddress = "A4:C1:38:9A:45:E3";
 // const char* myUuid = "181A";
 
 // callback for received peripheral advertisement
-void my_callback_func(BleDevice device) {
+void onScannedDevice(BleDevice device) {
 
 	Serial.println("BLE device scanned");
 	Serial.print("\trssi: ");
@@ -58,7 +58,7 @@ void setup() {
 	Serial.println("Setup");
 
 	// Register my_callback_func
-	BLE.setEventHandler(BleEventDeviceScanned, my_callback_func);
+	BLE.setEventHandler(BleEventDeviceScanned, onScannedDevice);
 }
 
 // The Arduino loop function.

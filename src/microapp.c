@@ -329,6 +329,10 @@ int handleSoftInterrupt(microapp_cmd_t* msg) {
 			result = handleSoftInterruptInternal(SOFT_INTERRUPT_TYPE_PIN, msg->id, (uint8_t*)msg);
 			break;
 		}
+		case CS_MICROAPP_COMMAND_MESH: {
+			result = handleSoftInterruptInternal(SOFT_INTERRUPT_TYPE_MESH, msg->id, (uint8_t*)msg);
+			break;
+		}
 	}
 	return result;
 }
