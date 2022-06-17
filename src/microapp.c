@@ -183,11 +183,7 @@ int handleBluenetRequest(microapp_cmd_t* cmd) {
 
 	int8_t queueIndex = -1;
 	if (emptySlots > 0) {
-		queueIndex                   = getNewItemInQueue();
-		request->emptyInterruptSlots = emptySlots - 1;
-	}
-	else {
-		request->emptyInterruptSlots = emptySlots;
+		queueIndex = getNewItemInQueue();
 	}
 
 	// overwrite in both scenarios the REQUEST
@@ -200,12 +196,14 @@ int handleBluenetRequest(microapp_cmd_t* cmd) {
 
 	// First indicate we have received the callback
 	uint8_t* outputPayloadRaw     = getOutgoingMessagePayload();
-	microapp_cmd_t* outputPayload = reinterpret_cast<microapp_cmd_t*>(outputPayloadRaw);
+	microapp_soft_interrupt_cmd_t* outputPayload = reinterpret_cast<microapp_soft_interrupt_cmd_t*>(outputPayloadRaw);
 	if (queueIndex < 0) {
-		outputPayload->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_DROPPED;
+		outputPayload->header.cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_DROPPED;
+		outputPayload->emptyInterruptSlots = emptySlots;
 	}
 	else {
-		outputPayload->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_RECEIVED;
+		outputPayload->header.cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_RECEIVED;
+		outputPayload->emptyInterruptSlots = emptySlots - 1;
 	}
 
 	microappCallbackFunc callbackFunctionIntoBluenet = ipc_data.microappCallback;
@@ -333,6 +331,7 @@ int handleSoftInterrupt(microapp_cmd_t* msg) {
 			result = handleSoftInterruptInternal(SOFT_INTERRUPT_TYPE_MESH, msg->id, (uint8_t*)msg);
 			break;
 		}
+		default: return -1;
 	}
 	return result;
 }

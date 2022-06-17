@@ -75,13 +75,13 @@ public:
 	}
 
 	/**
-	 * Initialize the mesh object. Bluenet will start forwarding microapp mesh messages
-	 * after calling this function.
+	 * Initialize the mesh object for reading. Bluenet will start
+	 * forwarding microapp mesh messages after calling this function.
 	 *
 	 * @return true if bluenet successfully registered an interrupt service routine
 	 * @return false if registering an interrupt service routine failed
 	 */
-	bool begin();
+	bool listen();
 
 	/**
 	 * Place a mesh message

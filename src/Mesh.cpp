@@ -1,4 +1,5 @@
 #include <Mesh.h>
+#include <Serial.h>
 
 int softInterruptMesh(void* args, void* buf) {
 	microapp_mesh_read_cmd_t* msg = (microapp_mesh_read_cmd_t*)buf;
@@ -13,10 +14,10 @@ Mesh::Mesh() {
 	_registeredIncomingMeshMsgHandler = nullptr;
 }
 
-bool Mesh::begin() {
-	// Register soft interrupt
+bool Mesh::listen() {
+	// Register soft interrupt locally
 	soft_interrupt_t softInterrupt;
-	softInterrupt.id = 23;
+	softInterrupt.id = 0;
 	softInterrupt.type = SOFT_INTERRUPT_TYPE_MESH;
 	softInterrupt.softInterruptFunc = softInterruptMesh;
 	registerSoftInterrupt(&softInterrupt);

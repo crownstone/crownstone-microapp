@@ -6,47 +6,42 @@
 
 uint32_t counter;
 
+void printMeshMsg(MeshMsg* msg) {
+	Serial.print("Received mesh message from stone ");
+	Serial.println(msg->stoneId);
+	for (int i = 0; i < msg->dlen; i++) {
+		Serial.print(*(msg->dataPtr + i));
+		Serial.print(" ");
+	}
+	Serial.println("");
+}
+
 void meshCallback(MeshMsg msg) {
-	Serial.println("mesh callback");
+	printMeshMsg(&msg);
 }
 
 void setup() {
 	Serial.begin();
 	counter = 0;
-	MESH.begin();
-	// mesh.setIncomingMeshMsgHandler(meshCallback);
 
+#ifdef ROLE_RECEIVER
+	Serial.println("Start listening to mesh");
+	if (!MESH.listen()) {
+		Serial.println("Mesh::listen() failed");
+	}
+	MESH.setIncomingMeshMsgHandler(meshCallback);
+#endif
 }
 
 void loop() {
-
 	// Serial.println("Loop");
 
 #ifdef ROLE_RECEIVER
 	// Read Mesh
 	if (MESH.available()) {
-		// Serial.println("Mesh message available");
 		MeshMsg msg;
 		MESH.readMeshMsg(&msg);
-
-		Serial.println("Received mesh message:");
-		Serial.println(*(msg.dataPtr));
-
-		// Serial.print("Mesh msg from stone ");
-		// Serial.print((int)stone_id);
-		// Serial.print(" [");
-		// Serial.print((int)size);
-		// Serial.print("]: ");
-		// int i = 0;
-		// while (size != 0) {
-		// 	Serial.print(*(msg_ptr+i));
-		// 	size--;
-		// }
-		// Serial.println("");
-		// Serial.println((*msg_ptr) + *(msg_ptr+1));
-		// if (size != 2) {
-		// 	Serial.println("Incorrect size");
-		// }
+		printMeshMsg(&msg);
 	}
 #endif
 #ifdef ROLE_TRANSMITTER
