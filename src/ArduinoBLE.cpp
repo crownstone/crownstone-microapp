@@ -8,7 +8,7 @@ int softInterruptBle(void* args, void* buf) {
 	BleSoftInterruptContext* context = (BleSoftInterruptContext*)args;
 
 	if (!context->eventHandler) {
-		return -1;
+		return ERR_MICROAPP_SOFT_INTERRUPT_NOT_REGISTERED;
 	}
 
 	// TODO: do something with type of softInterrupt. For now assume scan event
@@ -33,7 +33,8 @@ Ble::Ble() {
  * this softInterrupt so we have the possibility to send a "softInterrupt end" command
  * after the softInterrupt has been executed.
  */
-void Ble::setEventHandler(BleEventType type, void (*eventHandler)(BleDevice)) {
+bool Ble::setEventHandler(BleEventType type, void (*eventHandler)(BleDevice)) {
+	// Register the interrupt context locally
 	int softInterruptContextId = -1;
 	for (int i = 0; i < MAX_SOFT_INTERRUPTS; ++i) {
 		if (_bleSoftInterruptContext[i].filled == false) {
@@ -42,33 +43,39 @@ void Ble::setEventHandler(BleEventType type, void (*eventHandler)(BleDevice)) {
 		}
 	}
 	if (softInterruptContextId < 0) {
-		Serial.println("No space for new event handler");
-		return; // TODO: add return type to function
+		// No empty slots for storing softInterruptContext
+		return false;
 	}
 	BleSoftInterruptContext& context = _bleSoftInterruptContext[softInterruptContextId];
+	context.eventHandler = eventHandler;
+	context.filled = true;
+	// There can be only one registered event handler per event type
+	context.id = type;
 
-	Serial.println("Setting event handler");
-	// TODO: do something with type. For now assume type is BleEventDeviceScanned
-	uint8_t *payload = getOutgoingMessagePayload();
+	// Also register soft interrupt on the microapp side
+	soft_interrupt_t softInterrupt;
+	softInterrupt.id                = context.id;
+	softInterrupt.type              = SOFT_INTERRUPT_TYPE_BLE;
+	softInterrupt.softInterruptFunc = softInterruptBle;
+	softInterrupt.arg               = &_bleSoftInterruptContext[softInterruptContextId];
+	int result = registerSoftInterrupt(&softInterrupt);
+	if (result < 0) {
+		// No empty interrupt slots available on microapp side
+		return false;
+	}
+
+	// Finally, send a message to bluenet registering the soft interrupt
+	uint8_t *payload            = getOutgoingMessagePayload();
 	microapp_ble_cmd_t* ble_cmd = (microapp_ble_cmd_t*)(payload);
 	ble_cmd->header.cmd         = CS_MICROAPP_COMMAND_BLE;
+	ble_cmd->header.ack         = false;
+	ble_cmd->id                 = context.id;
 	ble_cmd->opcode             = CS_MICROAPP_COMMAND_BLE_SCAN_SET_HANDLER;
 
-	// Set identifier now to 0 (assuming a single softInterrupt)
-	ble_cmd->id = 0;
-
-	context.eventHandler = eventHandler;
-	context.filled        = true;
-	context.id            = ble_cmd->id;
-
-	soft_interrupt_t softInterrupt;
-	softInterrupt.id            = ble_cmd->id;
-	softInterrupt.type          = SOFT_INTERRUPT_TYPE_BLE;
-	softInterrupt.softInterruptFunc = softInterruptBle;
-	softInterrupt.arg           = &_bleSoftInterruptContext[softInterruptContextId];
-	registerSoftInterrupt(&softInterrupt);
-
 	sendMessage();
+
+	// Bluenet will set ack to true upon success
+	return ble_cmd->header.ack;
 }
 
 bool Ble::scan(bool withDuplicates) {

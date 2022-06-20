@@ -14,6 +14,7 @@ const char* myAddress = "A4:C1:38:9A:45:E3";
 // const char* myName = "CRWN";
 // const char* myUuid = "181A";
 
+// #define PRINT_EXTENSIVE
 // callback for received peripheral advertisement
 void onScannedDevice(BleDevice device) {
 
@@ -24,27 +25,28 @@ void onScannedDevice(BleDevice device) {
 	Serial.print("\taddress: ");
 	Serial.println(device.address().c_str());
 
+#ifdef PRINT_EXTENSIVE
 	if (device.hasLocalName()) {
 		Serial.print("\tComplete local name: ");
 		Serial.println(device.localName().c_str());
 	}
+#endif
 
 	// parse service data of Xiaomi device advertisement if available
 	data_ptr_t serviceData;
 	if (device.findAdvertisementDataType(GapAdvType::ServiceData, &serviceData)) {
 		if (serviceData.len == 15) { // service data length of the Xiaomi service data advertisements
-			Serial.println("\tService data");
-			uint8_t UUID[2] = {serviceData.data[1], serviceData.data[0]};
-			Serial.print("\t\tUUID: "); Serial.println(UUID,2);
 			uint16_t temperature = (serviceData.data[8] << 8) | serviceData.data[9];
-			Serial.print("\t\tTemperature: "); Serial.println(temperature);
+			Serial.print("\tTemperature: "); Serial.println(temperature);
+#ifdef PRINT_EXTENSIVE
 			uint8_t humidity = serviceData.data[10];
-			Serial.print("\t\tHumidity: "); Serial.println(humidity);
+			Serial.print("\tHumidity: "); Serial.println(humidity);
 			uint16_t battery_perc = serviceData.data[11];
-			Serial.print("\t\tBattery \%: "); Serial.println(battery_perc);
+			Serial.print("\tBattery \%: "); Serial.println(battery_perc);
+#endif
 		}
 		else {
-			Serial.println("\tIncorrect thermometer service data length");
+			Serial.println("\tIncorrect service data length");
 		}
 	}
 }
@@ -71,7 +73,7 @@ void loop() {
 	if ((counter >= (10000 / MICROAPP_LOOP_INTERVAL_MS)))
 	{
 		scanToggle = !scanToggle;
-		Serial.println("Toggle");
+		Serial.println("Toggle scanning");
 		if (scanToggle)
 		{
 			// BLE.scan(); // unfiltered!

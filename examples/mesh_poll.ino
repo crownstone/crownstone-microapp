@@ -27,7 +27,7 @@ void setup() {
 #ifdef ROLE_RECEIVER
 	Serial.println("Start listening to mesh");
 	if (!MESH.listen()) {
-		Serial.println("Mesh::listen() failed");
+		Serial.println("Mesh.listen() failed");
 	}
 	MESH.setIncomingMeshMsgHandler(meshCallback);
 #endif

@@ -81,8 +81,10 @@ public:
 	 *
 	 * @param[in] eventType   Type of event to set callback for
 	 * @param[in] callback    The callback function to call upon a trigger
+	 *
+	 * @return                True if successful
 	 */
-	void setEventHandler(BleEventType eventType, void (*callback)(BleDevice));
+	bool setEventHandler(BleEventType eventType, void (*callback)(BleDevice));
 
 	/**
 	 * Sends command to bluenet to call registered microapp callback function upon receiving advertisements

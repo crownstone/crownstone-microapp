@@ -1,6 +1,8 @@
 #include <ipc/cs_IpcRamData.h>
 #include <microapp.h>
 
+#include <Serial.h>
+
 // Define array with soft interrupts
 soft_interrupt_t softInterrupt[MAX_SOFT_INTERRUPTS];
 
@@ -169,11 +171,11 @@ int8_t getNewItemInQueue() {
  * Handle incoming requests from bluenet (probably soft interrupts).
  */
 int handleBluenetRequest(microapp_cmd_t* cmd) {
-	int result = 1;
+	int result = 0;
 
 	// There is no actual request (no problem, just return)
 	if (cmd->ack != CS_ACK_BLUENET_MICROAPP_REQUEST) {
-		return 0;
+		return result;
 	}
 
 	microapp_soft_interrupt_cmd_t* request = reinterpret_cast<microapp_soft_interrupt_cmd_t*>(cmd);
@@ -274,10 +276,10 @@ int registerSoftInterrupt(soft_interrupt_t* interrupt) {
 			softInterrupt[i].id                = interrupt->id;
 			softInterrupt[i].arg               = interrupt->arg;
 			softInterrupt[i].type              = interrupt->type;
-			return i; // success
+			return ERR_MICROAPP_SUCCESS;
 		}
 	}
-	return -1; // no more space
+	return ERR_MICROAPP_NO_SPACE;
 }
 
 int countRegisteredSoftInterrupts() {
@@ -302,22 +304,26 @@ int countRegisteredSoftInterrupts(uint8_t type) {
 
 int handleSoftInterruptInternal(uint8_t type, uint8_t id, uint8_t* msg) {
 	for (int i = 0; i < MAX_SOFT_INTERRUPTS; ++i) {
-		if (!softInterrupt[i].registered || softInterrupt[i].type != type) {
+		if (!softInterrupt[i].registered) {
+			continue;
+		}
+		if ( softInterrupt[i].type != type) {
 			continue;
 		}
 		if (softInterrupt[i].id == id) {
 			if (softInterrupt[i].softInterruptFunc) {
 				return softInterrupt[i].softInterruptFunc(softInterrupt[i].arg, msg);
 			}
-			return -3;
+			// softInterruptFunc does not exist
+			return ERR_MICROAPP_SOFT_INTERRUPT_NOT_REGISTERED;
 		}
-		return -2;
 	}
-	return -1;
+	 // no soft interrupt of this type with this id registered
+	return ERR_MICROAPP_SOFT_INTERRUPT_NOT_REGISTERED;
 }
 
 int handleSoftInterrupt(microapp_cmd_t* msg) {
-	int result = 0;
+	int result = ERR_MICROAPP_SUCCESS;
 	switch (msg->interruptCmd) {
 		case CS_MICROAPP_COMMAND_BLE_DEVICE: {
 			result = handleSoftInterruptInternal(SOFT_INTERRUPT_TYPE_BLE, msg->id, (uint8_t*)msg);
@@ -331,7 +337,14 @@ int handleSoftInterrupt(microapp_cmd_t* msg) {
 			result = handleSoftInterruptInternal(SOFT_INTERRUPT_TYPE_MESH, msg->id, (uint8_t*)msg);
 			break;
 		}
-		default: return -1;
+		default: {
+			// interruptCmd not known
+			return ERR_MICROAPP_UNKNOWN_PROTOCOL;
+		}
+	}
+	if (result < 0) {
+		Serial.print("handleSoftInterrupt error: ");
+		Serial.println(result);
 	}
 	return result;
 }

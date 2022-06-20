@@ -18,6 +18,10 @@ int8_t BleDevice::rssi() {
 	return _device.rssi;
 }
 
+uint8_t BleDevice::type() {
+	return _device.type;
+}
+
 bool BleDevice::hasLocalName() {
 	if (!_flags.flags.checkedLocalName) { // if not yet checked
 		data_ptr_t cln;

@@ -17,22 +17,27 @@ Mesh::Mesh() {
 bool Mesh::listen() {
 	// Register soft interrupt locally
 	soft_interrupt_t softInterrupt;
+	// Since we only have one type of mesh interrupt, id is always 0
 	softInterrupt.id = 0;
 	softInterrupt.type = SOFT_INTERRUPT_TYPE_MESH;
 	softInterrupt.softInterruptFunc = softInterruptMesh;
-	registerSoftInterrupt(&softInterrupt);
+	int result = registerSoftInterrupt(&softInterrupt);
+	if (result < 0) {
+		// No empty interrupt slots available
+		return false;
+	}
 
 	// Also send a command to bluenet that we want to listen to mesh
 	uint8_t* payload = getOutgoingMessagePayload();
-	microapp_mesh_cmd_t* cmd = (microapp_mesh_cmd_t*)(payload);
-	cmd->header.ack = false;
-	cmd->header.cmd = CS_MICROAPP_COMMAND_MESH;
-	cmd->header.id = softInterrupt.id;
-	cmd->opcode = CS_MICROAPP_COMMAND_MESH_READ_SET_HANDLER;
+	microapp_mesh_cmd_t* mesh_cmd = (microapp_mesh_cmd_t*)(payload);
+	mesh_cmd->header.ack = false;
+	mesh_cmd->header.cmd = CS_MICROAPP_COMMAND_MESH;
+	mesh_cmd->header.id = softInterrupt.id;
+	mesh_cmd->opcode = CS_MICROAPP_COMMAND_MESH_READ_SET_HANDLER;
 
 	sendMessage();
 
-	return cmd->header.ack;
+	return mesh_cmd->header.ack;
 }
 
 int Mesh::handleIncomingMeshMsg(microapp_mesh_read_cmd_t* msg) {
