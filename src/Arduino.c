@@ -3,15 +3,19 @@
 
 #include <ipc/cs_IpcRamData.h>
 
-bool pinExists(uint8_t pin) {
-	// first check, more checks on bluenet side
+boolean pinExists(uint8_t pin) {
+	// First check, more checks on bluenet side
 	return (pin < NUMBER_OF_PINS);
 }
 
+// Convert a pin to a virtual pin ('interrupt' in Arduino language)
+// This is a trivial mapping, here to comply with Arduino syntax
 uint8_t digitalPinToInterrupt(uint8_t pin) {
 	return pin;
 }
 
+// Convert a virtual pin back to a pin
+// This is a trivial mapping, see digitalPinToInterrupt()
 uint8_t interruptToDigitalPin(uint8_t interrupt) {
 	return interrupt;
 }
@@ -49,7 +53,6 @@ int digitalRead(uint8_t pin) {
 	if (!pinExists(pin)) return -1;
 
 	uint8_t *payload = getOutgoingMessagePayload();
-	//io_buffer_t *buffer = getOutgoingMessageBuffer();
 	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
 	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
 	pin_cmd->pin = pin;
@@ -85,7 +88,6 @@ int attachInterrupt(uint8_t interrupt, void (*isr)(void), uint8_t mode) {
 	uint8_t *payload = getOutgoingMessagePayload();
 	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
 	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
-	// the pin field actually contains the corresponding interrupt
 	pin_cmd->pin = interrupt;
 	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_MODE;
 	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_INPUT_PULLUP;

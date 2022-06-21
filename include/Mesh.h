@@ -55,11 +55,12 @@ private:
 	/**
 	 * Buffer for storing incoming mesh messages
 	 * This is where the actual data is stored (for polling applications)
-	 * Note: A MeshMsgBufferEntry is max 10 bytes in size
 	 */
 	MeshMsgBufferEntry _incomingMeshMsgBuffer[MESH_MSG_BUFFER_LEN];
 
-	// If true, call the handler function registered by the user upon incoming mesh messages
+	/**
+	 * Flag indicating whether an incoming mesh handler has been registered
+	 */
 	bool _hasRegisteredIncomingMeshMsgHandler;
 
 	ReceivedMeshMsgHandler _registeredIncomingMeshMsgHandler;

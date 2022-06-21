@@ -11,14 +11,23 @@ int softInterruptBle(void* args, void* buf) {
 		return ERR_MICROAPP_SOFT_INTERRUPT_NOT_REGISTERED;
 	}
 
-	// TODO: do something with type of softInterrupt. For now assume scan event
-	// Create temporary object on the stack
-	BleDevice bleDevice = BleDevice(*dev);
-	if (BLE.filterScanEvent(bleDevice)) {
-		// Call the event handler with a copy of this object
-		context->eventHandler(bleDevice);
+	// Based on the id (=type) of interrupt we will take action
+	switch (context->id) {
+		case BleEventDeviceScanned: {
+			// Create temporary object on the stack
+			BleDevice bleDevice = BleDevice(*dev);
+			if (BLE.filterScanEvent(bleDevice)) {
+				// Call the event handler with a copy of this object
+				context->eventHandler(bleDevice);
+			}
+			break;
+		}
+		// TODO: implement handlers for other ble events
+		default: {
+			return ERR_MICROAPP_NOT_IMPLEMENTED;
+		}
 	}
-	return 0;
+	return ERR_MICROAPP_SUCCESS;
 }
 
 Ble::Ble() {
@@ -84,7 +93,6 @@ bool Ble::scan(bool withDuplicates) {
 	}
 
 	uint8_t *payload = getOutgoingMessagePayload();
-	//io_buffer_t* buffer         = getOutgoingMessageBuffer();
 	microapp_ble_cmd_t* ble_cmd = (microapp_ble_cmd_t*)(payload);
 	ble_cmd->header.ack         = false;
 	ble_cmd->header.cmd         = CS_MICROAPP_COMMAND_BLE;
@@ -127,7 +135,7 @@ bool Ble::stopScan() {
 		return true;
 	}
 
-	// send a message to bluenet commanding it to stop forwarding ads to microapp
+	// send a message to bluenet asking it to stop forwarding ads to microapp
 	uint8_t *payload = getOutgoingMessagePayload();
 	microapp_ble_cmd_t* ble_cmd = (microapp_ble_cmd_t*)(payload);
 

@@ -2,7 +2,7 @@
 
 // A ble microapp example for reading advertisements from a Xiaomi Thermometer with custom firmware: https://github.com/atc1441/ATC_MiThermometer
 
-static uint16_t counter = 1;
+uint16_t loopCounter = 0;
 
 bool scanToggle = false;
 
@@ -10,11 +10,10 @@ const char* myAddress = "A4:C1:38:9A:45:E3";
 //const char* myName = "ATC_9A45E3";
 //const char* myUuid = "181A";
 
-// const char* myAddress = "DC:9F:FE:40:F3:1B";
-// const char* myName = "CRWN";
-// const char* myUuid = "181A";
+// For more extensive information about the scanned device
+#define PRINT_EXTENSIVE
+#undef PRINT_EXTENSIVE
 
-// #define PRINT_EXTENSIVE
 // callback for received peripheral advertisement
 void onScannedDevice(BleDevice device) {
 
@@ -67,10 +66,10 @@ void setup() {
 void loop() {
 
 	// Say something every time we loop (which is every second)
-	Serial.println(counter);
+	Serial.println(loopCounter);
 
 	// we would like to loop every 10000 ms (10 seconds)
-	if ((counter >= (10000 / MICROAPP_LOOP_INTERVAL_MS)))
+	if ((loopCounter >= (10000 / MICROAPP_LOOP_INTERVAL_MS)))
 	{
 		scanToggle = !scanToggle;
 		Serial.println("Toggle scanning");
@@ -85,7 +84,7 @@ void loop() {
 		{
 			BLE.stopScan();
 		}
-		counter = 0;
+		loopCounter = 0;
 	}
-	counter++;
+	loopCounter++;
 }

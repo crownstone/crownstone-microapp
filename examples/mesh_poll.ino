@@ -11,9 +11,13 @@ void printMeshMsg(MeshMsg* msg) {
 	Serial.println(msg->stoneId);
 	for (int i = 0; i < msg->dlen; i++) {
 		Serial.print(*(msg->dataPtr + i));
-		Serial.print(" ");
+		if (i + 1 == msg->dlen) {
+			Serial.println(" ");
+		}
+		else {
+			Serial.print(" ");
+		}
 	}
-	Serial.println("");
 }
 
 void meshCallback(MeshMsg msg) {
@@ -34,8 +38,6 @@ void setup() {
 }
 
 void loop() {
-	// Serial.println("Loop");
-
 #ifdef ROLE_RECEIVER
 	// Read Mesh
 	if (MESH.available()) {

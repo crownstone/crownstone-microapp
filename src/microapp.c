@@ -1,8 +1,6 @@
 #include <ipc/cs_IpcRamData.h>
 #include <microapp.h>
 
-#include <Serial.h>
-
 // Define array with soft interrupts
 soft_interrupt_t softInterrupt[MAX_SOFT_INTERRUPTS];
 
@@ -171,11 +169,11 @@ int8_t getNewItemInQueue() {
  * Handle incoming requests from bluenet (probably soft interrupts).
  */
 int handleBluenetRequest(microapp_cmd_t* cmd) {
-	int result = 0;
+	int result = ERR_MICROAPP_SUCCESS;
 
 	// There is no actual request (no problem, just return)
 	if (cmd->ack != CS_ACK_BLUENET_MICROAPP_REQUEST) {
-		return result;
+		return ERR_MICROAPP_SUCCESS;
 	}
 
 	microapp_soft_interrupt_cmd_t* request = reinterpret_cast<microapp_soft_interrupt_cmd_t*>(cmd);
@@ -212,7 +210,7 @@ int handleBluenetRequest(microapp_cmd_t* cmd) {
 	result = callbackFunctionIntoBluenet(CS_MICROAPP_CALLBACK_SIGNAL, &io_buffer);
 
 	if (queueIndex < 0) {
-		result = -1;
+		result = ERR_MICROAPP_NO_SPACE;
 	}
 	else { // call handleSoftInterrupt and mark the localQueue entry as empty again
 		// Q: Under what circumstances will the queue grow beyond 1 entry?
@@ -341,10 +339,6 @@ int handleSoftInterrupt(microapp_cmd_t* msg) {
 			// interruptCmd not known
 			return ERR_MICROAPP_UNKNOWN_PROTOCOL;
 		}
-	}
-	if (result < 0) {
-		Serial.print("handleSoftInterrupt error: ");
-		Serial.println(result);
 	}
 	return result;
 }
