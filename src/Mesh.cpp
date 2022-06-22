@@ -12,6 +12,7 @@ Mesh::Mesh() {
 	}
 	_hasRegisteredIncomingMeshMsgHandler = false;
 	_registeredIncomingMeshMsgHandler = nullptr;
+	_stoneId = 0;
 }
 
 bool Mesh::listen() {
@@ -116,4 +117,23 @@ void Mesh::sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId) {
 	memcpy(cmd->data, msg, msgSizeSent);
 
 	sendMessage();
+}
+
+short Mesh::id() {
+	// First check if we already cached the id before
+	if (_stoneId != 0) {
+		return _stoneId;
+	}
+	// If not, ask bluenet via a MESH_GET_INFO message
+	uint8_t* payload = getOutgoingMessagePayload();
+	microapp_mesh_info_cmd_t* cmd = (microapp_mesh_info_cmd_t*)(payload);
+	cmd->mesh_header.header.cmd = CS_MICROAPP_COMMAND_MESH;
+	cmd->mesh_header.header.ack = false;
+	cmd->mesh_header.opcode = CS_MICROAPP_COMMAND_MESH_GET_INFO;
+	sendMessage();
+
+	if (cmd->mesh_header.header.ack) {
+		_stoneId = cmd->stoneId;
+	}
+	return _stoneId;
 }

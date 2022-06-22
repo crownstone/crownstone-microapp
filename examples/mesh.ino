@@ -34,7 +34,12 @@ void setup() {
 		Serial.println("Mesh.listen() failed");
 	}
 	MESH.setIncomingMeshMsgHandler(meshCallback);
+
 #endif
+
+	short id = MESH.id();
+	Serial.print("Own stone id is ");
+	Serial.println(id);
 }
 
 void loop() {
@@ -50,8 +55,8 @@ void loop() {
 	if (counter % 10 == 0) {
 		// Send Mesh
 		Serial.println("Sending mesh msg");
-		uint8_t msg[2] = {22, 21};
-		uint8_t stoneId = 0; // broadcast
+		uint8_t msg[2] = {20, 19};
+		uint8_t stoneId = 6;
 		MESH.sendMeshMsg(msg, sizeof(msg), stoneId);
 	}
 #endif

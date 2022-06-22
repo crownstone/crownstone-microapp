@@ -63,7 +63,15 @@ private:
 	 */
 	bool _hasRegisteredIncomingMeshMsgHandler;
 
+	/**
+	 * Handler for registered callbacks for incoming mesh messages
+	 */
 	ReceivedMeshMsgHandler _registeredIncomingMeshMsgHandler;
+
+	/**
+	 * Own stone id
+	 */
+	uint8_t _stoneId;
 
 public:
 
@@ -121,6 +129,12 @@ public:
 	 */
 	void sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId);
 
+	/**
+	 * Get own stone id
+	 *
+	 * If already asked bluenet before, won't ask again but use cached value
+	 */
+	short id();
 };
 
 #define MESH Mesh::getInstance()
