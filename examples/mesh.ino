@@ -1,8 +1,8 @@
 #include <Mesh.h>
 #include <Serial.h>
 
-#define ROLE_RECEIVER
-// #define ROLE_TRANSMITTER
+// #define ROLE_RECEIVER
+#define ROLE_TRANSMITTER
 
 uint32_t counter;
 
@@ -56,7 +56,8 @@ void loop() {
 		// Send Mesh
 		Serial.println("Sending mesh msg");
 		uint8_t msg[2] = {20, 19};
-		uint8_t stoneId = 6;
+		// use 0 as stoneId for broadcast
+		uint8_t stoneId = 0;
 		MESH.sendMeshMsg(msg, sizeof(msg), stoneId);
 	}
 #endif
