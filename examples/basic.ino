@@ -40,6 +40,7 @@ void setup() {
 
 	// Set the UUID of this microapp.
 	serviceData.appUuid = 0x1234;
+	serviceData.dlen = 1;
 
 	// Set LED pin to OUTPUT, so we can write.
 	pinMode(LED2_PIN, OUTPUT);
