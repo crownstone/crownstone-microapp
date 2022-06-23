@@ -68,7 +68,7 @@ bool Ble::setEventHandler(BleEventType type, void (*eventHandler)(BleDevice)) {
 	softInterrupt.softInterruptFunc = softInterruptBle;
 	softInterrupt.arg               = &_bleSoftInterruptContext[softInterruptContextId];
 	int result = registerSoftInterrupt(&softInterrupt);
-	if (result < 0) {
+	if (result != ERR_MICROAPP_SUCCESS) {
 		// No empty interrupt slots available on microapp side
 		return false;
 	}

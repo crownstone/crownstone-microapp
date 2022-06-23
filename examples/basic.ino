@@ -49,11 +49,9 @@ void setup() {
 
 	// Set interrupt handler
 	pinMode(BUTTON2_PIN, INPUT_PULLUP);
-	int result = attachInterrupt(digitalPinToInterrupt(BUTTON2_PIN), blink, CHANGE);
-
-	Serial.write("attachInterrupt returns ");
-	Serial.write(result);
-	Serial.println(" ");
+	if (!attachInterrupt(digitalPinToInterrupt(BUTTON2_PIN), blink, CHANGE)) {
+		Serial.println("Setting button interrupt failed");
+	}
 
 }
 

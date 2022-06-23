@@ -51,7 +51,7 @@ void setup() {
 
 #ifdef ENABLE_GPIO_INTERRUPTS
 	pinMode(BUTTON1_PIN, INPUT_PULLUP);
-	if (attachInterrupt(digitalPinToInterrupt(BUTTON1_PIN), onPushedButton, RISING) < 0) {
+	if (!attachInterrupt(digitalPinToInterrupt(BUTTON1_PIN), onPushedButton, RISING)) {
 		Serial.println("Setting button interrupt failed");
 	}
 #endif

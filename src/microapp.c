@@ -229,7 +229,7 @@ int handleBluenetRequest(microapp_cmd_t* cmd) {
 
 	uint8_t *payload = getOutgoingMessagePayload();
 	microapp_cmd_t* outCmd = (microapp_cmd_t*)(payload);
-	if (result < 0) {
+	if (result != ERR_MICROAPP_SUCCESS) {
 		outCmd->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_ERROR;
 	}
 	else {

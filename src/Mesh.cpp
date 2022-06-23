@@ -23,7 +23,7 @@ bool Mesh::listen() {
 	softInterrupt.type = SOFT_INTERRUPT_TYPE_MESH;
 	softInterrupt.softInterruptFunc = softInterruptMesh;
 	int result = registerSoftInterrupt(&softInterrupt);
-	if (result < 0) {
+	if (result != ERR_MICROAPP_SUCCESS) {
 		// No empty interrupt slots available
 		return false;
 	}

@@ -27,8 +27,7 @@ void setup() {
 	while(true) {};
 #endif
 
-	// TODO: the following is now overwritten by setting the interrupt handler
-	//pinMode(BUTTON2_PIN, INPUT_PULLUP);
+	pinMode(BUTTON2_PIN, INPUT_PULLUP);
 	// Set interrupt handler
 	attachInterrupt(digitalPinToInterrupt(BUTTON2_PIN), introduceFaultInInterruptHandler, CHANGE);
 }

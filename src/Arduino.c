@@ -73,16 +73,16 @@ int digitalRead(uint8_t pin) {
  * Actually, this again sets also the values that are set with pinMode. That's redundant.
  * For now, just keep it like this because it doesn't hurt to have a pin configured twice.
  */
-int attachInterrupt(uint8_t interrupt, void (*isr)(void), uint8_t mode) {
-	if (!pinExists(interruptToDigitalPin(interrupt))) return -1;
+boolean attachInterrupt(uint8_t interrupt, void (*isr)(void), uint8_t mode) {
+	if (!pinExists(interruptToDigitalPin(interrupt))) return false;
 
 	soft_interrupt_t softInterrupt;
 	softInterrupt.type = SOFT_INTERRUPT_TYPE_PIN;
 	softInterrupt.id = interrupt;
 	softInterrupt.softInterruptFunc = reinterpret_cast<softInterruptFunction>(isr);
 	int result = registerSoftInterrupt(&softInterrupt);
-	if (result < 0) {
-		return result;
+	if (result != ERR_MICROAPP_SUCCESS) {
+		return false;
 	}
 
 	uint8_t *payload = getOutgoingMessagePayload();
@@ -94,7 +94,10 @@ int attachInterrupt(uint8_t interrupt, void (*isr)(void), uint8_t mode) {
 	pin_cmd->value = mode;
 
 	result = sendMessage();
-	return result;
+	if (result != ERR_MICROAPP_SUCCESS) {
+		return false;
+	}
+	return true;
 }
 
 
