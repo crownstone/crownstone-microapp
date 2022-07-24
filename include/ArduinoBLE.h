@@ -77,6 +77,26 @@ public:
 	}
 
 	/**
+	 * Initializes the BLE module
+	 *
+	 * @return true on success
+	 * @return false otherwise
+	 */
+	bool begin();
+
+	/**
+	 * Stops the BLE module
+	 */
+	void end();
+
+	/**
+	 * Poll for BLE events and handle them
+	 *
+	 * @param timeout
+	 */
+	void poll(int timeout = 0);
+
+	/**
 	 * Registers a callback function for scanned device event triggered within bluenet
 	 *
 	 * @param[in] eventType   Type of event to set callback for
@@ -85,6 +105,36 @@ public:
 	 * @return                True if successful
 	 */
 	bool setEventHandler(BleEventType eventType, void (*callback)(BleDevice));
+
+	/**
+	 * Query if another BLE device is connected
+	 *
+	 * @return true if another BLE device is connected
+	 * @return false otherwise
+	 */
+	bool connected();
+
+	/**
+	 * Disconnect any connected BLE device
+	 *
+	 * @return true on success
+	 * @return false otherwise
+	 */
+	bool disconnect();
+
+	/**
+	 * Get the MAC address of the own device
+	 *
+	 * @return String representation of the MAC address
+	 */
+	String address();
+
+	/**
+	 * Get the RSSI of the connected BLE device
+	 *
+	 * @return RSSI of connected device. 127 if not BLE device is connected
+	 */
+	int8_t rssi();
 
 	/**
 	 * Sends command to bluenet to call registered microapp callback function upon receiving advertisements
@@ -136,6 +186,10 @@ public:
 	 * @return                  BleDevice object representing the discovered device
 	 */
 	BleDevice available();
+
+/*
+ * The following functions do not exist in the ArduinoBle library
+ */
 
 	/**
 	 * Compares the scanned device device against the filter and returns true upon a match

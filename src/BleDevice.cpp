@@ -18,10 +18,6 @@ int8_t BleDevice::rssi() {
 	return _device.rssi;
 }
 
-uint8_t BleDevice::type() {
-	return _device.type;
-}
-
 bool BleDevice::hasLocalName() {
 	if (!_flags.flags.checkedLocalName) { // if not yet checked
 		data_ptr_t cln;
@@ -63,8 +59,6 @@ bool BleDevice::connect() {
 	ble_cmd->header.cmd = CS_MICROAPP_COMMAND_BLE;
 	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_CONNECT;
 	memcpy(ble_cmd->addr, _address.getBytes(), MAC_ADDRESS_LENGTH);
-
-//	global_buf_out.length = sizeof(microapp_ble_cmd_t);
 
 	// TODO: sendMessage should return ERR_SUCCESS (0) on success
 	//       More importantly, this only communicates the intent of a connection.
