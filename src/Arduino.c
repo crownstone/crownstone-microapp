@@ -22,7 +22,9 @@ uint8_t interruptToDigitalPin(uint8_t interrupt) {
 
 // The mode here is INPUT, OUTPUT, INPUT_PULLUP, etc.
 void pinMode(uint8_t pin, uint8_t mode) {
-	if (!pinExists(pin)) return;
+	if (!pinExists(pin)) {
+		return;
+	}
 
 	uint8_t *payload = getOutgoingMessagePayload();
 	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
@@ -36,7 +38,9 @@ void pinMode(uint8_t pin, uint8_t mode) {
 }
 
 void digitalWrite(uint8_t pin, uint8_t val) {
-	if (!pinExists(pin)) return;
+	if (!pinExists(pin)) {
+		return;
+	}
 
 	uint8_t *payload = getOutgoingMessagePayload();
 	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
@@ -50,7 +54,9 @@ void digitalWrite(uint8_t pin, uint8_t val) {
 }
 
 int digitalRead(uint8_t pin) {
-	if (!pinExists(pin)) return -1;
+	if (!pinExists(pin)) {
+		return -1;
+	}
 
 	uint8_t *payload = getOutgoingMessagePayload();
 	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
@@ -74,7 +80,9 @@ int digitalRead(uint8_t pin) {
  * For now, just keep it like this because it doesn't hurt to have a pin configured twice.
  */
 bool attachInterrupt(uint8_t interrupt, void (*isr)(void), uint8_t mode) {
-	if (!pinExists(interruptToDigitalPin(interrupt))) return false;
+	if (!pinExists(interruptToDigitalPin(interrupt))) {
+		return false;
+	}
 
 	soft_interrupt_t softInterrupt;
 	softInterrupt.type = SOFT_INTERRUPT_TYPE_PIN;
