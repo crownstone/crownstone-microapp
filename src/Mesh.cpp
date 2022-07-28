@@ -104,8 +104,8 @@ void Mesh::readMeshMsg(MeshMsg* msg) {
 void Mesh::sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId) {
 	uint8_t* payload = getOutgoingMessagePayload();
 	microapp_mesh_send_cmd_t* cmd = (microapp_mesh_send_cmd_t*)(payload);
-	cmd->mesh_header.header.cmd   = CS_MICROAPP_COMMAND_MESH;
-	cmd->mesh_header.opcode       = CS_MICROAPP_COMMAND_MESH_SEND;
+	cmd->meshHeader.header.cmd   = CS_MICROAPP_COMMAND_MESH;
+	cmd->meshHeader.opcode       = CS_MICROAPP_COMMAND_MESH_SEND;
 	cmd->stoneId                  = stoneId;
 
 	int msgSizeSent = msgSize;
@@ -127,12 +127,12 @@ short Mesh::id() {
 	// If not, ask bluenet via a MESH_GET_INFO message
 	uint8_t* payload = getOutgoingMessagePayload();
 	microapp_mesh_info_cmd_t* cmd = (microapp_mesh_info_cmd_t*)(payload);
-	cmd->mesh_header.header.cmd = CS_MICROAPP_COMMAND_MESH;
-	cmd->mesh_header.header.ack = false;
-	cmd->mesh_header.opcode = CS_MICROAPP_COMMAND_MESH_GET_INFO;
+	cmd->meshHeader.header.cmd = CS_MICROAPP_COMMAND_MESH;
+	cmd->meshHeader.header.ack = false;
+	cmd->meshHeader.opcode = CS_MICROAPP_COMMAND_MESH_GET_INFO;
 	sendMessage();
 
-	if (cmd->mesh_header.header.ack) {
+	if (cmd->meshHeader.header.ack) {
 		_stoneId = cmd->stoneId;
 	}
 	return _stoneId;
