@@ -3,7 +3,7 @@
 
 #include <ipc/cs_IpcRamData.h>
 
-boolean pinExists(uint8_t pin) {
+bool pinExists(uint8_t pin) {
 	// First check, more checks on bluenet side
 	return (pin < NUMBER_OF_PINS);
 }
@@ -73,7 +73,7 @@ int digitalRead(uint8_t pin) {
  * Actually, this again sets also the values that are set with pinMode. That's redundant.
  * For now, just keep it like this because it doesn't hurt to have a pin configured twice.
  */
-boolean attachInterrupt(uint8_t interrupt, void (*isr)(void), uint8_t mode) {
+bool attachInterrupt(uint8_t interrupt, void (*isr)(void), uint8_t mode) {
 	if (!pinExists(interruptToDigitalPin(interrupt))) return false;
 
 	soft_interrupt_t softInterrupt;

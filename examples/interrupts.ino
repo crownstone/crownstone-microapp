@@ -72,8 +72,8 @@ void setup() {
 
 #ifdef ENABLE_MESH_INTERRUPTS
 	// initialize mesh
-	MESH.setIncomingMeshMsgHandler(onReceivedMeshMsg);
-	if (!MESH.listen()) {
+	Mesh.setIncomingMeshMsgHandler(onReceivedMeshMsg);
+	if (!Mesh.listen()) {
 		Serial.println("Listening to mesh failed");
 	}
 #endif

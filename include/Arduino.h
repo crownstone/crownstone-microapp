@@ -90,7 +90,7 @@ void analogWrite(uint8_t pin, int val);
 // @param isr      The interrupt service routine to call
 // @param mode     The options are LOW, CHANGE, RISING, FALLING, and HIGH.
 //
-boolean attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode);
+bool attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode);
 
 // Mapping from digital pins to interrupts.
 uint8_t digitalPinToInterrupt(uint8_t pin);

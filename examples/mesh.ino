@@ -30,14 +30,14 @@ void setup() {
 
 #ifdef ROLE_RECEIVER
 	Serial.println("Start listening to mesh");
-	if (!MESH.listen()) {
+	if (!Mesh.listen()) {
 		Serial.println("Mesh.listen() failed");
 	}
-	MESH.setIncomingMeshMsgHandler(meshCallback);
+	Mesh.setIncomingMeshMsgHandler(meshCallback);
 
 #endif
 
-	short id = MESH.id();
+	short id = Mesh.id();
 	Serial.print("Own stone id is ");
 	Serial.println(id);
 }
@@ -45,9 +45,9 @@ void setup() {
 void loop() {
 #ifdef ROLE_RECEIVER
 	// Read Mesh
-	if (MESH.available()) {
+	if (Mesh.available()) {
 		MeshMsg msg;
-		MESH.readMeshMsg(&msg);
+		Mesh.readMeshMsg(&msg);
 		printMeshMsg(&msg);
 	}
 #endif
@@ -58,7 +58,7 @@ void loop() {
 		uint8_t msg[2] = {20, 19};
 		// use 0 as stoneId for broadcast
 		uint8_t stoneId = 0;
-		MESH.sendMeshMsg(msg, sizeof(msg), stoneId);
+		Mesh.sendMeshMsg(msg, sizeof(msg), stoneId);
 	}
 #endif
 	counter++;

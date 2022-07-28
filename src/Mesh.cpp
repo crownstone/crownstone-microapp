@@ -3,19 +3,12 @@
 
 int softInterruptMesh(void* args, void* buf) {
 	microapp_mesh_read_cmd_t* msg = (microapp_mesh_read_cmd_t*)buf;
-	return MESH.handleIncomingMeshMsg(msg);
+	return Mesh.handleIncomingMeshMsg(msg);
 }
 
-Mesh::Mesh() {
-	for (int i=0; i<MESH_MSG_BUFFER_LEN; i++) {
-		_incomingMeshMsgBuffer[i].filled = false;
-	}
-	_hasRegisteredIncomingMeshMsgHandler = false;
-	_registeredIncomingMeshMsgHandler = nullptr;
-	_stoneId = 0;
-}
+MeshClass::MeshClass() : _registeredIncomingMeshMsgHandler(nullptr), _stoneId(0) {}
 
-bool Mesh::listen() {
+bool MeshClass::listen() {
 	// Register soft interrupt locally
 	soft_interrupt_t softInterrupt;
 	// Since we only have one type of mesh interrupt, id is always 0
@@ -41,12 +34,12 @@ bool Mesh::listen() {
 	return mesh_cmd->header.ack;
 }
 
-int Mesh::handleIncomingMeshMsg(microapp_mesh_read_cmd_t* msg) {
+int MeshClass::handleIncomingMeshMsg(microapp_mesh_read_cmd_t* msg) {
 	// If a handler is registered, we do not need to copy anything to the buffer,
 	// since the handler will deal with it right away.
 	// The microapp's softInterrupt handler has copied the msg to a localCopy
 	// so there is no worry of overwriting the msg upon a bluenet roundtrip
-	if (_hasRegisteredIncomingMeshMsgHandler) {
+	if (_registeredIncomingMeshMsgHandler != nullptr) {
 		MeshMsg handlerMsg = MeshMsg(msg->stoneId, msg->data, msg->dlen);
 		_registeredIncomingMeshMsgHandler(handlerMsg);
 		return 0;
@@ -75,12 +68,11 @@ int Mesh::handleIncomingMeshMsg(microapp_mesh_read_cmd_t* msg) {
 	return 0;
 }
 
-void Mesh::setIncomingMeshMsgHandler(void (*handler)(MeshMsg)) {
-	_hasRegisteredIncomingMeshMsgHandler = true;
+void MeshClass::setIncomingMeshMsgHandler(void (*handler)(MeshMsg)) {
 	_registeredIncomingMeshMsgHandler = handler;
 }
 
-bool Mesh::available() {
+bool MeshClass::available() {
 	for (int i=0; i<MESH_MSG_BUFFER_LEN; i++) {
 		if (_incomingMeshMsgBuffer[i].filled) {
 			return true;
@@ -89,7 +81,7 @@ bool Mesh::available() {
 	return false;
 }
 
-void Mesh::readMeshMsg(MeshMsg* msg) {
+void MeshClass::readMeshMsg(MeshMsg* msg) {
 	for (int i=MESH_MSG_BUFFER_LEN-1; i>=0; i--) {
 		if (_incomingMeshMsgBuffer[i].filled) {
 			_incomingMeshMsgBuffer[i].filled = false;
@@ -101,7 +93,7 @@ void Mesh::readMeshMsg(MeshMsg* msg) {
 	}
 }
 
-void Mesh::sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId) {
+void MeshClass::sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId) {
 	uint8_t* payload = getOutgoingMessagePayload();
 	microapp_mesh_send_cmd_t* cmd = (microapp_mesh_send_cmd_t*)(payload);
 	cmd->meshHeader.header.cmd   = CS_MICROAPP_COMMAND_MESH;
@@ -119,7 +111,7 @@ void Mesh::sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId) {
 	sendMessage();
 }
 
-short Mesh::id() {
+short MeshClass::id() {
 	// First check if we already cached the id before
 	if (_stoneId != 0) {
 		return _stoneId;

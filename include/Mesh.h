@@ -5,7 +5,7 @@
 #define MESH_MSG_BUFFER_LEN 3
 
 struct MeshMsgBufferEntry {
-	bool filled;
+	bool filled = false;
 	uint8_t stoneId;
 	uint8_t data[MICROAPP_MAX_MESH_MESSAGE_SIZE];
 	uint8_t dlen;
@@ -45,23 +45,18 @@ int softInterruptMesh(void* args, void* buf);
  * - Interrupts (via setIncomingMeshMsgHandler())
  * Sending mesh messages is supported via sendMeshMsg()
  */
-class Mesh {
+class MeshClass {
 private:
 	/**
 	 * Constructor
 	 */
-	Mesh();
+	MeshClass();
 
 	/**
 	 * Buffer for storing incoming mesh messages
 	 * This is where the actual data is stored (for polling applications)
 	 */
 	MeshMsgBufferEntry _incomingMeshMsgBuffer[MESH_MSG_BUFFER_LEN];
-
-	/**
-	 * Flag indicating whether an incoming mesh handler has been registered
-	 */
-	bool _hasRegisteredIncomingMeshMsgHandler;
 
 	/**
 	 * Handler for registered callbacks for incoming mesh messages
@@ -75,9 +70,9 @@ private:
 
 public:
 
-	static Mesh & getInstance() {
+	static MeshClass & getInstance() {
 		// Guaranteed to be destroyed.
-		static Mesh instance;
+		static MeshClass instance;
 
 		// Instantiated on first use.
 		return instance;
@@ -110,6 +105,7 @@ public:
 	bool available();
 
 	/**
+	 * Read a mesh message
 	 * Pop a message from the incoming mesh message buffer.
 	 * Note that the returned pointer is not memory safe.
 	 * It should only be used in local context.
@@ -137,4 +133,4 @@ public:
 	short id();
 };
 
-#define MESH Mesh::getInstance()
+#define Mesh MeshClass::getInstance()
