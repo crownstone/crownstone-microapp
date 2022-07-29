@@ -48,9 +48,11 @@ int softInterruptMesh(void* args, void* buf);
 class MeshClass {
 private:
 	/**
-	 * Constructor
+	 * Constructors and copy constructors
 	 */
 	MeshClass();
+	MeshClass(MeshClass const&);
+	void operator=(MeshClass const&);
 
 	/**
 	 * Buffer for storing incoming mesh messages
