@@ -103,6 +103,9 @@ bool attachInterrupt(uint8_t interrupt, void (*isr)(void), uint8_t mode) {
 
 	result = sendMessage();
 	if (result != ERR_MICROAPP_SUCCESS) {
+		// Remove locally registered interrupt
+		result = removeRegisteredSoftInterrupt(SOFT_INTERRUPT_TYPE_PIN, interrupt);
+		// Do nothing with the result. We return false anyway
 		return false;
 	}
 	return true;

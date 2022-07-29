@@ -280,6 +280,19 @@ int registerSoftInterrupt(soft_interrupt_t* interrupt) {
 	return ERR_MICROAPP_NO_SPACE;
 }
 
+int removeRegisteredSoftInterrupt(uint8_t type, uint8_t id) {
+	for (int i = 0; i < MAX_SOFT_INTERRUPTS; ++i) {
+		if (!softInterrupt[i].registered) {
+			continue;
+		}
+		if (softInterrupt[i].type == type && softInterrupt[i].id == id) {
+			softInterrupt[i].registered = false;
+			return ERR_MICROAPP_SUCCESS;
+		}
+	}
+	return ERR_MICROAPP_SOFT_INTERRUPT_NOT_REGISTERED;
+}
+
 int countRegisteredSoftInterrupts() {
 	int result = 0;
 	for (int i = 0; i < MAX_SOFT_INTERRUPTS; ++i) {

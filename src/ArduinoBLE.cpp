@@ -4,6 +4,10 @@
  * An ordinary C function to keep the softInterrupt simple.
  */
 int softInterruptBle(void* args, void* buf) {
+	if (args == nullptr || buf == nullptr) {
+		return ERR_MICROAPP_SOFT_INTERRUPT_NOT_REGISTERED;
+	}
+
 	microapp_ble_device_t* dev       = (microapp_ble_device_t*)buf;
 	BleSoftInterruptContext* context = (BleSoftInterruptContext*)args;
 
@@ -63,13 +67,17 @@ bool Ble::setEventHandler(BleEventType type, void (*eventHandler)(BleDevice)) {
 
 	// Also register soft interrupt on the microapp side
 	soft_interrupt_t softInterrupt;
-	softInterrupt.id                = context.id;
+	softInterrupt.id                = type;
 	softInterrupt.type              = SOFT_INTERRUPT_TYPE_BLE;
 	softInterrupt.softInterruptFunc = softInterruptBle;
 	softInterrupt.arg               = &_bleSoftInterruptContext[softInterruptContextId];
 	int result = registerSoftInterrupt(&softInterrupt);
 	if (result != ERR_MICROAPP_SUCCESS) {
 		// No empty interrupt slots available on microapp side
+		// Remove soft interrupt context
+		context.eventHandler = nullptr;
+		context.id = 0;
+		context.filled = false;
 		return false;
 	}
 
@@ -84,7 +92,16 @@ bool Ble::setEventHandler(BleEventType type, void (*eventHandler)(BleDevice)) {
 	sendMessage();
 
 	// Bluenet will set ack to true upon success
-	return ble_cmd->header.ack;
+	if (!ble_cmd->header.ack) {
+		// Undo local softInterrupt registration
+		removeRegisteredSoftInterrupt(SOFT_INTERRUPT_TYPE_BLE, type);
+		// Undo soft interrupt context
+		context.eventHandler = nullptr;
+		context.id = 0;
+		context.filled = false;
+		return false;
+	}
+	return true;
 }
 
 bool Ble::scan(bool withDuplicates) {
@@ -169,7 +186,7 @@ bool Ble::filterScanEvent(BleDevice device) {
 			if (device._address != _activeFilter.address) {
 				return false;
 			}
-			break;
+			return true;
 		}
 		case BleFilterLocalName: {
 			if (!device.hasLocalName()) {
@@ -183,7 +200,7 @@ bool Ble::filterScanEvent(BleDevice device) {
 			if (memcmp(deviceName.c_str(), _activeFilter.name, _activeFilter.len) != 0) {
 				return false;
 			}
-			break;
+			return true;
 		}
 		case BleFilterUuid: {
 			// TODO: refactor. Now filters ads of type service data with as
@@ -197,12 +214,18 @@ bool Ble::filterScanEvent(BleDevice device) {
 			if (uuid != _activeFilter.uuid) {
 				return false;
 			}
-			break;
+			return true;
 		}
-		case BleFilterNone:
-		default: break;
+		case BleFilterNone: {
+			// If no filter is set, we pass the filter by default
+			return true;
+		}
+		default: {
+			// Unknown filter type
+			return false;
+		}
 	}
-	return true;
+	return false;
 }
 
 BleFilter* Ble::getFilter() {

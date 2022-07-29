@@ -120,9 +120,9 @@ int sendMessage();
 int registerSoftInterrupt(soft_interrupt_t *interrupt);
 
 /**
- * Evoke a previously registered softInterrupt.
+ * Remove a registered softInterrupt locally
  */
-int evokeSoftInterrupt(uint8_t type, uint8_t id, uint8_t *msg);
+int removeRegisteredSoftInterrupt(uint8_t type, uint8_t id);
 
 /**
  * Handle softInterrupts.
