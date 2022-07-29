@@ -42,7 +42,7 @@ int MeshClass::handleIncomingMeshMsg(microapp_mesh_read_cmd_t* msg) {
 	if (_registeredIncomingMeshMsgHandler != nullptr) {
 		MeshMsg handlerMsg = MeshMsg(msg->stoneId, msg->data, msg->dlen);
 		_registeredIncomingMeshMsgHandler(handlerMsg);
-		return 0;
+		return ERR_MICROAPP_SUCCESS;
 	}
 	// Add msg to buffer or discard if full
 	// Q: is it not more logical to discard oldest?
@@ -57,7 +57,7 @@ int MeshClass::handleIncomingMeshMsg(microapp_mesh_read_cmd_t* msg) {
 	}
 	if (full) {
 		// discard message
-		return -1;
+		return ERR_MICROAPP_NO_SPACE;
 	}
 	MeshMsgBufferEntry& copy = _incomingMeshMsgBuffer[i];
 	copy.stoneId = msg->stoneId;

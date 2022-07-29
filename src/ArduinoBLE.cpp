@@ -16,6 +16,7 @@ int softInterruptBle(void* args, void* buf) {
 	}
 
 	// Based on the id (=type) of interrupt we will take action
+	// This could probably also be done by checking dev->header.interruptId
 	switch (context->id) {
 		case BleEventDeviceScanned: {
 			// Create temporary object on the stack
