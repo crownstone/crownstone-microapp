@@ -84,10 +84,17 @@ bool MeshClass::available() {
 void MeshClass::readMeshMsg(MeshMsg* msg) {
 	for (int i=MESH_MSG_BUFFER_LEN-1; i>=0; i--) {
 		if (_incomingMeshMsgBuffer[i].filled) {
-			_incomingMeshMsgBuffer[i].filled = false;
+			// copy message data to another location where it can't be overwritten by incoming messages
+			// (do not check if _availableMeshMsg was already filled, just overwrite)
+			_availableMeshMsg.filled = true;
+			memcpy(_availableMeshMsg.data, _incomingMeshMsgBuffer[i].data, MICROAPP_MAX_MESH_MESSAGE_SIZE);
+			// create a mesh message to return to the user
 			*msg = MeshMsg(	_incomingMeshMsgBuffer[i].stoneId,
-							_incomingMeshMsgBuffer[i].data,
+							_availableMeshMsg.data,
 							_incomingMeshMsgBuffer[i].dlen);
+
+			// free the incoming buffer entry
+			_incomingMeshMsgBuffer[i].filled = false;
 			return;
 		}
 	}
@@ -96,8 +103,8 @@ void MeshClass::readMeshMsg(MeshMsg* msg) {
 void MeshClass::sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId) {
 	uint8_t* payload = getOutgoingMessagePayload();
 	microapp_mesh_send_cmd_t* cmd = (microapp_mesh_send_cmd_t*)(payload);
-	cmd->meshHeader.header.cmd   = CS_MICROAPP_COMMAND_MESH;
-	cmd->meshHeader.opcode       = CS_MICROAPP_COMMAND_MESH_SEND;
+	cmd->meshHeader.header.cmd    = CS_MICROAPP_COMMAND_MESH;
+	cmd->meshHeader.opcode        = CS_MICROAPP_COMMAND_MESH_SEND;
 	cmd->stoneId                  = stoneId;
 
 	int msgSizeSent = msgSize;

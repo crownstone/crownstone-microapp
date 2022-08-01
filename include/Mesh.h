@@ -2,7 +2,7 @@
 
 #include <microapp.h>
 
-#define MESH_MSG_BUFFER_LEN 3
+#define MESH_MSG_BUFFER_LEN 2
 
 struct MeshMsgBufferEntry {
 	bool filled = false;
@@ -59,6 +59,13 @@ private:
 	 * This is where the actual data is stored (for polling applications)
 	 */
 	MeshMsgBufferEntry _incomingMeshMsgBuffer[MESH_MSG_BUFFER_LEN];
+
+
+	/**
+	 * Available mesh message passed to the user
+	 * Requires a separate memory location than _incomingMeshMsgBuffer since those can be overwritten
+	 */
+	MeshMsgBufferEntry _availableMeshMsg;
 
 	/**
 	 * Handler for registered callbacks for incoming mesh messages
