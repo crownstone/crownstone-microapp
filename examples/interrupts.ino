@@ -56,10 +56,6 @@ void setup() {
 	}
 #endif
 
-	// This delay causes a yield to bluenet which is needed because
-	// setup() otherwise contains too many consecutive non-yielding microapp calls
-	delay(1500);
-
 #ifdef ENABLE_BLE_INTERRUPTS
 	// initialize ble
 	if (!BLE.setEventHandler(BleEventDeviceScanned, onScannedDevice)) {
