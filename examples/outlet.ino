@@ -42,7 +42,7 @@ void setup() {
 	// Set GPIO pin to OUTPUT, so we can write.
 	pinMode(GPIO0_PIN, OUTPUT);
 	digitalWrite(GPIO0_PIN, true);
-	
+
 	//pinMode(GPIO1_PIN, OUTPUT);
 	//digitalWrite(GPIO1_PIN, false);
 
@@ -57,11 +57,9 @@ void setup() {
 	// Set interrupt handler
 	//pinMode(BUTTON2_PIN, INPUT_PULLUP);
 	pinMode(BUTTON2_PIN, INPUT);
-	int result = attachInterrupt(digitalPinToInterrupt(BUTTON2_PIN), blink, RISING);
-
-	Serial.write("attachInterrupt returns ");
-	Serial.write(result);
-	Serial.println(" ");
+	if (!attachInterrupt(digitalPinToInterrupt(BUTTON2_PIN), blink, CHANGE)) {
+		Serial.println("Setting button interrupt failed");
+	}
 
 }
 
@@ -71,7 +69,7 @@ void setup() {
 void loop() {
 	// We are able to use static variables.
 	counter++;
-	
+
 	if (counter % 5 == 0) {
 		if (state == LOW) {
 			Serial.println("State down");

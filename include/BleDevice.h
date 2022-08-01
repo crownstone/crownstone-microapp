@@ -70,6 +70,12 @@ public:
 	int8_t rssi();
 
 	/**
+	 * Get type of advertisement
+	 *
+	 */
+	uint8_t type();
+
+	/**
 	 * Returns whether the device has advertised a local name
 	 *
 	 * @return true    if the advertisement contains a local name field (either complete or shortened).

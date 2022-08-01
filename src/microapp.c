@@ -169,11 +169,11 @@ int8_t getNewItemInQueue() {
  * Handle incoming requests from bluenet (probably soft interrupts).
  */
 int handleBluenetRequest(microapp_cmd_t* cmd) {
-	int result = 1;
+	int result = ERR_MICROAPP_SUCCESS;
 
 	// There is no actual request (no problem, just return)
 	if (cmd->ack != CS_ACK_BLUENET_MICROAPP_REQUEST) {
-		return 0;
+		return ERR_MICROAPP_SUCCESS;
 	}
 
 	microapp_soft_interrupt_cmd_t* request = reinterpret_cast<microapp_soft_interrupt_cmd_t*>(cmd);
@@ -183,11 +183,7 @@ int handleBluenetRequest(microapp_cmd_t* cmd) {
 
 	int8_t queueIndex = -1;
 	if (emptySlots > 0) {
-		queueIndex                   = getNewItemInQueue();
-		request->emptyInterruptSlots = emptySlots - 1;
-	}
-	else {
-		request->emptyInterruptSlots = emptySlots;
+		queueIndex = getNewItemInQueue();
 	}
 
 	// overwrite in both scenarios the REQUEST
@@ -200,21 +196,27 @@ int handleBluenetRequest(microapp_cmd_t* cmd) {
 
 	// First indicate we have received the callback
 	uint8_t* outputPayloadRaw     = getOutgoingMessagePayload();
-	microapp_cmd_t* outputPayload = reinterpret_cast<microapp_cmd_t*>(outputPayloadRaw);
+	microapp_soft_interrupt_cmd_t* outputPayload = reinterpret_cast<microapp_soft_interrupt_cmd_t*>(outputPayloadRaw);
 	if (queueIndex < 0) {
-		outputPayload->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_DROPPED;
+		outputPayload->header.cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_DROPPED;
+		outputPayload->emptyInterruptSlots = emptySlots;
 	}
 	else {
-		outputPayload->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_RECEIVED;
+		outputPayload->header.cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_RECEIVED;
+		outputPayload->emptyInterruptSlots = emptySlots - 1;
 	}
 
 	microappCallbackFunc callbackFunctionIntoBluenet = ipc_data.microappCallback;
 	result = callbackFunctionIntoBluenet(CS_MICROAPP_CALLBACK_SIGNAL, &io_buffer);
 
 	if (queueIndex < 0) {
-		result = -1;
+		result = ERR_MICROAPP_NO_SPACE;
 	}
 	else { // call handleSoftInterrupt and mark the localQueue entry as empty again
+		// Q: Under what circumstances will the queue grow beyond 1 entry?
+		// A: If bluenet comes with a second request before the first softInterrupt is handled
+		// That only seems possible if handleSoftInterrupt yields back to bluenet
+		// which tbh I don't see happening easily, maybe with a delay call in a user softInterrupt handler?
 		queue_t* localCopy = &localQueue[queueIndex];
 		memcpy(localCopy->buffer, request, MAX_PAYLOAD);
 		microapp_cmd_t* msg = reinterpret_cast<microapp_cmd_t*>(localCopy->buffer);
@@ -227,7 +229,7 @@ int handleBluenetRequest(microapp_cmd_t* cmd) {
 
 	uint8_t *payload = getOutgoingMessagePayload();
 	microapp_cmd_t* outCmd = (microapp_cmd_t*)(payload);
-	if (result < 0) {
+	if (result != ERR_MICROAPP_SUCCESS) {
 		outCmd->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_ERROR;
 	}
 	else {
@@ -272,10 +274,23 @@ int registerSoftInterrupt(soft_interrupt_t* interrupt) {
 			softInterrupt[i].id                = interrupt->id;
 			softInterrupt[i].arg               = interrupt->arg;
 			softInterrupt[i].type              = interrupt->type;
-			return i; // success
+			return ERR_MICROAPP_SUCCESS;
 		}
 	}
-	return -1; // no more space
+	return ERR_MICROAPP_NO_SPACE;
+}
+
+int removeRegisteredSoftInterrupt(uint8_t type, uint8_t id) {
+	for (int i = 0; i < MAX_SOFT_INTERRUPTS; ++i) {
+		if (!softInterrupt[i].registered) {
+			continue;
+		}
+		if (softInterrupt[i].type == type && softInterrupt[i].id == id) {
+			softInterrupt[i].registered = false;
+			return ERR_MICROAPP_SUCCESS;
+		}
+	}
+	return ERR_MICROAPP_SOFT_INTERRUPT_NOT_REGISTERED;
 }
 
 int countRegisteredSoftInterrupts() {
@@ -300,22 +315,26 @@ int countRegisteredSoftInterrupts(uint8_t type) {
 
 int handleSoftInterruptInternal(uint8_t type, uint8_t id, uint8_t* msg) {
 	for (int i = 0; i < MAX_SOFT_INTERRUPTS; ++i) {
-		if (!softInterrupt[i].registered || softInterrupt[i].type != type) {
+		if (!softInterrupt[i].registered) {
+			continue;
+		}
+		if ( softInterrupt[i].type != type) {
 			continue;
 		}
 		if (softInterrupt[i].id == id) {
 			if (softInterrupt[i].softInterruptFunc) {
 				return softInterrupt[i].softInterruptFunc(softInterrupt[i].arg, msg);
 			}
-			return -3;
+			// softInterruptFunc does not exist
+			return ERR_MICROAPP_SOFT_INTERRUPT_NOT_REGISTERED;
 		}
-		return -2;
 	}
-	return -1;
+	 // no soft interrupt of this type with this id registered
+	return ERR_MICROAPP_SOFT_INTERRUPT_NOT_REGISTERED;
 }
 
 int handleSoftInterrupt(microapp_cmd_t* msg) {
-	int result = 0;
+	int result = ERR_MICROAPP_SUCCESS;
 	switch (msg->interruptCmd) {
 		case CS_MICROAPP_COMMAND_BLE_DEVICE: {
 			result = handleSoftInterruptInternal(SOFT_INTERRUPT_TYPE_BLE, msg->id, (uint8_t*)msg);
@@ -324,6 +343,14 @@ int handleSoftInterrupt(microapp_cmd_t* msg) {
 		case CS_MICROAPP_COMMAND_PIN: {
 			result = handleSoftInterruptInternal(SOFT_INTERRUPT_TYPE_PIN, msg->id, (uint8_t*)msg);
 			break;
+		}
+		case CS_MICROAPP_COMMAND_MESH: {
+			result = handleSoftInterruptInternal(SOFT_INTERRUPT_TYPE_MESH, msg->id, (uint8_t*)msg);
+			break;
+		}
+		default: {
+			// interruptCmd not known
+			return ERR_MICROAPP_UNKNOWN_PROTOCOL;
 		}
 	}
 	return result;

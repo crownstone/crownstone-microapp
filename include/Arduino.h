@@ -10,6 +10,9 @@ extern "C" {
 #include <microapp.h>
 #include <stdint.h>
 
+typedef bool boolean;
+typedef uint8_t byte;
+
 //
 // Redefinitions for easy pin access. These do NOT correspond to physical pins on a specific board.
 // A maximum of 10 GPIO pins (0-9), 4 button pins (1-4) and 4 LED pins (1-4) are supported.
@@ -87,13 +90,10 @@ void analogWrite(uint8_t pin, int val);
 // @param isr      The interrupt service routine to call
 // @param mode     The options are LOW, CHANGE, RISING, FALLING, and HIGH.
 //
-int attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode);
+bool attachInterrupt(uint8_t pin, void (*isr)(void), uint8_t mode);
 
 // Mapping from digital pins to interrupts.
 uint8_t digitalPinToInterrupt(uint8_t pin);
-
-typedef bool boolean;
-typedef uint8_t byte;
 
 // Return highest byte (8 bits) or second-lowest byte (for larger data types)
 byte highByte(short val);

@@ -60,8 +60,6 @@ bool BleDevice::connect() {
 	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_CONNECT;
 	memcpy(ble_cmd->addr, _address.getBytes(), MAC_ADDRESS_LENGTH);
 
-//	global_buf_out.length = sizeof(microapp_ble_cmd_t);
-
 	// TODO: sendMessage should return ERR_SUCCESS (0) on success
 	//       More importantly, this only communicates the intent of a connection.
 	//       A connection is an asynchronous sequence of events not under the control of the microapp.

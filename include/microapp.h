@@ -10,8 +10,9 @@ extern "C" {
 // SoftInterrupt functions
 typedef int (*softInterruptFunction)(void *, void *);
 
-const uint8_t SOFT_INTERRUPT_TYPE_BLE = 1;
-const uint8_t SOFT_INTERRUPT_TYPE_PIN = 2;
+const uint8_t SOFT_INTERRUPT_TYPE_BLE  = 1;
+const uint8_t SOFT_INTERRUPT_TYPE_PIN  = 2;
+const uint8_t SOFT_INTERRUPT_TYPE_MESH = 3;
 
 // Store softInterrupts in the microapp
 struct soft_interrupt_t {
@@ -35,8 +36,6 @@ typedef microapp_ble_device_t ble_dev_t;
 
 // Create long-form version for who wants
 
-// typedef message_t microapp_message_t;
-
 #define OUTPUT CS_MICROAPP_COMMAND_PIN_WRITE
 #define INPUT CS_MICROAPP_COMMAND_PIN_READ
 #define TOGGLE CS_MICROAPP_COMMAND_PIN_TOGGLE
@@ -50,8 +49,6 @@ typedef microapp_ble_device_t ble_dev_t;
 #define I2C_READ CS_MICROAPP_COMMAND_TWI_READ
 #define I2C_WRITE CS_MICROAPP_COMMAND_TWI_WRITE
 
-//#define HIGH                 CS_MICROAPP_COMMAND_SWITCH_ON
-//#define LOW                  CS_MICROAPP_COMMAND_SWITCH_OFF
 
 const uint8_t LOW = 0;
 const uint8_t HIGH = !LOW;
@@ -123,9 +120,9 @@ int sendMessage();
 int registerSoftInterrupt(soft_interrupt_t *interrupt);
 
 /**
- * Evoke a previously registered softInterrupt.
+ * Remove a registered softInterrupt locally
  */
-int evokeSoftInterrupt(uint8_t type, uint8_t id, uint8_t *msg);
+int removeRegisteredSoftInterrupt(uint8_t type, uint8_t id);
 
 /**
  * Handle softInterrupts.

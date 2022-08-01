@@ -40,6 +40,7 @@ void setup() {
 
 	// Set the UUID of this microapp.
 	serviceData.appUuid = 0x1234;
+	serviceData.dlen = 1;
 
 	// Set LED pin to OUTPUT, so we can write.
 	pinMode(LED2_PIN, OUTPUT);
@@ -49,11 +50,9 @@ void setup() {
 
 	// Set interrupt handler
 	pinMode(BUTTON2_PIN, INPUT_PULLUP);
-	int result = attachInterrupt(digitalPinToInterrupt(BUTTON2_PIN), blink, CHANGE);
-
-	Serial.write("attachInterrupt returns ");
-	Serial.write(result);
-	Serial.println(" ");
+	if (!attachInterrupt(digitalPinToInterrupt(BUTTON2_PIN), blink, CHANGE)) {
+		Serial.println("Setting button interrupt failed");
+	}
 
 }
 
