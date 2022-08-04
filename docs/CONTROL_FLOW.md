@@ -218,6 +218,13 @@ void loop() {
 The microapp will resume at `Serial.println()` on the next microapp tick.
 However, it is possible that before the next microapp tick, an interrupt occurs. Hence, bluenet makes a request following a non-yielding request from the microapp. What happens then? The following sequence diagram shows this scenario. For clarity, let's assume that the event handler for receiving a mesh message will NOT send a message over serial like in the previous example, but instead sends a mesh message. (If we used a serial call like in the previous example, it might get confused with the serial call in `loop`)
 
+```
+void receivedMesh(MeshMsg msg) {
+    MeshMsg reply = msg;
+    Mesh.sendMeshMsg(reply);
+}
+```
+
 ```mermaid
 sequenceDiagram
     participant b as Bluenet
