@@ -32,7 +32,7 @@ sequenceDiagram
     Note over b : A bluenet tick is the initial trigger.
     b ->> b : tickMicroapp()
     b -->> b2m : Write to shared buffer
-    Note over b2m : sdkType = NONE <br> ack = NO_REQUEST
+    Note over b2m : sdkType = CONTINUE <br> ack = NO_REQUEST
     b ->> b : callMicroapp()
     b ->> c : nextCoroutine()
     Note over c,m : Resume in the sendMessage() call <br> of signalLoopEnd() of previous loop().
@@ -56,7 +56,7 @@ sequenceDiagram
     b ->> b : stopAfterMicroappCommand()
     Note over b : stopAfterMicroappCommand() will <br> return false for sdkType SERIAL. <br> Hence, call microapp again.
     b -->> b2m : Write to shared buffer
-    Note over b2m : sdkType = NONE <br> ack = NO_REQUEST
+    Note over b2m : sdkType = CONTINUE <br> ack = NO_REQUEST
     b ->> b : callMicroapp()
     b ->> c : nextCoroutine()
     Note over c,m : Resume in the sendMessage() call <br> of Serial.println().
@@ -125,8 +125,8 @@ sequenceDiagram
     c ->> m : enter microapp
     b2m -->> m : Read from shared buffer
     m ->> m : handleBluenetRequest()
-    alt Internal queue full
-        Note over m : If the internal queue is full,<br> the microapp returns early
+    alt interrupt stack full
+        Note over m : If the interrupt stack is full, <br> the microapp returns early
         m -->> b2m : Write to shared buffer
         Note over b2m : ack = ERR_BUSY
         m -->> m2b : Write to shared buffer
@@ -143,11 +143,11 @@ sequenceDiagram
         b ->> b : stopAfterMicroappCommand()
         Note over b : stopAfterMicroappCommand() will <br> return true for sdkType YIELD. <br> Hence, do not call microapp again.
         Note over b : softInterrupt() ends.
-    else Empty slot in internal queue
-        Note over m : If there is space in the internal queue, <br> acknowledge bluenets request
+    else interrupt stack not full
+        Note over m : If there is space in the interrupt stack, <br> acknowledge bluenets interrupt
         m -->> b2m : Write to shared buffer
         Note over b2m : ack = WAIT_FOR_SUCCESS
-        Note over m : handleBluenetRequest() copies <br> bluenet message to <br> empty entry in internal queue.
+        Note over m : handleBluenetRequest() copies <br> shared buffers to top of <br> request- and interrupt stacks.
         m ->> m : handleSoftInterrupt()
         Note over m : handleSoftInterrupt() identifies <br> the interrupt handler based on <br> sdkType = MESH and <br> interruptType = RECV_MSG.
         m ->> m : softInterruptMesh()
@@ -183,23 +183,16 @@ sequenceDiagram
         Note over m : The user handler or internal handler <br> may return a return code, e.g. SUCCESS
         m ->> m : handleSoftInterrupt() returns
         Note over m : Continue in handleBluenetRequest()
-        Note over m : Clear internal queue entry.
-        m -->> b2m : Write to shared buffer
-        Note over b2m : ack = SUCCESS
+        Note over m : Clear interrupt stack entry <br> and copy top request stack entry <br> back to shared buffer
         m -->> m2b : Write to shared buffer
         Note over m2b : sdkType = YIELD <br> ack = NO_REQUEST
+        m -->> b2m : Write to shared buffer
+        Note over b2m : ack = SUCCESS
         m ->> m : sendMessage()
         m ->> c : microapp_callback()
         c ->> b : yieldCoroutine()
         b2m -->> b : Read from shared buffer
-        Note over b : Bluenet recognizes successfull <br> handling of interrupt.
-        b ->> b : retrieveCommand()
-        m2b -->> b : Read from shared buffer
-        b ->> b : handleMicroappCommand()
-        Note over b : handleMicroappCommand() does <br> nothing for sdkType YIELD.
-        b ->> b : stopAfterMicroappCommand()
-        Note over b : stopAfterMicroappCommand() will <br> return true for sdkType YIELD. <br> Hence, do not call microapp again.
-        Note over b : softInterrupt() ends.
+        Note over b : Bluenet recognizes successfull <br> handling of interrupt and does not <br> call retrieveCommand(). <br> Force stop softInterrupt()
     end
 ```
 
@@ -235,7 +228,7 @@ sequenceDiagram
     participant b2m as BluenetToMicroappBuffer
 
     Note over b : The first part of the diagram is <br> exactly as in the first diagram. <br> This diagram start at <br> the stopAfterMicroapp() call <br> that triggers the call limit.
-    Note over b2m : sdkType = NONE <br> ack = NO_REQUEST
+    Note over b2m : sdkType = CONTINUE <br> ack = NO_REQUEST
     Note over m2b : sdkType = SERIAL <br> ack = REQUEST
 
     b ->> b : stopAfterMicroappCommand()
