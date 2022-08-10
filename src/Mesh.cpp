@@ -10,7 +10,7 @@ MeshClass::MeshClass() : _registeredIncomingMeshMsgHandler(nullptr), _stoneId(0)
 
 bool MeshClass::listen() {
 	// Register soft interrupt locally
-	soft_interrupt_t softInterrupt;
+	interrupt_registration_t softInterrupt;
 	// Since we only have one type of mesh interrupt, id is always 0
 	softInterrupt.id = 0;
 	softInterrupt.type = SOFT_INTERRUPT_TYPE_MESH;

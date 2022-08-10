@@ -14,7 +14,11 @@ extern "C" {
 // Create shortened typedefs (we are within microapp scope here)
 
 // Types of BLE event for which event handlers can be set
-typedef MicroappBleEventType BleEventType;
+enum BleEventType {
+	BleEventDeviceScanned = 0x01,
+	BleEventConnected     = 0x02,
+	BleEventDisconnected  = 0x03,
+};
 
 #ifdef __cplusplus
 }

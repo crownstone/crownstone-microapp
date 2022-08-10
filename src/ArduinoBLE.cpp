@@ -67,7 +67,7 @@ bool Ble::setEventHandler(BleEventType type, void (*eventHandler)(BleDevice)) {
 	context.id = type;
 
 	// Also register soft interrupt on the microapp side
-	soft_interrupt_t softInterrupt;
+	interrupt_registration_t softInterrupt;
 	softInterrupt.id                = type;
 	softInterrupt.type              = SOFT_INTERRUPT_TYPE_BLE;
 	softInterrupt.softInterruptFunc = softInterruptBle;

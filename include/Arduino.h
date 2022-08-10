@@ -38,6 +38,9 @@ const uint8_t LED2_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_LED2;
 const uint8_t LED3_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_LED3;
 const uint8_t LED4_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_LED4;
 
+// Further pin redefinitions
+
+
 //
 // You have to implement the setup() function. It can be empty if there is nothing to do at startup.
 //

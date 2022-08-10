@@ -7,48 +7,39 @@
 extern "C" {
 #endif
 
-// SoftInterrupt functions
-typedef int (*softInterruptFunction)(void *, void *);
+// Interrupt functions
+typedef int (*interruptFunction)(void *, void *);
 
-const uint8_t SOFT_INTERRUPT_TYPE_BLE  = 1;
-const uint8_t SOFT_INTERRUPT_TYPE_PIN  = 2;
-const uint8_t SOFT_INTERRUPT_TYPE_MESH = 3;
-
-// Store softInterrupts in the microapp
-struct soft_interrupt_t {
-    uint8_t type;
-    uint8_t id;
-    softInterruptFunction softInterruptFunc;
+// Store interrupts in the microapp
+struct interrupt_registration_t {
+    uint8_t major;
+    uint8_t minor;
+    interruptFunction interruptFunc;
     void *arg;
     bool registered;
 };
 
-#define MAX_SOFT_INTERRUPTS 4
+#define MAX_INTERRUPT_REGISTRATIONS 4
 
-extern soft_interrupt_t softInterrupt[MAX_SOFT_INTERRUPTS];
+extern interrupt_registration_t interruptRegistrations[MAX_INTERRUPT_REGISTRATIONS];
 
 // Create shortened typedefs (it is obvious we are within the microapp here)
 
-typedef microapp_ble_cmd_t ble_cmd_t;
-typedef microapp_twi_cmd_t twi_cmd_t;
-typedef microapp_pin_cmd_t pin_cmd_t;
-typedef microapp_ble_device_t ble_dev_t;
+typedef microapp_sdk_ble_t ble_sdk_t;
+typedef microapp_sdk_twi_t twi_sdk_t;
+typedef microapp_sdk_pin_t pin_sdk_t;
 
-// Create long-form version for who wants
+#define OUTPUT          CS_MICROAPP_SDK_PIN_OUTPUT
+#define INPUT           CS_MICROAPP_SDK_PIN_INPUT
+#define INPUT_PULLUP    CS_MICROAPP_SDK_PIN_INPUT_PULLUP
 
-#define OUTPUT CS_MICROAPP_COMMAND_PIN_WRITE
-#define INPUT CS_MICROAPP_COMMAND_PIN_READ
-#define TOGGLE CS_MICROAPP_COMMAND_PIN_TOGGLE
-#define INPUT_PULLUP CS_MICROAPP_COMMAND_PIN_INPUT_PULLUP
+#define CHANGE          CS_MICROAPP_SDK_PIN_CHANGE
+#define RISING          CS_MICROAPP_SDK_PIN_RISING
+#define FALLING         CS_MICROAPP_SDK_PIN_FALLING
 
-#define CHANGE CS_MICROAPP_COMMAND_VALUE_CHANGE
-#define RISING CS_MICROAPP_COMMAND_VALUE_RISING
-#define FALLING CS_MICROAPP_COMMAND_VALUE_FALLING
-
-#define I2C_INIT CS_MICROAPP_COMMAND_TWI_INIT
-#define I2C_READ CS_MICROAPP_COMMAND_TWI_READ
-#define I2C_WRITE CS_MICROAPP_COMMAND_TWI_WRITE
-
+#define I2C_INIT        CS_MICROAPP_SDK_TWI_INIT
+#define I2C_READ        CS_MICROAPP_SDK_TWI_READ
+#define I2C_WRITE       CS_MICROAPP_SDK_TWI_WRITE
 
 const uint8_t LOW = 0;
 const uint8_t HIGH = !LOW;
@@ -59,8 +50,8 @@ const uint8_t HIGH = !LOW;
 // define size_t as a 16-bit unsigned int
 typedef uint16_t size_t;
 
-// set a max string size which is equal to the max payload of microapp_message_t
-const size_t MAX_STRING_SIZE = MAX_PAYLOAD;
+// redefine the max size of a string
+const size_t MAX_STRING_SIZE = MICROAPP_SDK_MAX_STRING_LENGTH;
 
 /**
  * Finds the length of a null-terminated string
@@ -127,7 +118,7 @@ int removeRegisteredSoftInterrupt(uint8_t type, uint8_t id);
 /**
  * Handle softInterrupts.
  */
-int handleSoftInterrupt(microapp_cmd_t *msg);
+int handleSoftInterrupt(microapp_sdk_header_t *header);
 
 #ifdef __cplusplus
 }

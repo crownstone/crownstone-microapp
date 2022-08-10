@@ -84,7 +84,7 @@ bool attachInterrupt(uint8_t interrupt, void (*isr)(void), uint8_t mode) {
 		return false;
 	}
 
-	soft_interrupt_t softInterrupt;
+	interrupt_registration_t softInterrupt;
 	softInterrupt.type = SOFT_INTERRUPT_TYPE_PIN;
 	softInterrupt.id = interrupt;
 	softInterrupt.softInterruptFunc = reinterpret_cast<softInterruptFunction>(isr);
