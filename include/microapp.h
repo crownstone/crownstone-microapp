@@ -15,7 +15,7 @@ struct interrupt_registration_t {
     uint8_t major;
     uint8_t minor;
     interruptFunction interruptFunc;
-    void *arg;
+    // void *arg;
     bool registered;
 };
 
@@ -25,9 +25,9 @@ extern interrupt_registration_t interruptRegistrations[MAX_INTERRUPT_REGISTRATIO
 
 // Create shortened typedefs (it is obvious we are within the microapp here)
 
-typedef microapp_sdk_ble_t ble_sdk_t;
-typedef microapp_sdk_twi_t twi_sdk_t;
-typedef microapp_sdk_pin_t pin_sdk_t;
+// typedef microapp_sdk_ble_t ble_sdk_t;
+// typedef microapp_sdk_twi_t twi_sdk_t;
+// typedef microapp_sdk_pin_t pin_sdk_t;
 
 #define OUTPUT          CS_MICROAPP_SDK_PIN_OUTPUT
 #define INPUT           CS_MICROAPP_SDK_PIN_INPUT
@@ -91,13 +91,10 @@ void *memcpy(void *dest, const void *src, size_t num);
 /*
  * Get outgoing message buffer (can be used for sendMessage);
  */
-//io_buffer_t *getOutgoingMessageBuffer();
 
-//io_buffer_t *getIncomingMessageBuffer();
+// uint8_t *getOutgoingMessagePayload();
 
-uint8_t *getOutgoingMessagePayload();
-
-uint8_t *getIncomingMessagePayload();
+// uint8_t *getIncomingMessagePayload();
 
 /**
  * Send a message to the bluenet code. This is the function that is called - in
@@ -108,17 +105,17 @@ int sendMessage();
 /**
  * Register a softInterrupt locally.
  */
-int registerSoftInterrupt(soft_interrupt_t *interrupt);
+int registerSoftInterrupt(interrupt_registration_t* interrupt);
 
 /**
  * Remove a registered softInterrupt locally
  */
-int removeRegisteredSoftInterrupt(uint8_t type, uint8_t id);
+int removeInterruptRegistration(uint8_t major, uint8_t minor);
 
 /**
- * Handle softInterrupts.
+ * Handle interrupts
  */
-int handleSoftInterrupt(microapp_sdk_header_t *header);
+int handleInterrupt(microapp_sdk_header_t* header);
 
 #ifdef __cplusplus
 }

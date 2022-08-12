@@ -221,34 +221,8 @@ int handleBluenetInterrupt() {
 	newStackEntry->filled = false;
 
 	// End with a sendMessage call which yields back to bluenet
-	// Bluenet will see the
-	incomingHeader->ack = CS_ACK_SUCCESS;
-	sendMessage();
-
-	// call handleSoftInterrupt and mark the localQueue entry as empty again
-	// Q: Under what circumstances will the queue grow beyond 1 entry?
-	// A: If bluenet comes with a second request before the first softInterrupt is handled
-	// That only seems possible if handleSoftInterrupt yields back to bluenet
-	// which tbh I don't see happening easily, maybe with a delay call in a user softInterrupt handler?
-	// It also happens when bluenet forces a yield due to consecutive calls
-	queue_t* localCopy = &localQueue[queueIndex];
-	memcpy(localCopy->buffer, request, MAX_PAYLOAD);
-	microapp_cmd_t* msg = reinterpret_cast<microapp_cmd_t*>(localCopy->buffer);
-	result              = handleSoftInterrupt(msg);
-	localCopy->filled   = false;
-
-	// End with a call to sendMessage(). It will not enter this function again because
-	// the microapp itself changed request->ack to something else than CS_ACK_BLUENET_MICROAPP_REQUEST.
-
-	uint8_t *payload = getOutgoingMessagePayload();
-	microapp_cmd_t* outCmd = (microapp_cmd_t*)(payload);
-	if (result != ERR_MICROAPP_SUCCESS) {
-		outCmd->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_ERROR;
-	}
-	else {
-		outCmd->cmd = CS_MICROAPP_COMMAND_SOFT_INTERRUPT_END;
-	}
-	outCmd->id = request->header.id;
+	// Bluenet will see the acknowledge and not call again
+	incomingHeader->ack = result;
 	sendMessage();
 	return result;
 }
@@ -269,100 +243,84 @@ int sendMessage() {
 	// The callback will yield control to bluenet.
 	microappCallbackFunc callbackFunctionIntoBluenet = ipc_data.microappCallback;
 	uint8_t opcode = checkOnce ? CS_MICROAPP_CALLBACK_SIGNAL : CS_MICROAPP_CALLBACK_UPDATE_IO_BUFFER;
-	result         = callbackFunctionIntoBluenet(opcode, &io_buffer);
+	result         = callbackFunctionIntoBluenet(opcode, &shared_io_buffer);
 
 	// Here the microapp resumes execution, check for incoming interrupts
-	handleBluenetRequest();
+	handleBluenetInterrupt();
 
 	return result;
 }
 
-int registerSoftInterrupt(interrupt_registration_t* interrupt) {
-	for (int i = 0; i < MAX_SOFT_INTERRUPTS; ++i) {
+int registerInterrupt(interrupt_registration_t* interrupt) {
+	for (int i = 0; i < MAX_INTERRUPT_REGISTRATIONS; ++i) {
 		if (!interruptRegistrations[i].registered) {
 			interruptRegistrations[i].registered        = true;
 			interruptRegistrations[i].softInterruptFunc = interrupt->softInterruptFunc;
-			interruptRegistrations[i].id                = interrupt->id;
-			interruptRegistrations[i].arg               = interrupt->arg;
-			interruptRegistrations[i].type              = interrupt->type;
-			return ERR_MICROAPP_SUCCESS;
+			interruptRegistrations[i].major             = interrupt->major;
+			interruptRegistrations[i].minor             = interrupt->minor;
+			return CS_ACK_SUCCESS;
 		}
 	}
-	return ERR_MICROAPP_NO_SPACE;
+	return CS_ACK_ERR_NO_SPACE;
 }
 
-int removeRegisteredSoftInterrupt(uint8_t type, uint8_t id) {
-	for (int i = 0; i < MAX_SOFT_INTERRUPTS; ++i) {
+int removeInterruptRegistration(uint8_t major, uint8_t minor) {
+	for (int i = 0; i < MAX_INTERRUPT_REGISTRATIONS; ++i) {
 		if (!interruptRegistrations[i].registered) {
 			continue;
 		}
-		if (interruptRegistrations[i].type == type && interruptRegistrations[i].id == id) {
+		if (interruptRegistrations[i].major == major &&
+			interruptRegistrations[i].minor == minor) {
 			interruptRegistrations[i].registered = false;
-			return ERR_MICROAPP_SUCCESS;
+			return CS_ACK_SUCCESS;
 		}
 	}
-	return ERR_MICROAPP_SOFT_INTERRUPT_NOT_REGISTERED;
+	return CS_ACK_ERR_NOT_FOUND;
 }
 
-int countRegisteredSoftInterrupts() {
-	int result = 0;
-	for (int i = 0; i < MAX_SOFT_INTERRUPTS; ++i) {
-		if (interruptRegistrations[i].registered) {
-			result++;
-		}
-	}
-	return result;
-}
-
-int countRegisteredSoftInterrupts(uint8_t type) {
-	int result = 0;
-	for (int i = 0; i < MAX_SOFT_INTERRUPTS; ++i) {
-		if (interruptRegistrations[i].registered && interruptRegistrations[i].type == type) {
-			result++;
-		}
-	}
-	return result;
-}
-
-int handleSoftInterruptInternal(uint8_t type, uint8_t id, uint8_t* msg) {
-	for (int i = 0; i < MAX_SOFT_INTERRUPTS; ++i) {
+int callInterrupt(uint8_t major, uint8_t minor, microapp_sdk_header_t* header) {
+	for (int i = 0; i < MAX_INTERRUPT_REGISTRATIONS; ++i) {
 		if (!interruptRegistrations[i].registered) {
 			continue;
 		}
-		if ( interruptRegistrations[i].type != type) {
+		if (interruptRegistrations[i].major != major) {
 			continue;
 		}
-		if (interruptRegistrations[i].id == id) {
-			if (interruptRegistrations[i].softInterruptFunc) {
-				return interruptRegistrations[i].softInterruptFunc(interruptRegistrations[i].arg, msg);
+		if (interruptRegistrations[i].minor == minor) {
+			if (interruptRegistrations[i].interruptFunc) {
+				return interruptRegistrations[i].interruptFunc(header);
 			}
-			// softInterruptFunc does not exist
-			return ERR_MICROAPP_SOFT_INTERRUPT_NOT_REGISTERED;
+			// interruptFunc does not exist
+			return CS_ACK_ERR_NOT_FOUND;
 		}
 	}
-	 // no soft interrupt of this type with this id registered
-	return ERR_MICROAPP_SOFT_INTERRUPT_NOT_REGISTERED;
+	 // No soft interrupt of this type with this id registered
+	return CS_ACK_ERR_NOT_FOUND;
 }
 
-int handleSoftInterrupt(microapp_cmd_t* msg) {
-	int result = ERR_MICROAPP_SUCCESS;
-	switch (msg->interruptCmd) {
-		case CS_MICROAPP_COMMAND_BLE_DEVICE: {
-			result = handleSoftInterruptInternal(SOFT_INTERRUPT_TYPE_BLE, msg->id, (uint8_t*)msg);
+int handleInterrupt(microapp_sdk_header_t* header) {
+	// For all possible interrupt types, get the minor from the incoming message
+	uint8_t minor;
+	switch (header->sdkType) {
+		case CS_MICROAPP_SDK_TYPE_PIN: {
+			microapp_sdk_pin_t* pin = reinterpret_cast<microapp_sdk_pin_t*>(header);
+			minor = pin->pin;
 			break;
 		}
-		case CS_MICROAPP_COMMAND_PIN: {
-			result = handleSoftInterruptInternal(SOFT_INTERRUPT_TYPE_PIN, msg->id, (uint8_t*)msg);
+		case CS_MICROAPP_SDK_TYPE_BLE: {
+			microapp_sdk_ble_t* ble = reinterpret_cast<microapp_sdk_ble_t*>(header);
+			minor = ble->type;
 			break;
 		}
-		case CS_MICROAPP_COMMAND_MESH: {
-			result = handleSoftInterruptInternal(SOFT_INTERRUPT_TYPE_MESH, msg->id, (uint8_t*)msg);
+		case CS_MICROAPP_SDK_TYPE_MESH: {
+			microapp_sdk_mesh_t* mesh = reinterpret_cast<microapp_sdk_mesh_t*>(header);
+			minor = mesh->type;
 			break;
 		}
 		default: {
-			// interruptCmd not known
-			return ERR_MICROAPP_UNKNOWN_PROTOCOL;
+			return CS_ACK_ERR_UNDEFINED;
 		}
 	}
-	return result;
+	// Call the interrupt
+	return callInterrupt(header->sdkType, minor, header);
 }
