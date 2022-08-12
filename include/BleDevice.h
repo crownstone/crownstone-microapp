@@ -29,7 +29,7 @@ private:
 
 	BleDevice(){}; // default constructor
 
-	microapp_ble_device_t _device; // the raw advertisement data
+	microapp_sdk_ble_t* _device; // the raw advertisement data
 
 	MacAddress _address;
 
@@ -50,7 +50,7 @@ private:
 
 public:
 
-	BleDevice(const microapp_ble_device_t & dev); // non-empty constructor
+	BleDevice(microapp_sdk_ble_t* dev); // non-empty constructor
 
 	// return true if BleDevice is nontrivial, i.e. initialized from an actual advertisement
 	explicit operator bool() const {return _flags.flags.nonEmpty;}

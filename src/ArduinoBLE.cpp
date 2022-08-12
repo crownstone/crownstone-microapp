@@ -1,104 +1,118 @@
 #include <ArduinoBLE.h>
 
 /*
- * An ordinary C function to keep the softInterrupt simple.
+ * An ordinary C function
  */
-int softInterruptBle(void* args, void* buf) {
-	if (args == nullptr || buf == nullptr) {
-		return ERR_MICROAPP_SOFT_INTERRUPT_NOT_REGISTERED;
+int handleBleInterrupt(void* buf) {
+	if (buf == nullptr) {
+		return CS_ACK_ERR_NOT_FOUND;
+	}
+	microapp_sdk_ble_t* ble = reinterpret_cast<microapp_sdk_ble_t*>(buf);
+	return BLE.handleInterrupt(ble);
+}
+
+int Ble::handleInterrupt(microapp_sdk_ble_t* ble) {
+	// First get interrupt context
+	BleInterruptContext* context;
+	int interruptContextId = -1;
+	for (int i = 0; i < MAX_BLE_INTERRUPT_REGISTRATIONS; ++i) {
+		if (_bleInterruptContext[i].filled == false) {
+			continue;
+		}
+		if (_bleInterruptContext[i].type == ble->type) {
+			interruptContextId = i;
+			break;
+		}
+	}
+	if (interruptContextId < 0) {
+		// Interrupt context not found
+		return CS_ACK_ERR_NOT_FOUND;
+	}
+	BleInterruptContext& context = _bleInterruptContext[interruptContextId];
+
+	if (context->eventHandler == nullptr) {
+		return CS_ACK_ERR_EMPTY;
 	}
 
-	microapp_ble_device_t* dev       = (microapp_ble_device_t*)buf;
-	BleSoftInterruptContext* context = (BleSoftInterruptContext*)args;
-
-	if (!context->eventHandler) {
-		return ERR_MICROAPP_SOFT_INTERRUPT_NOT_REGISTERED;
-	}
-
-	// Based on the id (=type) of interrupt we will take action
-	// This could probably also be done by checking dev->header.interruptId
-	switch (context->id) {
-		case BleEventDeviceScanned: {
+	// Based on the type of event we will take action
+	switch (context->type) {
+		case CS_MICROAPP_SDK_BLE_SCAN_SCANNED_DEVICE: {
+			// Save to the stack
 			// Create temporary object on the stack
-			BleDevice bleDevice = BleDevice(*dev);
-			if (BLE.filterScanEvent(bleDevice)) {
+			BleDevice bleDevice = BleDevice(ble);
+			if (filterScanEvent(bleDevice)) {
 				// Call the event handler with a copy of this object
 				context->eventHandler(bleDevice);
 			}
 			break;
 		}
-		// TODO: implement handlers for other ble events
+		case CS_MICROAPP_SDK_BLE_CONNECTION_CONNECTED: {
+			// TODO: implement
+			return CS_ACK_ERR_NOT_IMPLEMENTED;
+		}
+		case CS_MICROAPP_SDK_BLE_CONNECTION_DISCONNECTED: {
+			// TODO: implement
+			return CS_ACK_ERR_NOT_IMPLEMENTED;
+		}
 		default: {
-			return ERR_MICROAPP_NOT_IMPLEMENTED;
+			return CS_ACK_ERR_NOT_IMPLEMENTED;
 		}
 	}
-	return ERR_MICROAPP_SUCCESS;
-}
-
-Ble::Ble() {
-	for (int i = 0; i < MAX_SOFT_INTERRUPTS; i++) {
-		_bleSoftInterruptContext[i].eventHandler = nullptr;
-		_bleSoftInterruptContext[i].filled       = false;
-	}
+	return CS_ACK_SUCCESS;
 }
 
 /*
- * Set softInterrupt, but not directly... We register a wrapper function that calls
- * this softInterrupt so we have the possibility to send a "softInterrupt end" command
- * after the softInterrupt has been executed.
+ * Set interrupt handler, but not directly...
+ * We register a wrapper function that calls the passed handler
  */
-bool Ble::setEventHandler(BleEventType type, void (*eventHandler)(BleDevice)) {
+bool Ble::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice)) {
+
 	// Register the interrupt context locally
-	int softInterruptContextId = -1;
-	for (int i = 0; i < MAX_SOFT_INTERRUPTS; ++i) {
-		if (_bleSoftInterruptContext[i].filled == false) {
-			softInterruptContextId = i;
+	int interruptContextId = -1;
+	for (int i = 0; i < MAX_BLE_INTERRUPT_REGISTRATIONS; ++i) {
+		if (_bleInterruptContext[i].filled == false) {
+			interruptContextId = i;
 			break;
 		}
 	}
-	if (softInterruptContextId < 0) {
-		// No empty slots for storing softInterruptContext
+	if (interruptContextId < 0) {
+		// No empty slots for storing interruptContext
 		return false;
 	}
-	BleSoftInterruptContext& context = _bleSoftInterruptContext[softInterruptContextId];
+	BleInterruptContext& context = _bleInterruptContext[interruptContextId];
 	context.eventHandler = eventHandler;
-	context.filled = true;
-	// There can be only one registered event handler per event type
-	context.id = type;
+	context.filled       = true;
+	context.type         = interruptType(eventType);
 
-	// Also register soft interrupt on the microapp side
-	interrupt_registration_t softInterrupt;
-	softInterrupt.id                = type;
-	softInterrupt.type              = SOFT_INTERRUPT_TYPE_BLE;
-	softInterrupt.softInterruptFunc = softInterruptBle;
-	softInterrupt.arg               = &_bleSoftInterruptContext[softInterruptContextId];
-	int result = registerSoftInterrupt(&softInterrupt);
-	if (result != ERR_MICROAPP_SUCCESS) {
+	// Also register interrupt on the microapp side
+	interrupt_registration_t interrupt;
+	interrupt.major              = CS_MICROAPP_SDK_TYPE_BLE;
+	interrupt.minor              = interruptType(eventType);
+	interrupt.interruptFunc      = handleBleInterrupt;
+	int result = registerInterrupt(&interrupt);
+	if (result != CS_ACK_SUCCESS) {
 		// No empty interrupt slots available on microapp side
-		// Remove soft interrupt context
+		// Remove interrupt context
 		context.eventHandler = nullptr;
-		context.id = 0;
 		context.filled = false;
 		return false;
 	}
 
-	// Finally, send a message to bluenet registering the soft interrupt
-	uint8_t *payload            = getOutgoingMessagePayload();
-	microapp_ble_cmd_t* ble_cmd = (microapp_ble_cmd_t*)(payload);
-	ble_cmd->header.cmd         = CS_MICROAPP_COMMAND_BLE;
-	ble_cmd->header.ack         = false;
-	ble_cmd->id                 = context.id;
-	ble_cmd->opcode             = CS_MICROAPP_COMMAND_BLE_SCAN_SET_HANDLER;
+	// Finally, send a message to bluenet registering the interrupt
+	uint8_t *payload        = getOutgoingMessagePayload();
+	microapp_sdk_ble_t* ble = (microapp_sdk_ble_t*)(payload);
+	ble->header.sdkType     = CS_MICROAPP_SDK_TYPE_BLE;
+	ble->header.ack         = CS_ACK_REQUEST;
+	ble->type               = requestType(eventType);
 
 	sendMessage();
 
 	// Bluenet will set ack to true upon success
-	if (!ble_cmd->header.ack) {
-		// Undo local softInterrupt registration
-		removeRegisteredSoftInterrupt(SOFT_INTERRUPT_TYPE_BLE, type);
-		// Undo soft interrupt context
+	if (ble->header.ack != CS_ACK_SUCCESS) {
+		// Undo local interrupt registration
+		removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_BLE, interruptType(eventType));
+		// Undo interrupt context
 		context.eventHandler = nullptr;
-		context.id = 0;
 		context.filled = false;
 		return false;
 	}
@@ -111,19 +125,19 @@ bool Ble::scan(bool withDuplicates) {
 	}
 
 	uint8_t *payload = getOutgoingMessagePayload();
-	microapp_ble_cmd_t* ble_cmd = (microapp_ble_cmd_t*)(payload);
-	ble_cmd->header.ack         = false;
-	ble_cmd->header.cmd         = CS_MICROAPP_COMMAND_BLE;
-	ble_cmd->opcode             = CS_MICROAPP_COMMAND_BLE_SCAN_START;
+	microapp_sdk_ble_t* ble = (microapp_sdk_ble_t*)(payload);
+	ble->header.sdkType     = CS_MICROAPP_SDK_TYPE_BLE;
+	ble->header.ack         = CS_ACK_REQUEST;
+	ble->type               = CS_MICROAPP_SDK_BLE_SCAN_START;
 
 	sendMessage();
 
-	bool success = ble_cmd->header.ack;
+	bool success = (ble->header.ack == CS_ACK_SUCCESS);
 	if (!success) {
-		return success;
+		return false;
 	}
 	_isScanning = true;
-	return success;
+	return true;
 }
 
 bool Ble::scanForName(const char* name, bool withDuplicates) {
@@ -155,23 +169,22 @@ bool Ble::stopScan() {
 
 	// send a message to bluenet asking it to stop forwarding ads to microapp
 	uint8_t *payload = getOutgoingMessagePayload();
-	microapp_ble_cmd_t* ble_cmd = (microapp_ble_cmd_t*)(payload);
+	microapp_sdk_ble_t* ble = (microapp_sdk_ble_t*)(payload);
 
-	ble_cmd->header.ack = false;
-	ble_cmd->header.cmd = CS_MICROAPP_COMMAND_BLE;
-	ble_cmd->opcode     = CS_MICROAPP_COMMAND_BLE_SCAN_STOP;
+	ble->header.ack     = CS_ACK_REQUEST;
+	ble->header.sdkType = CS_MICROAPP_SDK_TYPE_BLE;
+	ble->type           = CS_MICROAPP_SDK_BLE_SCAN_STOP;
 
 	sendMessage();
 
-	bool success = ble_cmd->header.ack;
+	bool success = (ble->header.ack == CS_ACK_SUCCESS);
 	if (!success) {
-		return success;
+		return false;
 	}
 
 	_activeFilter.type = BleFilterNone;  // reset filter
 	_isScanning = false;
-
-	return success;
+	return true;
 }
 
 BleDevice Ble::available() {
@@ -231,4 +244,30 @@ bool Ble::filterScanEvent(BleDevice device) {
 
 BleFilter* Ble::getFilter() {
 	return &_activeFilter;
+}
+
+MicroappSdkBleType Ble::requestType(BleEventType type) {
+	switch (type) {
+		case BLEDeviceScanned:
+			return CS_MICROAPP_SDK_BLE_SCAN_REGISTER_INTERRUPT;
+		case BLEConnected:
+			return CS_MICROAPP_SDK_BLE_CONNECTION_REQUEST_CONNECT;
+		case BLEDisconnected:
+			return CS_MICROAPP_SDK_BLE_CONNECTION_REQUEST_DISCONNECT;
+		default:
+			return CS_MICROAPP_SDK_BLE_NONE;
+	}
+}
+
+MicroappSdkBleType Ble::interruptType(BleEventType type) {
+	switch (type) {
+		case BLEDeviceScanned:
+			return CS_MICROAPP_SDK_BLE_SCAN_SCANNED_DEVICE;
+		case BLEConnected:
+			return CS_MICROAPP_SDK_BLE_CONNECTION_CONNECTED;
+		case BLEDisconnected:
+			return CS_MICROAPP_SDK_BLE_CONNECTION_DISCONNECTED;
+		default:
+			return CS_MICROAPP_SDK_BLE_NONE;
+	}
 }

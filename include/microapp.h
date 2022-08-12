@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 // Interrupt functions
-typedef int (*interruptFunction)(void *, void *);
+typedef int (*interruptFunction)(void *);
 
 // Store interrupts in the microapp
 struct interrupt_registration_t {
@@ -92,9 +92,9 @@ void *memcpy(void *dest, const void *src, size_t num);
  * Get outgoing message buffer (can be used for sendMessage);
  */
 
-// uint8_t *getOutgoingMessagePayload();
+uint8_t *getOutgoingMessagePayload();
 
-// uint8_t *getIncomingMessagePayload();
+uint8_t *getIncomingMessagePayload();
 
 /**
  * Send a message to the bluenet code. This is the function that is called - in
@@ -105,7 +105,7 @@ int sendMessage();
 /**
  * Register a softInterrupt locally.
  */
-int registerSoftInterrupt(interrupt_registration_t* interrupt);
+int registerInterrupt(interrupt_registration_t* interrupt);
 
 /**
  * Remove a registered softInterrupt locally

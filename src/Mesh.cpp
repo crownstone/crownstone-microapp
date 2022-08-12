@@ -1,48 +1,51 @@
 #include <Mesh.h>
 #include <Serial.h>
 
-int softInterruptMesh(void* args, void* buf) {
-	microapp_mesh_read_cmd_t* msg = (microapp_mesh_read_cmd_t*)buf;
-	return Mesh.handleIncomingMeshMsg(msg);
+int handleMeshInterrupt(void* buf) {
+	if (buf == nullptr) {
+		return CS_ACK_ERR_NOT_FOUND;
+	}
+	microapp_sdk_mesh_t* mesh = reinterpret_cast<microapp_sdk_mesh_t*>(buf);
+	// The only type of mesh interrupts are for now incoming messages
+	return Mesh.handleIncomingMeshMsg(mesh);
 }
 
-MeshClass::MeshClass() : _registeredIncomingMeshMsgHandler(nullptr), _stoneId(0) {}
+MeshClass::MeshClass() :	_registeredIncomingMeshMsgHandler(nullptr),
+							_stoneId(0) {}
 
 bool MeshClass::listen() {
 	// Register soft interrupt locally
-	interrupt_registration_t softInterrupt;
-	// Since we only have one type of mesh interrupt, id is always 0
-	softInterrupt.id = 0;
-	softInterrupt.type = SOFT_INTERRUPT_TYPE_MESH;
-	softInterrupt.softInterruptFunc = softInterruptMesh;
-	int result = registerSoftInterrupt(&softInterrupt);
-	if (result != ERR_MICROAPP_SUCCESS) {
+	interrupt_registration_t interrupt;
+	interrupt.major = CS_MICROAPP_SDK_TYPE_MESH;
+	interrupt.minor = CS_MICROAPP_SDK_MESH_READ;
+	interrupt.interruptFunc = handleMeshInterrupt;
+	int result = registerInterrupt(&interrupt);
+	if (result != CS_ACK_SUCCESS) {
 		// No empty interrupt slots available
 		return false;
 	}
 
 	// Also send a command to bluenet that we want to listen to mesh
 	uint8_t* payload = getOutgoingMessagePayload();
-	microapp_mesh_cmd_t* mesh_cmd = (microapp_mesh_cmd_t*)(payload);
-	mesh_cmd->header.ack = false;
-	mesh_cmd->header.cmd = CS_MICROAPP_COMMAND_MESH;
-	mesh_cmd->header.id = softInterrupt.id;
-	mesh_cmd->opcode = CS_MICROAPP_COMMAND_MESH_READ_SET_HANDLER;
+	microapp_sdk_mesh_t* mesh = (microapp_sdk_mesh_t*)(payload);
+	mesh->header.ack          = CS_ACK_REQUEST;
+	mesh->header.sdkType      = CS_MICROAPP_SDK_TYPE_MESH;
+	mesh->type                = CS_MICROAPP_SDK_MESH_LISTEN;
 
 	sendMessage();
 
-	return mesh_cmd->header.ack;
+	return (mesh->header.ack == CS_ACK_SUCCESS);
 }
 
-int MeshClass::handleIncomingMeshMsg(microapp_mesh_read_cmd_t* msg) {
+int MeshClass::handleIncomingMeshMsg(microapp_sdk_mesh_t* msg) {
 	// If a handler is registered, we do not need to copy anything to the buffer,
 	// since the handler will deal with it right away.
 	// The microapp's softInterrupt handler has copied the msg to a localCopy
 	// so there is no worry of overwriting the msg upon a bluenet roundtrip
 	if (_registeredIncomingMeshMsgHandler != nullptr) {
-		MeshMsg handlerMsg = MeshMsg(msg->stoneId, msg->data, msg->dlen);
+		MeshMsg handlerMsg = MeshMsg(msg->stoneId, msg->data, msg->size);
 		_registeredIncomingMeshMsgHandler(handlerMsg);
-		return ERR_MICROAPP_SUCCESS;
+		return CS_ACK_SUCCESS;
 	}
 	// Add msg to buffer or discard if full
 	// Q: is it not more logical to discard oldest?
@@ -57,12 +60,12 @@ int MeshClass::handleIncomingMeshMsg(microapp_mesh_read_cmd_t* msg) {
 	}
 	if (full) {
 		// discard message
-		return ERR_MICROAPP_NO_SPACE;
+		return CS_ACK_ERR_NO_SPACE;
 	}
 	MeshMsgBufferEntry& copy = _incomingMeshMsgBuffer[i];
 	copy.stoneId = msg->stoneId;
-	copy.dlen = msg->dlen;
-	memcpy(copy.data, msg->data, msg->dlen);
+	copy.dlen = msg->size;
+	memcpy(copy.data, msg->data, msg->size);
 	copy.filled = true;
 
 	return 0;

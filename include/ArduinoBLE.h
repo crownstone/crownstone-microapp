@@ -11,18 +11,17 @@ extern "C" {
 
 #include <microapp.h>
 
-// Create shortened typedefs (we are within microapp scope here)
-
-// Types of BLE event for which event handlers can be set
-enum BleEventType {
-	BleEventDeviceScanned = 0x01,
-	BleEventConnected     = 0x02,
-	BleEventDisconnected  = 0x03,
-};
-
 #ifdef __cplusplus
 }
 #endif
+
+// Types of BLE event for which event handlers can be set
+// The naming of these corresponds with ArduinoBLE syntax
+enum BleEventType {
+	BLEDeviceScanned = 0x01,
+	BLEConnected     = 0x02,
+	BLEDisconnected  = 0x03,
+};
 
 // Types of filters which can be used to filter scanned BLE devices
 enum BleFilterType {
@@ -44,10 +43,10 @@ struct BleFilter {
 typedef void (*BleEventHandler)(BleDevice);
 
 // Context for the callback that can be kept local.
-struct BleSoftInterruptContext {
-	BleEventHandler eventHandler;
-	bool filled;
-	uint8_t id;
+struct BleInterruptContext {
+	BleEventHandler eventHandler = nullptr;
+	bool filled                  = false;
+	MicroappSdkBleType type;
 };
 
 /**
@@ -57,7 +56,10 @@ struct BleSoftInterruptContext {
  */
 class Ble {
 private:
-	Ble();
+
+	friend int handleBleInterrupt(void*);
+
+	Ble(){};
 
 	BleDevice _activeDevice;
 
@@ -65,10 +67,43 @@ private:
 
 	bool _isScanning = false;
 
+	static const uint8_t MAX_BLE_INTERRUPT_REGISTRATIONS = 3;
+
 	/*
 	 * Store callback contexts.
 	 */
-	BleSoftInterruptContext _bleSoftInterruptContext[MAX_SOFT_INTERRUPTS];
+	BleInterruptContext _bleInterruptContext[MAX_BLE_INTERRUPT_REGISTRATIONS];
+
+	/**
+	 * Compares the scanned device device against the filter and returns true upon a match
+	 *
+	 * @param[in] rawDevice the scanned BLE device
+	 *
+	 */
+	bool filterScanEvent(BleDevice rawDevice);
+
+	/**
+	 * Get the currently set filter for scanned devices
+	 *
+	 * @return A pointer to the BleFilter object
+	 */
+	BleFilter* getFilter();
+
+	/**
+	 * Map the BleEventType to the MicroappSdkBleType for requests
+	 *
+	 */
+	MicroappSdkBleType requestType(BleEventType type);
+
+	/**
+	 * Map the BleEventType to the MicroappSdkBleType for interrupts
+	 */
+	MicroappSdkBleType interruptType(BleEventType type);
+
+	/**
+	 * Handles interrupts entering the BLE class
+	 */
+	int handleInterrupt(microapp_sdk_ble_t* ble);
 
 public:
 
@@ -190,25 +225,6 @@ public:
 	 * @return                  BleDevice object representing the discovered device
 	 */
 	BleDevice available();
-
-/*
- * The following functions do not exist in the ArduinoBle library
- */
-
-	/**
-	 * Compares the scanned device device against the filter and returns true upon a match
-	 *
-	 * @param[in] rawDevice  the scanned BLE device
-	 *
-	 */
-	bool filterScanEvent(BleDevice rawDevice);
-
-	/**
-	 * Get the currently set filter for scanned devices
-	 *
-	 * @return                 A pointer to the BleFilter object
-	 */
-	BleFilter* getFilter();
 
 };
 

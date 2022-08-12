@@ -1,8 +1,8 @@
 #include <BleDevice.h>
 
-BleDevice::BleDevice(const microapp_ble_device_t & dev) {
+BleDevice::BleDevice(microapp_sdk_ble_t* dev) {
 	_device = dev;
-	_address = MacAddress(_device.addr);
+	_address = MacAddress(_device->address);
 	_flags.flags.nonEmpty = true;
 }
 
@@ -10,12 +10,12 @@ String BleDevice::address() {
 	if (_address.isInitialized()) { // if already cached address
 		return _address.getString();
 	}
-	_address = MacAddress(_device.addr);
+	_address = MacAddress(_device->address);
 	return _address.getString();
 }
 
 int8_t BleDevice::rssi() {
-	return _device.rssi;
+	return _device->rssi;
 }
 
 bool BleDevice::hasLocalName() {
@@ -54,25 +54,9 @@ String BleDevice::localName() {
 }
 
 bool BleDevice::connect() {
-	uint8_t *payload = getOutgoingMessagePayload();
-	microapp_ble_cmd_t *ble_cmd = (microapp_ble_cmd_t*)(payload);
-	ble_cmd->header.cmd = CS_MICROAPP_COMMAND_BLE;
-	ble_cmd->opcode = CS_MICROAPP_COMMAND_BLE_CONNECT;
-	memcpy(ble_cmd->addr, _address.getBytes(), MAC_ADDRESS_LENGTH);
-
-	// TODO: sendMessage should return ERR_SUCCESS (0) on success
-	//       More importantly, this only communicates the intent of a connection.
-	//       A connection is an asynchronous sequence of events not under the control of the microapp.
-	//       This has to be captured on the microapp side (in this library).
-	//       See e.g. the implementation of delay. There we call sendMessage until we are satisfied
-	//       (in this case a simple loop). Here we have to call sendMessage until we are satisfied
-	//       with the result.
-	int res = (sendMessage() == 0);
-
-	if (res == 0) {
-		_flags.flags.connected = true;
-	}
-	return res;
+	// TODO: implement
+	_flags.flags.connected = false;
+	return false;
 }
 
 bool BleDevice::connected() {
@@ -83,14 +67,14 @@ bool BleDevice::findAdvertisementDataType(GapAdvType type, data_ptr_t* foundData
 	uint8_t i = 0;
 	foundData->data = nullptr;
 	foundData->len = 0;
-	while (i < _device.dlen-1) {
-		uint8_t fieldLen = _device.data[i];
-		uint8_t fieldType = _device.data[i+1];
-		if (fieldLen == 0 || i + 1 + fieldLen > _device.dlen) {
+	while (i < _device->size-1) {
+		uint8_t fieldLen = _device->data[i];
+		uint8_t fieldType = _device->data[i+1];
+		if (fieldLen == 0 || i + 1 + fieldLen > _device->size) {
 			return false;
 		}
 		if (fieldType == type) {
-			foundData->data = &_device.data[i+2];
+			foundData->data = &_device->data[i+2];
 			foundData->len = fieldLen-1;
 			return true;
 		}
