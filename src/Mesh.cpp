@@ -19,7 +19,7 @@ bool MeshClass::listen() {
 	interrupt.major = CS_MICROAPP_SDK_TYPE_MESH;
 	interrupt.minor = CS_MICROAPP_SDK_MESH_READ;
 	interrupt.handler = handleMeshInterrupt;
-	int result = registerInterrupt(&interrupt);
+	microapp_result_t result = registerInterrupt(&interrupt);
 	if (result != CS_ACK_SUCCESS) {
 		// No empty interrupt slots available
 		return false;
@@ -37,7 +37,7 @@ bool MeshClass::listen() {
 	return (meshRequest->header.ack == CS_ACK_SUCCESS);
 }
 
-int MeshClass::handleIncomingMeshMsg(microapp_sdk_mesh_t* msg) {
+microapp_result_t MeshClass::handleIncomingMeshMsg(microapp_sdk_mesh_t* msg) {
 	// If a handler is registered, we do not need to copy anything to the buffer,
 	// since the handler will deal with it right away.
 	// The microapp's softInterrupt handler has copied the msg to a localCopy
@@ -68,7 +68,7 @@ int MeshClass::handleIncomingMeshMsg(microapp_sdk_mesh_t* msg) {
 	memcpy(copy.data, msg->data, msg->size);
 	copy.filled = true;
 
-	return 0;
+	return CS_ACK_SUCCESS;
 }
 
 void MeshClass::setIncomingMeshMsgHandler(void (*handler)(MeshMsg)) {

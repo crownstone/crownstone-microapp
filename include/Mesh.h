@@ -83,7 +83,7 @@ private:
 	/**
 	 * Handle an incoming mesh message. Called by c wrapper function
 	 */
-	int handleIncomingMeshMsg(microapp_sdk_mesh_t* msg);
+	microapp_result_t handleIncomingMeshMsg(microapp_sdk_mesh_t* msg);
 
 public:
 

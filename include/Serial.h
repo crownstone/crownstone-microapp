@@ -10,7 +10,16 @@ private:
 	Serial_(Serial_ const&)         = delete;
 	void operator=(Serial_ const&)  = delete;
 
-	enum Type { Char = 0, Int = 1, Str = 2, Arr = 3, Float = 4, Double = 5, UnsignedInt = 6, Short = 7};
+	enum Type {
+		Char        = CS_MICROAPP_SDK_LOG_CHAR,
+		Int         = CS_MICROAPP_SDK_LOG_INT,
+		Str         = CS_MICROAPP_SDK_LOG_STR,
+		Arr         = CS_MICROAPP_SDK_LOG_ARR,
+		Float       = CS_MICROAPP_SDK_LOG_FLOAT,
+		Double      = CS_MICROAPP_SDK_LOG_DOUBLE,
+		UnsignedInt = CS_MICROAPP_SDK_LOG_UINT,
+		Short       = CS_MICROAPP_SDK_LOG_SHORT,
+	};
 
 	size_t _write(microapp_sdk_log_header_t *logRequest, Type type, MicroappSdkLogFlags flags);
 	size_t _write(String str, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);

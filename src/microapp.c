@@ -130,13 +130,14 @@ microapp_result_t checkRamData(bool checkOnce) {
 	}
 
 	ipc_data.valid = true;
+	microapp_result_t result = CS_ACK_SUCCESS;
 
 	if (checkOnce) {
 		// Write the buffer only once
 		microappCallbackFunc callbackFunctionIntoBluenet = ipc_data.microappCallback;
-		microapp_result_t result = callbackFunctionIntoBluenet(CS_MICROAPP_CALLBACK_UPDATE_IO_BUFFER, &shared_io_buffer);
+		result = callbackFunctionIntoBluenet(CS_MICROAPP_CALLBACK_UPDATE_IO_BUFFER, &shared_io_buffer);
 	}
-	return CS_ACK_SUCCESS;
+	return result;
 }
 
 /*
@@ -209,7 +210,7 @@ void handleBluenetInterrupt() {
 	// Call the interrupt handler and pass a pointer to the copy of the interrupt buffer
 	// Note that new sendMessage calls may occur in the interrupt handler
 	microapp_sdk_header_t* stackEntryHeader = reinterpret_cast<microapp_sdk_header_t*>(newStackEntry->ioBuffer.bluenet2microapp.payload);
-	int result = handleInterrupt(stackEntryHeader);
+	microapp_result_t result = handleInterrupt(stackEntryHeader);
 
 	// When done with the interrupt handling, we can pop the buffers from the stack again
 	// Though really we only need the outgoing buffer, since we just finished dealing with the incoming buffer
