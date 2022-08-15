@@ -4,9 +4,8 @@
 #include <stdint.h>
 #include <microapp.h>
 
-#define WIRE_SIZE_OPCODE                           6
-#define WIRE_MAX_PAYLOAD_LENGTH                    (MAX_PAYLOAD - WIRE_SIZE_OPCODE)
-#define WIRE_MAX_STRING_LENGTH                     (WIRE_MAX_PAYLOAD_LENGTH - 1)
+#define WIRE_MAX_PAYLOAD_LENGTH   MICROAPP_SDK_MAX_TWI_PAYLOAD_SIZE
+#define WIRE_MAX_STRING_LENGTH    (MICROAPP_SDK_MAX_TWI_PAYLOAD_SIZE - 1)
 
 class WireBase_ {
 private:
@@ -28,7 +27,7 @@ protected:
 	WireBase_(char port) : _port(port) {}
 
 	enum Type { Char = 0, Int = 1, Str = 2, Arr = 3};
-	
+
 	// Write an array of bytes to i2c.
 	// Returns number of bytes written.
 	int _write(const uint8_t *buf, int length, Type type);
@@ -39,7 +38,7 @@ public:
 	// The address is your own address.
 	// TODO: not supported yet
 	// void begin(const uint8_t address);
-	
+
 	// Start as master
 	void begin();
 
@@ -52,7 +51,7 @@ public:
 	// Start a transmission
 	// The address is the address of the device you will send to.
 	void beginTransmission(const uint8_t address);
-	
+
 	// Stop a transmission
 	void endTransmission();
 

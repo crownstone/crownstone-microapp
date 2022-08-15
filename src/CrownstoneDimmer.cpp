@@ -11,10 +11,12 @@ void CrownstoneDimmer::setIntensity(uint8_t intensity) {
 		return;
 	}
 	uint8_t *payload = getOutgoingMessagePayload();
-	microapp_dimmer_switch_cmd_t* dimmer_cmd = reinterpret_cast<microapp_dimmer_switch_cmd_t*>(payload);
-	dimmer_cmd->header.cmd = CS_MICROAPP_COMMAND_SWITCH_DIMMER;
-	dimmer_cmd->opcode = CS_MICROAPP_COMMAND_DIMMER;
-	dimmer_cmd->value = intensity;
-
+	microapp_sdk_switch_t* switchRequest = reinterpret_cast<microapp_sdk_switch_t*>(payload);
+	switchRequest->header.ack            = CS_ACK_REQUEST;
+	switchRequest->header.sdkType        = CS_MICROAPP_SDK_TYPE_SWITCH;
+	if (intensity > 100) {
+		intensity = 100;
+	}
+	switchRequest->value = intensity;
 	sendMessage();
 }

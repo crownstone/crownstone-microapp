@@ -74,10 +74,8 @@ uint8_t* getIncomingMessagePayload() {
  * Struct that stores copies of the shared io buffer
  */
 struct stack_entry_t {
-	// uint8_t interruptBuffer[MICROAPP_SDK_MAX_PAYLOAD];
-	// uint8_t requestBuffer[MICROAPP_SDK_MAX_PAYLOAD];
 	bluenet_io_buffer_t ioBuffer;
-	uint8_t filled = false;
+	bool filled;
 };
 
 /*
@@ -138,17 +136,17 @@ int checkRamData(bool checkOnce) {
 	if (checkOnce) {
 		// Write the buffer only once
 		microappCallbackFunc callbackFunctionIntoBluenet = ipc_data.microappCallback;
-		result = callbackFunctionIntoBluenet(CS_MICROAPP_CALLBACK_UPDATE_IO_BUFFER, &io_buffer);
+		result = callbackFunctionIntoBluenet(CS_MICROAPP_CALLBACK_UPDATE_IO_BUFFER, &shared_io_buffer);
 	}
 	return 0;
 }
 
 /*
- * Returns the number of empty slots for bluenet. Access and counting of empty slots can be improved.
+ * Returns the number of empty slots for bluenet.
  */
-int8_t emptySlotsInStack() {
-	int8_t totalEmpty = 0;
-	for (int8_t i = 0; i < MAX_INTERRUPT_REGISTRATIONS; ++i) {
+uint8_t emptySlotsInStack() {
+	uint8_t totalEmpty = 0;
+	for (uint8_t i = 0; i < MAX_INTERRUPT_DEPTH; ++i) {
 		if (!stack[i].filled) {
 			totalEmpty++;
 		}
@@ -157,7 +155,7 @@ int8_t emptySlotsInStack() {
 }
 
 int8_t getNextEmptyStackSlot() {
-	for (uint8_t i = 0; i < MAX_INTERRUPT_REGISTRATIONS; ++i) {
+	for (uint8_t i = 0; i < MAX_INTERRUPT_DEPTH; ++i) {
 		if (!stack[i].filled) {
 			return i;
 		}
@@ -168,7 +166,7 @@ int8_t getNextEmptyStackSlot() {
 /*
  * Handle incoming interrupts from bluenet
  */
-int handleBluenetInterrupt() {
+void handleBluenetInterrupt() {
 	uint8_t* incomingPayload = getIncomingMessagePayload();
 	microapp_sdk_header_t* incomingHeader = reinterpret_cast<microapp_sdk_header_t*>(incomingPayload);
 	// First check if this is not just a regular call
@@ -200,10 +198,10 @@ int handleBluenetInterrupt() {
 	uint8_t* outgoingPayload = getOutgoingMessagePayload();
 	// Copying the outgoing buffer is needed so that the outgoing buffer can be freely used
 	// for microapp requests during the interrupt handling
-	memcpy(newStackEntry->ioBuffer.microapp2bluenet, outgoingPayload, MICROAPP_SDK_MAX_PAYLOAD);
+	memcpy(newStackEntry->ioBuffer.microapp2bluenet.payload, outgoingPayload, MICROAPP_SDK_MAX_PAYLOAD);
 	// Copying the incoming buffer is needed so that the interrupt payload is preserved
 	// if bluenet generates another interrupt before finishing handling this one
-	memcpy(newStackEntry->ioBuffer.bluenet2microapp, incomingPayload, MICROAPP_SDK_MAX_PAYLOAD);
+	memcpy(newStackEntry->ioBuffer.bluenet2microapp.payload, incomingPayload, MICROAPP_SDK_MAX_PAYLOAD);
 	newStackEntry->filled = true;
 
 	// Mark the incoming ack as 'in progress' so bluenet will keep calling
@@ -212,26 +210,25 @@ int handleBluenetInterrupt() {
 	// Now the interrupt will actually be handled
 	// Call the interrupt handler and pass a pointer to the copy of the interrupt buffer
 	// Note that new sendMessage calls may occur in the interrupt handler
-	microapp_sdk_header_t* stackEntryHeader = reinterpret_cast<microapp_sdk_header_t*>(newStackEntry->ioBuffer.bluenet2microapp);
+	microapp_sdk_header_t* stackEntryHeader = reinterpret_cast<microapp_sdk_header_t*>(newStackEntry->ioBuffer.bluenet2microapp.payload);
 	int result = handleInterrupt(stackEntryHeader);
 
 	// When done with the interrupt handling, we can pop the buffers from the stack again
 	// Though really we only need the outgoing buffer, since we just finished dealing with the incoming buffer
-	memcpy(outgoingPayload, newStackEntry->ioBuffer.microapp2bluenet, MICROAPP_SDK_MAX_PAYLOAD);
+	memcpy(outgoingPayload, newStackEntry->ioBuffer.microapp2bluenet.payload, MICROAPP_SDK_MAX_PAYLOAD);
 	newStackEntry->filled = false;
 
 	// End with a sendMessage call which yields back to bluenet
 	// Bluenet will see the acknowledge and not call again
 	incomingHeader->ack = result;
 	sendMessage();
-	return result;
+	return;
 }
 
 /*
- * Send the actual message.
+ * Send the actual message to bluenet
  *
- * This method will also obtain information for soft interrupts and propagate those if necessary. If there are no
- * soft interrupts it will just return and at some later time be called again.
+ * If there are no interrupts it will just return and at some later time be called again.
  */
 int sendMessage() {
 	bool checkOnce = true;
@@ -254,10 +251,10 @@ int sendMessage() {
 int registerInterrupt(interrupt_registration_t* interrupt) {
 	for (int i = 0; i < MAX_INTERRUPT_REGISTRATIONS; ++i) {
 		if (!interruptRegistrations[i].registered) {
-			interruptRegistrations[i].registered        = true;
-			interruptRegistrations[i].softInterruptFunc = interrupt->softInterruptFunc;
-			interruptRegistrations[i].major             = interrupt->major;
-			interruptRegistrations[i].minor             = interrupt->minor;
+			interruptRegistrations[i].registered = true;
+			interruptRegistrations[i].handler    = interrupt->handler;
+			interruptRegistrations[i].major      = interrupt->major;
+			interruptRegistrations[i].minor      = interrupt->minor;
 			return CS_ACK_SUCCESS;
 		}
 	}
@@ -278,7 +275,7 @@ int removeInterruptRegistration(uint8_t major, uint8_t minor) {
 	return CS_ACK_ERR_NOT_FOUND;
 }
 
-int callInterrupt(uint8_t major, uint8_t minor, microapp_sdk_header_t* header) {
+int callInterrupt(uint8_t major, uint8_t minor, microapp_sdk_header_t* interruptHeader) {
 	for (int i = 0; i < MAX_INTERRUPT_REGISTRATIONS; ++i) {
 		if (!interruptRegistrations[i].registered) {
 			continue;
@@ -287,10 +284,10 @@ int callInterrupt(uint8_t major, uint8_t minor, microapp_sdk_header_t* header) {
 			continue;
 		}
 		if (interruptRegistrations[i].minor == minor) {
-			if (interruptRegistrations[i].interruptFunc) {
-				return interruptRegistrations[i].interruptFunc(header);
+			if (interruptRegistrations[i].handler) {
+				return interruptRegistrations[i].handler(interruptHeader);
 			}
-			// interruptFunc does not exist
+			// Handler does not exist
 			return CS_ACK_ERR_NOT_FOUND;
 		}
 	}
@@ -298,23 +295,23 @@ int callInterrupt(uint8_t major, uint8_t minor, microapp_sdk_header_t* header) {
 	return CS_ACK_ERR_NOT_FOUND;
 }
 
-int handleInterrupt(microapp_sdk_header_t* header) {
+int handleInterrupt(microapp_sdk_header_t* interruptHeader) {
 	// For all possible interrupt types, get the minor from the incoming message
 	uint8_t minor;
-	switch (header->sdkType) {
+	switch (interruptHeader->sdkType) {
 		case CS_MICROAPP_SDK_TYPE_PIN: {
-			microapp_sdk_pin_t* pin = reinterpret_cast<microapp_sdk_pin_t*>(header);
-			minor = pin->pin;
+			microapp_sdk_pin_t* pinInterrupt = reinterpret_cast<microapp_sdk_pin_t*>(interruptHeader);
+			minor = pinInterrupt->pin;
 			break;
 		}
 		case CS_MICROAPP_SDK_TYPE_BLE: {
-			microapp_sdk_ble_t* ble = reinterpret_cast<microapp_sdk_ble_t*>(header);
-			minor = ble->type;
+			microapp_sdk_ble_t* bleInterrupt = reinterpret_cast<microapp_sdk_ble_t*>(interruptHeader);
+			minor = bleInterrupt->type;
 			break;
 		}
 		case CS_MICROAPP_SDK_TYPE_MESH: {
-			microapp_sdk_mesh_t* mesh = reinterpret_cast<microapp_sdk_mesh_t*>(header);
-			minor = mesh->type;
+			microapp_sdk_mesh_t* meshInterrupt = reinterpret_cast<microapp_sdk_mesh_t*>(interruptHeader);
+			minor = meshInterrupt->type;
 			break;
 		}
 		default: {
@@ -322,5 +319,5 @@ int handleInterrupt(microapp_sdk_header_t* header) {
 		}
 	}
 	// Call the interrupt
-	return callInterrupt(header->sdkType, minor, header);
+	return callInterrupt(interruptHeader->sdkType, minor, interruptHeader);
 }

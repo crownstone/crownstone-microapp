@@ -10,34 +10,21 @@ extern "C" {
 #warning "Incorrect uintptr_t type"
 #endif
 
-/*
- * Implementation sends a message under the hood. The microapp itself is reponsible for looping for long enough.
- * A tick takes 100 ms. Hence the loop should be the delay in ms divided by 100.
- */
-void delay(uint32_t delay_ms) {
-	const uint8_t bluenet_tick_duration_ms = 100;
-	uint32_t ticks = delay_ms / (bluenet_tick_duration_ms * MICROAPP_LOOP_FREQUENCY);
-	for (uint32_t i = 0; i < ticks; i++) {
-		uint8_t *payload = getOutgoingMessagePayload();
-		microapp_delay_cmd_t *delay_cmd = (microapp_delay_cmd_t*)(payload);
-		delay_cmd->header.cmd = CS_MICROAPP_COMMAND_DELAY;
-		delay_cmd->period = ticks;
-		sendMessage();
-	}
-}
-
 void signalSetupEnd() {
 	uint8_t *payload = getOutgoingMessagePayload();
-	microapp_cmd_t *cmd = (microapp_cmd_t*)(payload);
-	cmd->cmd = CS_MICROAPP_COMMAND_SETUP_END;
-	cmd->interruptCmd = CS_MICROAPP_COMMAND_NONE;
+	microapp_sdk_yield_t *yield = reinterpret_cast<microapp_sdk_yield_t*>(payload);
+	yield->header.ack = CS_ACK_NO_REQUEST;
+	yield->header.sdkType = CS_MICROAPP_SDK_TYPE_YIELD;
+	yield->type = CS_MICROAPP_SDK_YIELD_SETUP;
 	sendMessage();
 }
 
 void signalLoopEnd() {
 	uint8_t *payload = getOutgoingMessagePayload();
-	microapp_cmd_t *cmd = (microapp_cmd_t*)(payload);
-	cmd->cmd = CS_MICROAPP_COMMAND_LOOP_END;
+	microapp_sdk_yield_t *yield = reinterpret_cast<microapp_sdk_yield_t*>(payload);
+	yield->header.ack = CS_ACK_NO_REQUEST;
+	yield->header.sdkType = CS_MICROAPP_SDK_TYPE_YIELD;
+	yield->type = CS_MICROAPP_SDK_YIELD_LOOP;
 	sendMessage();
 }
 

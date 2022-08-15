@@ -1,7 +1,23 @@
 #include <Arduino.h>
+#include <ipc/cs_IpcRamData.h>
 #include <microapp.h>
 
-#include <ipc/cs_IpcRamData.h>
+/*
+ * Implementation sends a message under the hood. The microapp itself is reponsible for looping for long enough.
+ * A tick takes 100 ms. Hence the loop should be the delay in ms divided by 100.
+ */
+void delay(uint32_t delay_ms) {
+	const uint8_t bluenet_tick_duration_ms = 100;
+	uint32_t ticks                         = delay_ms / (bluenet_tick_duration_ms * MICROAPP_LOOP_FREQUENCY);
+	for (uint32_t i = 0; i < ticks; i++) {
+		uint8_t* payload            = getOutgoingMessagePayload();
+		microapp_sdk_yield_t* yield = (microapp_sdk_yield_t*)(payload);
+		yield->header.sdkType       = CS_MICROAPP_SDK_TYPE_YIELD;
+		yield->type                 = CS_MICROAPP_SDK_YIELD_ASYNC;
+		yield->emptyInterruptSlots  = emptySlotsInStack();
+		sendMessage();
+	}
+}
 
 bool pinExists(uint8_t pin) {
 	// First check, more checks on bluenet side
@@ -26,13 +42,14 @@ void pinMode(uint8_t pin, uint8_t mode) {
 		return;
 	}
 
-	uint8_t *payload = getOutgoingMessagePayload();
-	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
-	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
-	pin_cmd->pin = pin;
-	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_MODE;
-	pin_cmd->opcode2 = mode;
-	pin_cmd->value = 0;
+	uint8_t* payload               = getOutgoingMessagePayload();
+	microapp_sdk_pin_t* pinRequest = reinterpret_cast<microapp_sdk_pin_t*>(payload);
+	pinRequest->header.ack         = CS_ACK_REQUEST;
+	pinRequest->header.sdkType     = CS_MICROAPP_SDK_TYPE_PIN;
+	pinRequest->pin                = pin;
+	pinRequest->type               = CS_MICROAPP_SDK_PIN_INIT;
+	pinRequest->direction          = mode;
+	pinRequest->polarity           = CS_MICROAPP_SDK_PIN_NO_POLARITY;
 
 	sendMessage();
 }
@@ -42,14 +59,19 @@ void digitalWrite(uint8_t pin, uint8_t val) {
 		return;
 	}
 
-	uint8_t *payload = getOutgoingMessagePayload();
-	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
-	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
-	pin_cmd->pin = pin;
-	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_ACTION;
-	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_WRITE;
-	pin_cmd->value = val;
-
+	uint8_t* payload               = getOutgoingMessagePayload();
+	microapp_sdk_pin_t* pinRequest = reinterpret_cast<microapp_sdk_pin_t*>(payload);
+	pinRequest->header.ack         = CS_ACK_REQUEST;
+	pinRequest->header.sdkType     = CS_MICROAPP_SDK_TYPE_PIN;
+	pinRequest->pin                = pin;
+	pinRequest->type               = CS_MICROAPP_SDK_PIN_ACTION;
+	pinRequest->action             = CS_MICROAPP_SDK_PIN_WRITE;
+	if (val == HIGH) {
+		pinRequest->value = CS_MICROAPP_SDK_PIN_ON;
+	}
+	else {
+		pinRequest->value = CS_MICROAPP_SDK_PIN_OFF;
+	}
 	sendMessage();
 }
 
@@ -58,18 +80,22 @@ int digitalRead(uint8_t pin) {
 		return -1;
 	}
 
-	uint8_t *payload = getOutgoingMessagePayload();
-	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
-	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
-	pin_cmd->pin = pin;
-	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_ACTION;
-	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_READ;
-	pin_cmd->value = 0;
+	uint8_t* payload               = getOutgoingMessagePayload();
+	microapp_sdk_pin_t* pinRequest = reinterpret_cast<microapp_sdk_pin_t*>(payload);
+	pinRequest->header.ack         = CS_ACK_REQUEST;
+	pinRequest->header.sdkType     = CS_MICROAPP_SDK_TYPE_PIN;
+	pinRequest->pin                = pin;
+	pinRequest->type               = CS_MICROAPP_SDK_PIN_ACTION;
+	pinRequest->action             = CS_MICROAPP_SDK_PIN_WRITE;
+	pinRequest->value              = 0;
 
 	sendMessage();
 
+	if (pinRequest->header.ack != CS_ACK_SUCCESS) {
+		return 0;
+	}
 	// TODO, perhaps a larger type then uint8_t is required / desired
-	uint8_t value = pin_cmd->value;
+	uint8_t value = pinRequest->value;
 	return value;
 }
 
@@ -79,57 +105,54 @@ int digitalRead(uint8_t pin) {
  * Actually, this again sets also the values that are set with pinMode. That's redundant.
  * For now, just keep it like this because it doesn't hurt to have a pin configured twice.
  */
-bool attachInterrupt(uint8_t interrupt, void (*isr)(void), uint8_t mode) {
-	if (!pinExists(interruptToDigitalPin(interrupt))) {
+bool attachInterrupt(uint8_t interruptIndex, void (*isr)(void), uint8_t mode) {
+	if (!pinExists(interruptToDigitalPin(interruptIndex))) {
 		return false;
 	}
 
-	interrupt_registration_t softInterrupt;
-	softInterrupt.type = SOFT_INTERRUPT_TYPE_PIN;
-	softInterrupt.id = interrupt;
-	softInterrupt.softInterruptFunc = reinterpret_cast<softInterruptFunction>(isr);
-	int result = registerSoftInterrupt(&softInterrupt);
-	if (result != ERR_MICROAPP_SUCCESS) {
+	interrupt_registration_t interrupt;
+	interrupt.major   = CS_MICROAPP_SDK_TYPE_PIN;
+	interrupt.minor   = interruptIndex;
+	interrupt.handler = reinterpret_cast<interruptFunction>(isr);
+	int result        = registerInterrupt(&interrupt);
+	if (result != CS_ACK_SUCCESS) {
 		return false;
 	}
 
-	uint8_t *payload = getOutgoingMessagePayload();
-	microapp_pin_cmd_t* pin_cmd = reinterpret_cast<microapp_pin_cmd_t*>(payload);
-	pin_cmd->header.cmd = CS_MICROAPP_COMMAND_PIN;
-	pin_cmd->pin = interrupt;
-	pin_cmd->opcode1 = CS_MICROAPP_COMMAND_PIN_MODE;
-	pin_cmd->opcode2 = CS_MICROAPP_COMMAND_PIN_INPUT_PULLUP;
-	pin_cmd->value = mode;
+	uint8_t* payload               = getOutgoingMessagePayload();
+	microapp_sdk_pin_t* pinRequest = reinterpret_cast<microapp_sdk_pin_t*>(payload);
+	pinRequest->header.ack         = CS_ACK_REQUEST;
+	pinRequest->header.sdkType     = CS_MICROAPP_SDK_TYPE_PIN;
+	pinRequest->pin                = interruptIndex;
+	pinRequest->type               = CS_MICROAPP_SDK_PIN_INIT;
+	pinRequest->direction          = CS_MICROAPP_SDK_PIN_INPUT_PULLUP;
+	pinRequest->polarity           = mode;
 
 	result = sendMessage();
-	if (result != ERR_MICROAPP_SUCCESS) {
+	if (result != CS_ACK_SUCCESS) {
 		// Remove locally registered interrupt
-		result = removeRegisteredSoftInterrupt(SOFT_INTERRUPT_TYPE_PIN, interrupt);
+		result = removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_PIN, interruptIndex);
 		// Do nothing with the result. We return false anyway
 		return false;
 	}
 	return true;
 }
 
-
 // Internally it is just the same as digitalRead
 int analogRead(uint8_t pin) {
 	return digitalRead(pin);
 }
 
-void analogReference(uint8_t mode) {
-}
+void analogReference(uint8_t mode) {}
 
 // Internally it is just the same as digitalWrite
 void analogWrite(uint8_t pin, int val) {
 	digitalWrite(pin, val);
 }
 
-void init() {
-}
+void init() {}
 
-void initVariant() {
-}
+void initVariant() {}
 
 // Return highest byte (8 bits) or second-lowest byte (for larger data types)
 byte highByte(short val) {
@@ -144,4 +167,3 @@ byte lowByte(short val) {
 short word(byte highByte, byte lowByte) {
 	return (short)(highByte << 8) | lowByte;
 }
-

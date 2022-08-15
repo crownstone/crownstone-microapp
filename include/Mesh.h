@@ -7,7 +7,7 @@
 struct MeshMsgBufferEntry {
 	bool filled = false;
 	uint8_t stoneId;
-	uint8_t data[MICROAPP_MAX_MESH_MESSAGE_SIZE];
+	uint8_t data[MAX_MICROAPP_MESH_PAYLOAD_SIZE];
 	uint8_t dlen;
 };
 
@@ -60,7 +60,6 @@ private:
 	 */
 	MeshMsgBufferEntry _incomingMeshMsgBuffer[MESH_MSG_BUFFER_LEN];
 
-
 	/**
 	 * Available mesh message passed to the user
 	 * Requires a separate memory location than _incomingMeshMsgBuffer since those can be overwritten
@@ -99,7 +98,7 @@ public:
 	/**
 	 * Place a mesh message
 	 */
-	int handleIncomingMeshMsg(microapp_mesh_read_cmd_t* msg);
+	int handleIncomingMeshMsg(microapp_sdk_mesh_t* msg);
 
 	/**
 	 * Register a handler that will be called upon incoming mesh messages

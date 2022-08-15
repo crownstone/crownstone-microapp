@@ -13,34 +13,44 @@ extern "C" {
 typedef bool boolean;
 typedef uint8_t byte;
 
-//
-// Redefinitions for easy pin access. These do NOT correspond to physical pins on a specific board.
-// A maximum of 10 GPIO pins (0-9), 4 button pins (1-4) and 4 LED pins (1-4) are supported.
-// However, keep in mind that for a specific board some of these pins may not exist.
-// The physical pin mapping for your board is defined in bluenet/source/include/boards/{board}.h
-//
-const uint8_t GPIO0_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_GPIO0;
-const uint8_t GPIO1_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_GPIO1;
-const uint8_t GPIO2_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_GPIO2;
-const uint8_t GPIO3_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_GPIO3;
-const uint8_t GPIO4_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_GPIO4;
-const uint8_t GPIO5_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_GPIO5;
-const uint8_t GPIO6_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_GPIO6;
-const uint8_t GPIO7_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_GPIO7;
-const uint8_t GPIO8_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_GPIO8;
-const uint8_t GPIO9_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_GPIO9;
-const uint8_t BUTTON1_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_BUTTON1;
-const uint8_t BUTTON2_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_BUTTON2;
-const uint8_t BUTTON3_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_BUTTON3;
-const uint8_t BUTTON4_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_BUTTON4;
-const uint8_t LED1_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_LED1;
-const uint8_t LED2_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_LED2;
-const uint8_t LED3_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_LED3;
-const uint8_t LED4_PIN = CommandMicroappPin::CS_MICROAPP_COMMAND_PIN_LED4;
+const uint8_t LOW = 0;
+const uint8_t HIGH = !LOW;
 
-// Further pin redefinitions
+// 10 GPIO pins, 4 buttons, and 4 leds
+#define NUMBER_OF_PINS 18
 
+/*
+ * Redefinitions for easy pin access. These do NOT correspond to physical pins on a specific board.
+ * A maximum of 10 GPIO pins (0-9), 4 button pins (1-4) and 4 LED pins (1-4) are supported.
+ * However, keep in mind that for a specific board some of these pins may not exist.
+ * The physical pin mapping for your board is defined in bluenet/source/include/boards/{board}.h
+ */
+const uint8_t GPIO0_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_GPIO0;
+const uint8_t GPIO1_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_GPIO1;
+const uint8_t GPIO2_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_GPIO2;
+const uint8_t GPIO3_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_GPIO3;
+const uint8_t GPIO4_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_GPIO4;
+const uint8_t GPIO5_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_GPIO5;
+const uint8_t GPIO6_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_GPIO6;
+const uint8_t GPIO7_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_GPIO7;
+const uint8_t GPIO8_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_GPIO8;
+const uint8_t GPIO9_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_GPIO9;
+const uint8_t BUTTON1_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_BUTTON1;
+const uint8_t BUTTON2_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_BUTTON2;
+const uint8_t BUTTON3_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_BUTTON3;
+const uint8_t BUTTON4_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_BUTTON4;
+const uint8_t LED1_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_LED1;
+const uint8_t LED2_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_LED2;
+const uint8_t LED3_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_LED3;
+const uint8_t LED4_PIN = MicroappSdkPin::CS_MICROAPP_SDK_PIN_LED4;
 
+#define OUTPUT          CS_MICROAPP_SDK_PIN_OUTPUT
+#define INPUT           CS_MICROAPP_SDK_PIN_INPUT
+#define INPUT_PULLUP    CS_MICROAPP_SDK_PIN_INPUT_PULLUP
+
+#define CHANGE          CS_MICROAPP_SDK_PIN_CHANGE
+#define RISING          CS_MICROAPP_SDK_PIN_RISING
+#define FALLING         CS_MICROAPP_SDK_PIN_FALLING
 //
 // You have to implement the setup() function. It can be empty if there is nothing to do at startup.
 //

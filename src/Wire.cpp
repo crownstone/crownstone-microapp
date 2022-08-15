@@ -41,13 +41,12 @@ int WireBase_::send(const uint8_t *buf, int length) {
 
 void WireBase_::begin() {
 	uint8_t *payload = getOutgoingMessagePayload();
-	//io_buffer_t *buffer = getOutgoingMessageBuffer();
-	microapp_twi_cmd_t* twi_cmd = reinterpret_cast<microapp_twi_cmd_t*>(payload);
-	twi_cmd->header.cmd = CS_MICROAPP_COMMAND_TWI;
-	twi_cmd->header.ack = 0;
-	twi_cmd->address = 0;
-	twi_cmd->opcode = I2C_INIT;
-	twi_cmd->stop = true;
+	microapp_sdk_twi_t* twiRequest = reinterpret_cast<microapp_sdk_twi_t*>(payload);
+	twiRequest->header.sdkType = CS_MICROAPP_SDK_TYPE_TWI;
+	twiRequest->header.ack = CS_ACK_REQUEST;
+	twiRequest->type = CS_MICROAPP_SDK_TWI_INIT;
+	twiRequest->address = 0;
+	twiRequest->flags = CS_MICROAPP_SDK_TWI_FLAG_STOP;
 	sendMessage();
 }
 
@@ -64,32 +63,34 @@ void WireBase_::endTransmission() {
 
 void WireBase_::requestFrom(const uint8_t address, const int size, bool stop) {
 	uint8_t *payload = getOutgoingMessagePayload();
-	//io_buffer_t *buffer = getOutgoingMessageBuffer();
-	microapp_twi_cmd_t* twi_cmd = reinterpret_cast<microapp_twi_cmd_t*>(payload);
-	twi_cmd->header.cmd = CS_MICROAPP_COMMAND_TWI;
-	twi_cmd->header.ack = 0;
-	twi_cmd->address = address;
-	twi_cmd->opcode = I2C_READ;
-	twi_cmd->length = size;
-	twi_cmd->stop = stop;
+	microapp_sdk_twi_t* twiRequest = reinterpret_cast<microapp_sdk_twi_t*>(payload);
+	twiRequest->header.sdkType = CS_MICROAPP_SDK_TYPE_TWI;
+	twiRequest->header.ack     = CS_ACK_REQUEST;
+	twiRequest->address        = address;
+	twiRequest->type           = CS_MICROAPP_SDK_TWI_READ;
+	twiRequest->size           = size;
+	twiRequest->flags          = CS_MICROAPP_SDK_TWI_FLAG_CLEAR;
+	if (stop){
+		twiRequest->flags |= CS_MICROAPP_SDK_TWI_FLAG_STOP;
+	}
+
 	sendMessage();
 
-	uint8_t *payloadIn = getIncomingMessagePayload();
-	//io_buffer_t *bufferIn = getIncomingMessageBuffer();
-	microapp_twi_cmd_t* twi_in_cmd = reinterpret_cast<microapp_twi_cmd_t*>(payloadIn);
 	_readPtr = 0;
-	_readLen = twi_in_cmd->length;
+	_readLen = twiRequest->size;
 	if (_readLen > WIRE_MAX_PAYLOAD_LENGTH) {
 		_readLen = WIRE_MAX_PAYLOAD_LENGTH;
 	}
 	for (int i = 0; i < _readLen; ++i) {
-		_readBuf[i] = twi_in_cmd->buf[i];
+		_readBuf[i] = twiRequest->buf[i];
 	}
 }
 
 int WireBase_::available() {
 	int result = (_readLen - _readPtr);
-	if (result < 0) result = 0;
+	if (result < 0) {
+		result = 0;
+	}
 	return result;
 }
 
@@ -111,33 +112,32 @@ int WireBase_::_write(const uint8_t *buf, int length, Type type) {
 		// Nothing to send.
 		return 0;
 	}
-	
+
 	uint8_t *payload = getOutgoingMessagePayload();
-	//io_buffer_t *buffer = getOutgoingMessageBuffer();
-	microapp_twi_cmd_t* twi_cmd = reinterpret_cast<microapp_twi_cmd_t*>(payload);
-	twi_cmd->header.cmd = CS_MICROAPP_COMMAND_TWI;
-	twi_cmd->header.ack = 0;
-	twi_cmd->address = _address;
-	twi_cmd->opcode = I2C_WRITE;
-	twi_cmd->stop = true;
+	microapp_sdk_twi_t* twiRequest = reinterpret_cast<microapp_sdk_twi_t*>(payload);
+	twiRequest->header.sdkType = CS_MICROAPP_SDK_TYPE_TWI;
+	twiRequest->header.ack     = CS_ACK_REQUEST;
+	twiRequest->address        = _address;
+	twiRequest->type           = CS_MICROAPP_SDK_TWI_WRITE;
+	twiRequest->flags          = CS_MICROAPP_SDK_TWI_FLAG_STOP;
 
 	// Make sure length is not too large.
 	if (type == Type::Str && length > WIRE_MAX_STRING_LENGTH) {
 		length = WIRE_MAX_STRING_LENGTH;
 	}
-	
+
 	// Make sure that in all cases that length is truncated. Do not silently fail.
 	if (length > WIRE_MAX_PAYLOAD_LENGTH) {
 		length = WIRE_MAX_PAYLOAD_LENGTH;
 	}
-	
-	twi_cmd->length = length;
-	
+
+	twiRequest->size = length;
+
 	// Copy the data.
 	for (int i = 0; i < length; ++i) {
-		twi_cmd->buf[i] = buf[i];
+		twiRequest->buf[i] = buf[i];
 	}
-	
+
 	// TODO: check result.
 	sendMessage();
 	return length;

@@ -14,38 +14,13 @@ typedef int (*interruptFunction)(void *);
 struct interrupt_registration_t {
     uint8_t major;
     uint8_t minor;
-    interruptFunction interruptFunc;
-    // void *arg;
+    interruptFunction handler;
     bool registered;
 };
 
 #define MAX_INTERRUPT_REGISTRATIONS 4
 
 extern interrupt_registration_t interruptRegistrations[MAX_INTERRUPT_REGISTRATIONS];
-
-// Create shortened typedefs (it is obvious we are within the microapp here)
-
-// typedef microapp_sdk_ble_t ble_sdk_t;
-// typedef microapp_sdk_twi_t twi_sdk_t;
-// typedef microapp_sdk_pin_t pin_sdk_t;
-
-#define OUTPUT          CS_MICROAPP_SDK_PIN_OUTPUT
-#define INPUT           CS_MICROAPP_SDK_PIN_INPUT
-#define INPUT_PULLUP    CS_MICROAPP_SDK_PIN_INPUT_PULLUP
-
-#define CHANGE          CS_MICROAPP_SDK_PIN_CHANGE
-#define RISING          CS_MICROAPP_SDK_PIN_RISING
-#define FALLING         CS_MICROAPP_SDK_PIN_FALLING
-
-#define I2C_INIT        CS_MICROAPP_SDK_TWI_INIT
-#define I2C_READ        CS_MICROAPP_SDK_TWI_READ
-#define I2C_WRITE       CS_MICROAPP_SDK_TWI_WRITE
-
-const uint8_t LOW = 0;
-const uint8_t HIGH = !LOW;
-
-// 10 GPIO pins, 4 buttons, and 4 leds
-#define NUMBER_OF_PINS 18
 
 // define size_t as a 16-bit unsigned int
 typedef uint16_t size_t;
@@ -101,6 +76,11 @@ uint8_t *getIncomingMessagePayload();
  * the end - by all the functions that have to reach the microapp code.
  */
 int sendMessage();
+
+/*
+ * Returns the number of empty slots for bluenet.
+ */
+uint8_t emptySlotsInStack();
 
 /**
  * Register a softInterrupt locally.

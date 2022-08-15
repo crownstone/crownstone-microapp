@@ -6,27 +6,34 @@ void CrownstoneRelay::init() {
 }
 
 void CrownstoneRelay::switchOff() {
-	setSwitch(CS_MICROAPP_COMMAND_SWITCH_OFF);
+	setSwitch(CS_MICROAPP_SDK_SWITCH_OFF);
 }
 
 void CrownstoneRelay::switchOn() {
-	setSwitch(CS_MICROAPP_COMMAND_SWITCH_ON);
+	setSwitch(CS_MICROAPP_SDK_SWITCH_ON);
 }
 
 void CrownstoneRelay::switchToggle() {
-	setSwitch(CS_MICROAPP_COMMAND_SWITCH_TOGGLE);
+	setSwitch(CS_MICROAPP_SDK_SWITCH_TOGGLE);
 }
 
-void CrownstoneRelay::setSwitch(CommandMicroappSwitchValue val) {
+void CrownstoneRelay::switchBehaviour() {
+	setSwitch(CS_MICROAPP_SDK_SWITCH_BEHAVIOUR);
+}
+
+void CrownstoneRelay::switchSmartOn() {
+	setSwitch(CS_MICROAPP_SDK_SWITCH_SMART_ON);
+}
+
+void CrownstoneRelay::setSwitch(MicroappSdkSwitchValue val) {
 	if (!_initialized) {
 		Serial.println("Relay not initialized");
 		return;
 	}
 	uint8_t *payload = getOutgoingMessagePayload();
-	microapp_dimmer_switch_cmd_t* switch_cmd = reinterpret_cast<microapp_dimmer_switch_cmd_t*>(payload);
-	switch_cmd->header.cmd = CS_MICROAPP_COMMAND_SWITCH_DIMMER;
-	switch_cmd->opcode = CS_MICROAPP_COMMAND_SWITCH;
-	switch_cmd->value = val;
+	microapp_sdk_switch_t* switchRequest = reinterpret_cast<microapp_sdk_switch_t*>(payload);
+	switchRequest->header.sdkType        = CS_MICROAPP_SDK_TYPE_SWITCH;
+	switchRequest->value                 = val;
 
 	sendMessage();
 }

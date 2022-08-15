@@ -8,7 +8,7 @@ private:
 
 	bool _initialized = false;
 
-	void setSwitch(CommandMicroappSwitchValue val);
+	void setSwitch(MicroappSdkSwitchValue val);
 
 public:
 
@@ -19,5 +19,9 @@ public:
 	void switchOn();
 
 	void switchToggle();
+
+	void switchBehaviour();
+
+	void switchSmartOn();
 
 };
