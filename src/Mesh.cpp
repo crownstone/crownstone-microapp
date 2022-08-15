@@ -1,7 +1,7 @@
 #include <Mesh.h>
 #include <Serial.h>
 
-int handleMeshInterrupt(void* buf) {
+microapp_result_t handleMeshInterrupt(void* buf) {
 	if (buf == nullptr) {
 		return CS_ACK_ERR_NOT_FOUND;
 	}
@@ -64,7 +64,7 @@ int MeshClass::handleIncomingMeshMsg(microapp_sdk_mesh_t* msg) {
 	}
 	MeshMsgBufferEntry& copy = _incomingMeshMsgBuffer[i];
 	copy.stoneId = msg->stoneId;
-	copy.dlen = msg->size;
+	copy.size = msg->size;
 	memcpy(copy.data, msg->data, msg->size);
 	copy.filled = true;
 
@@ -94,7 +94,7 @@ void MeshClass::readMeshMsg(MeshMsg* msg) {
 			// create a mesh message to return to the user
 			*msg = MeshMsg(	_incomingMeshMsgBuffer[i].stoneId,
 							_availableMeshMsg.data,
-							_incomingMeshMsgBuffer[i].dlen);
+							_incomingMeshMsgBuffer[i].size);
 			// free the incoming buffer entry
 			_incomingMeshMsgBuffer[i].filled = false;
 			return;

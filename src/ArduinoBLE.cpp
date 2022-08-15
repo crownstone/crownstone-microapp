@@ -3,7 +3,7 @@
 /*
  * An ordinary C function
  */
-int handleBleInterrupt(void* buf) {
+microapp_result_t handleBleInterrupt(void* buf) {
 	if (buf == nullptr) {
 		return CS_ACK_ERR_NOT_FOUND;
 	}
@@ -11,7 +11,7 @@ int handleBleInterrupt(void* buf) {
 	return BLE.handleInterrupt(bleInterrupt);
 }
 
-int Ble::handleInterrupt(microapp_sdk_ble_t* bleInterrupt) {
+microapp_result_t Ble::handleInterrupt(microapp_sdk_ble_t* bleInterrupt) {
 	// First get interrupt context
 	int interruptContextId = -1;
 	for (int i = 0; i < MAX_BLE_INTERRUPT_REGISTRATIONS; ++i) {

@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 // Interrupt functions
-typedef int (*interruptFunction)(void *);
+typedef microapp_result_t (*interruptFunction)(void *);
 
 // Store interrupts in the microapp
 struct interrupt_registration_t {
@@ -75,7 +75,7 @@ uint8_t *getIncomingMessagePayload();
  * Send a message to the bluenet code. This is the function that is called - in
  * the end - by all the functions that have to reach the microapp code.
  */
-int sendMessage();
+microapp_result_t sendMessage();
 
 /*
  * Returns the number of empty slots for bluenet.
@@ -85,17 +85,17 @@ uint8_t emptySlotsInStack();
 /**
  * Register a softInterrupt locally.
  */
-int registerInterrupt(interrupt_registration_t* interrupt);
+microapp_result_t registerInterrupt(interrupt_registration_t* interrupt);
 
 /**
  * Remove a registered softInterrupt locally
  */
-int removeInterruptRegistration(uint8_t major, uint8_t minor);
+microapp_result_t removeInterruptRegistration(uint8_t major, uint8_t minor);
 
 /**
  * Handle interrupts
  */
-int handleInterrupt(microapp_sdk_header_t* header);
+microapp_result_t handleInterrupt(microapp_sdk_header_t* header);
 
 #ifdef __cplusplus
 }

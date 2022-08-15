@@ -57,7 +57,7 @@ struct BleInterruptContext {
 class Ble {
 private:
 
-	friend int handleBleInterrupt(void*);
+	friend microapp_result_t handleBleInterrupt(void*);
 
 	Ble(){};
 
@@ -103,7 +103,7 @@ private:
 	/**
 	 * Handles interrupts entering the BLE class
 	 */
-	int handleInterrupt(microapp_sdk_ble_t* ble);
+	microapp_result_t handleInterrupt(microapp_sdk_ble_t* ble);
 
 public:
 

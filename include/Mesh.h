@@ -8,7 +8,7 @@ struct MeshMsgBufferEntry {
 	bool filled = false;
 	uint8_t stoneId;
 	uint8_t data[MAX_MICROAPP_MESH_PAYLOAD_SIZE];
-	uint8_t dlen;
+	uint8_t size;
 };
 
 /**
@@ -23,20 +23,19 @@ class MeshMsg {
 public:
 	uint8_t stoneId;
 	uint8_t* dataPtr;
-	uint8_t dlen;
+	uint8_t size;
 
 	MeshMsg(){};
-	MeshMsg(uint8_t stoneId_, uint8_t* dataPtr_, uint8_t dlen_) {
+	MeshMsg(uint8_t stoneId_, uint8_t* dataPtr_, uint8_t size_) {
 		stoneId = stoneId_;
 		dataPtr = dataPtr_;
-		dlen = dlen_;
+		size = size_;
 	};
 };
 
 typedef void (*ReceivedMeshMsgHandler)(MeshMsg);
 
-// wrapper for class method
-int softInterruptMesh(void* args, void* buf);
+microapp_result_t handleMeshInterrupt(void* buf);
 
 /**
  * Mesh class for inter-crownstone messaging.
@@ -47,6 +46,11 @@ int softInterruptMesh(void* args, void* buf);
  */
 class MeshClass {
 private:
+	/**
+	 * Allow c wrapper to call private member functions
+	 */
+	friend microapp_result_t handleMeshInterrupt(void*);
+
 	/**
 	 * Constructors and copy constructors
 	 */
@@ -76,6 +80,11 @@ private:
 	 */
 	uint8_t _stoneId;
 
+	/**
+	 * Handle an incoming mesh message. Called by c wrapper function
+	 */
+	int handleIncomingMeshMsg(microapp_sdk_mesh_t* msg);
+
 public:
 
 	static MeshClass & getInstance() {
@@ -94,11 +103,6 @@ public:
 	 * @return false if registering an interrupt service routine failed
 	 */
 	bool listen();
-
-	/**
-	 * Place a mesh message
-	 */
-	int handleIncomingMeshMsg(microapp_sdk_mesh_t* msg);
 
 	/**
 	 * Register a handler that will be called upon incoming mesh messages
