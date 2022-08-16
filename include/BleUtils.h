@@ -1,7 +1,7 @@
 #pragma once
 
-#include <microapp.h>
 #include <String.h>
+#include <microapp.h>
 
 // UTILITIES FOR THE MICROAPP BLE LIBRARY
 
@@ -28,7 +28,8 @@ private:
 	/**
 	 * Convert from MAC address string to byte array.
 	 *
-	 * @param[in] mac_str   Null-terminated string of the format "AA:BB:CC:DD:EE:FF", with either uppercase or lowercase letters.
+	 * @param[in] mac_str   Null-terminated string of the format "AA:BB:CC:DD:EE:FF", with either uppercase or lowercase
+	 * letters.
 	 * @param[out] mac      Pointer to a block of data containing the 6 bytes of the MAC address.
 	 */
 	void convertStringToMac(const char* mac_str, uint8_t* mac);
@@ -37,7 +38,7 @@ protected:
 	uint8_t _mac[MAC_ADDRESS_LENGTH];
 
 public:
-	MacAddress() {};
+	MacAddress(){};
 	MacAddress(const uint8_t* mac);
 	MacAddress(const char* mac_str);
 
@@ -46,9 +47,8 @@ public:
 	String getString();
 	uint8_t* getBytes();
 
-	bool operator==(const MacAddress& other) { return memcmp(this->_mac,other._mac,MAC_ADDRESS_LENGTH) == 0; }
-	bool operator!=(const MacAddress& other) { return memcmp(this->_mac,other._mac,MAC_ADDRESS_LENGTH) != 0; }
-
+	bool operator==(const MacAddress& other) { return memcmp(this->_mac, other._mac, MAC_ADDRESS_LENGTH) == 0; }
+	bool operator!=(const MacAddress& other) { return memcmp(this->_mac, other._mac, MAC_ADDRESS_LENGTH) != 0; }
 };
 
 // type for 16-bit uuid

@@ -1,14 +1,14 @@
 #pragma once
 
 #include <String.h>
-#include <stdint.h>
 #include <cs_MicroappStructs.h>
+#include <stdint.h>
 
 class Serial_ {
 private:
 	Serial_(){};
-	Serial_(Serial_ const&)         = delete;
-	void operator=(Serial_ const&)  = delete;
+	Serial_(Serial_ const&)        = delete;
+	void operator=(Serial_ const&) = delete;
 
 	enum Type {
 		Char        = CS_MICROAPP_SDK_LOG_CHAR,
@@ -21,10 +21,10 @@ private:
 		Short       = CS_MICROAPP_SDK_LOG_SHORT,
 	};
 
-	size_t _write(microapp_sdk_log_header_t *logRequest, Type type, MicroappSdkLogFlags flags);
+	size_t _write(microapp_sdk_log_header_t* logRequest, Type type, MicroappSdkLogFlags flags);
 	size_t _write(String str, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
-	size_t _write(const char *str, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
-	size_t _write(const uint8_t *buf, int length, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
+	size_t _write(const char* str, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
+	size_t _write(const uint8_t* buf, int length, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
 	size_t _write(char value, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
 	size_t _write(float value, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
 	size_t _write(double value, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
@@ -33,7 +33,7 @@ private:
 	size_t _write(unsigned int value, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
 
 public:
-	static Serial_ & getInstance() {
+	static Serial_& getInstance() {
 		// Guaranteed to be destroyed.
 		static Serial_ instance;
 
@@ -69,7 +69,7 @@ public:
 	// Write a string (as char array) to serial. The length will be obtained through searching for a null
 	// byte.
 	// Returns number of bytes written.
-	size_t write(const char *str);
+	size_t write(const char* str);
 
 	// Write to serial. For now this becomes logs in the Crownstone firmware. That is not so useful to the
 	// microapp person though. To send it through to UART for a USB dongle is quite limited, for normal
@@ -80,7 +80,7 @@ public:
 
 	// Write an array of bytes to serial.
 	// Returns number of bytes written.
-	size_t write(const uint8_t *buf, int length);
+	size_t write(const uint8_t* buf, int length);
 
 	// Copies of write
 
@@ -96,11 +96,11 @@ public:
 
 	size_t print(unsigned int value);
 
-	size_t print(const char *str);
+	size_t print(const char* str);
 
 	size_t print(String str);
 
-	size_t print(const uint8_t *buf, int length);
+	size_t print(const uint8_t* buf, int length);
 
 	// Copies of print (but with newline)
 
@@ -116,14 +116,11 @@ public:
 
 	size_t println(unsigned int value);
 
-	size_t println(const char *str);
+	size_t println(const char* str);
 
 	size_t println(String str);
 
-	size_t println(const uint8_t *buf, int length);
-
-
+	size_t println(const uint8_t* buf, int length);
 };
 
 #define Serial Serial_::getInstance()
-

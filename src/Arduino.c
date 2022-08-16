@@ -111,9 +111,9 @@ bool attachInterrupt(uint8_t interruptIndex, void (*isr)(void), uint8_t mode) {
 	}
 
 	interrupt_registration_t interrupt;
-	interrupt.major   = CS_MICROAPP_SDK_TYPE_PIN;
-	interrupt.minor   = interruptIndex;
-	interrupt.handler = reinterpret_cast<interruptFunction>(isr);
+	interrupt.major          = CS_MICROAPP_SDK_TYPE_PIN;
+	interrupt.minor          = interruptIndex;
+	interrupt.handler        = reinterpret_cast<interruptFunction>(isr);
 	microapp_result_t result = registerInterrupt(&interrupt);
 	if (result != CS_ACK_SUCCESS) {
 		return false;

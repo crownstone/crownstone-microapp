@@ -1,13 +1,13 @@
 #include <BleDevice.h>
 
 BleDevice::BleDevice(microapp_sdk_ble_t* dev) {
-	_device = dev;
-	_address = MacAddress(_device->address);
+	_device               = dev;
+	_address              = MacAddress(_device->address);
 	_flags.flags.nonEmpty = true;
 }
 
 String BleDevice::address() {
-	if (_address.isInitialized()) { // if already cached address
+	if (_address.isInitialized()) {  // if already cached address
 		return _address.getString();
 	}
 	_address = MacAddress(_device->address);
@@ -19,38 +19,39 @@ int8_t BleDevice::rssi() {
 }
 
 bool BleDevice::hasLocalName() {
-	if (!_flags.flags.checkedLocalName) { // if not yet checked
+	if (!_flags.flags.checkedLocalName) {  // if not yet checked
 		data_ptr_t cln;
 		data_ptr_t sln;
-		_flags.flags.hasCompleteLocalName = findAdvertisementDataType(GapAdvType::CompleteLocalName,&cln);
-		_flags.flags.hasShortenedLocalName = findAdvertisementDataType(GapAdvType::ShortenedLocalName,&sln);
-		_flags.flags.checkedLocalName = true;
+		_flags.flags.hasCompleteLocalName  = findAdvertisementDataType(GapAdvType::CompleteLocalName, &cln);
+		_flags.flags.hasShortenedLocalName = findAdvertisementDataType(GapAdvType::ShortenedLocalName, &sln);
+		_flags.flags.checkedLocalName      = true;
 	}
-	return (_flags.flags.hasCompleteLocalName || _flags.flags.hasShortenedLocalName); // either complete local name or shortened local name
+	return (_flags.flags.hasCompleteLocalName
+			|| _flags.flags.hasShortenedLocalName);  // either complete local name or shortened local name
 }
 
 String BleDevice::localName() {
 	// check if we have a local name
 	if (!hasLocalName()) {
 		_localNameLen = 0;
-		return String(_localName,_localNameLen);
+		return String(_localName, _localNameLen);
 	}
 	// check if we have already cached the name
 	if (_flags.flags.cachedLocalName) {
-		return String(_localName,_localNameLen);
+		return String(_localName, _localNameLen);
 	}
 	// if local name field available but not yet cached, get it from _device.data
 	data_ptr_t ln;
 	if (_flags.flags.hasCompleteLocalName) {
-		findAdvertisementDataType(GapAdvType::CompleteLocalName,&ln);
+		findAdvertisementDataType(GapAdvType::CompleteLocalName, &ln);
 	}
-	else { // hasShortenedLocalName
-		findAdvertisementDataType(GapAdvType::ShortenedLocalName,&ln);
+	else {  // hasShortenedLocalName
+		findAdvertisementDataType(GapAdvType::ShortenedLocalName, &ln);
 	}
 	_localNameLen = ln.len;
-	memcpy(_localName,ln.data,_localNameLen);
+	memcpy(_localName, ln.data, _localNameLen);
 	_flags.flags.cachedLocalName = true;
-	return String(_localName,_localNameLen);
+	return String(_localName, _localNameLen);
 }
 
 bool BleDevice::connect() {
@@ -64,38 +65,38 @@ bool BleDevice::connected() {
 }
 
 bool BleDevice::findAdvertisementDataType(GapAdvType type, data_ptr_t* foundData) {
-	uint8_t i = 0;
+	uint8_t i       = 0;
 	foundData->data = nullptr;
-	foundData->len = 0;
-	while (i < _device->size-1) {
-		uint8_t fieldLen = _device->data[i];
-		uint8_t fieldType = _device->data[i+1];
+	foundData->len  = 0;
+	while (i < _device->size - 1) {
+		uint8_t fieldLen  = _device->data[i];
+		uint8_t fieldType = _device->data[i + 1];
 		if (fieldLen == 0 || i + 1 + fieldLen > _device->size) {
 			return false;
 		}
 		if (fieldType == type) {
-			foundData->data = &_device->data[i+2];
-			foundData->len = fieldLen-1;
+			foundData->data = &_device->data[i + 2];
+			foundData->len  = fieldLen - 1;
 			return true;
 		}
-		i += fieldLen+1;
+		i += fieldLen + 1;
 	}
 	return false;
 }
 
 bool BleDevice::findServiceDataUuid(uuid16_t uuid) {
-	GapAdvType serviceUuidListTypes[2] = {GapAdvType::IncompleteList16BitServiceUuids,
-										  GapAdvType::CompleteList16BitServiceUuids};
+	GapAdvType serviceUuidListTypes[2] = {
+			GapAdvType::IncompleteList16BitServiceUuids, GapAdvType::CompleteList16BitServiceUuids};
 	data_ptr_t adData;
 	for (int i = 0; i < 2; i++) {
 		if (findAdvertisementDataType(serviceUuidListTypes[i], &adData)) {
 			// check adData for uuid
 			int j = 0;
 			while (j < adData.len) {
-				if (uuid == ((adData.data[j+1] << 8) | adData.data[j])) {
+				if (uuid == ((adData.data[j + 1] << 8) | adData.data[j])) {
 					return true;
 				}
-				j += 2; // for 16 bit uuids, shift 2 bytes
+				j += 2;  // for 16 bit uuids, shift 2 bytes
 			}
 		}
 	}

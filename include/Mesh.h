@@ -29,7 +29,7 @@ public:
 	MeshMsg(uint8_t stoneId_, uint8_t* dataPtr_, uint8_t size_) {
 		stoneId = stoneId_;
 		dataPtr = dataPtr_;
-		size = size_;
+		size    = size_;
 	};
 };
 
@@ -86,8 +86,7 @@ private:
 	microapp_result_t handleIncomingMeshMsg(microapp_sdk_mesh_t* msg);
 
 public:
-
-	static MeshClass & getInstance() {
+	static MeshClass& getInstance() {
 		// Guaranteed to be destroyed.
 		static MeshClass instance;
 

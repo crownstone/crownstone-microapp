@@ -8,14 +8,14 @@ extern "C" {
 #endif
 
 // Interrupt functions
-typedef microapp_result_t (*interruptFunction)(void *);
+typedef microapp_result_t (*interruptFunction)(void*);
 
 // Store interrupts in the microapp
 struct interrupt_registration_t {
-    uint8_t major;
-    uint8_t minor;
-    interruptFunction handler;
-    bool registered;
+	uint8_t major;
+	uint8_t minor;
+	interruptFunction handler;
+	bool registered;
 };
 
 #define MAX_INTERRUPT_REGISTRATIONS 4
@@ -35,7 +35,7 @@ const size_t MAX_STRING_SIZE = MICROAPP_SDK_MAX_STRING_LENGTH;
  *
  * @return           length of the string
  */
-uint8_t strlen(const char *str);
+uint8_t strlen(const char* str);
 
 /**
  * Compares the first num bytes of ptr1 and ptr2
@@ -50,7 +50,7 @@ uint8_t strlen(const char *str);
  * @return 1         if for the first unmatching byte i we have ptr1[i] >
  * ptr2[i]
  */
-int memcmp(const void *ptr1, const void *ptr2, size_t num);
+int memcmp(const void* ptr1, const void* ptr2, size_t num);
 
 /**
  * Copies num bytes from src to dest
@@ -61,15 +61,15 @@ int memcmp(const void *ptr1, const void *ptr2, size_t num);
  *
  * @return           A pointer to dest
  */
-void *memcpy(void *dest, const void *src, size_t num);
+void* memcpy(void* dest, const void* src, size_t num);
 
 /*
  * Get outgoing message buffer (can be used for sendMessage);
  */
 
-uint8_t *getOutgoingMessagePayload();
+uint8_t* getOutgoingMessagePayload();
 
-uint8_t *getIncomingMessagePayload();
+uint8_t* getIncomingMessagePayload();
 
 /**
  * Send a message to the bluenet code. This is the function that is called - in

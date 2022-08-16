@@ -1,7 +1,7 @@
 #include <ArduinoBLE.h>
 
 /*
- * An ordinary C function
+ * An ordinary C function. Calls internal handler
  */
 microapp_result_t handleBleInterrupt(void* buf) {
 	if (buf == nullptr) {
@@ -11,6 +11,10 @@ microapp_result_t handleBleInterrupt(void* buf) {
 	return BLE.handleInterrupt(bleInterrupt);
 }
 
+/*
+ * Internal interrupt handler.
+ * Retrieves context, checks type of interrupt and takes appropriate action
+ */
 microapp_result_t Ble::handleInterrupt(microapp_sdk_ble_t* bleInterrupt) {
 	// First get interrupt context
 	int interruptContextId = -1;
@@ -79,26 +83,26 @@ bool Ble::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice
 		return false;
 	}
 	BleInterruptContext& context = _bleInterruptContext[interruptContextId];
-	context.eventHandler = eventHandler;
-	context.filled       = true;
-	context.type         = interruptType(eventType);
+	context.eventHandler         = eventHandler;
+	context.filled               = true;
+	context.type                 = interruptType(eventType);
 
 	// Also register interrupt on the microapp side
 	interrupt_registration_t interrupt;
-	interrupt.major              = CS_MICROAPP_SDK_TYPE_BLE;
-	interrupt.minor              = interruptType(eventType);
-	interrupt.handler      = handleBleInterrupt;
+	interrupt.major          = CS_MICROAPP_SDK_TYPE_BLE;
+	interrupt.minor          = interruptType(eventType);
+	interrupt.handler        = handleBleInterrupt;
 	microapp_result_t result = registerInterrupt(&interrupt);
 	if (result != CS_ACK_SUCCESS) {
 		// No empty interrupt slots available on microapp side
 		// Remove interrupt context
 		context.eventHandler = nullptr;
-		context.filled = false;
+		context.filled       = false;
 		return false;
 	}
 
 	// Finally, send a message to bluenet registering the interrupt
-	uint8_t *payload        = getOutgoingMessagePayload();
+	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
 	bleRequest->header.sdkType     = CS_MICROAPP_SDK_TYPE_BLE;
 	bleRequest->header.ack         = CS_ACK_REQUEST;
@@ -112,7 +116,7 @@ bool Ble::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice
 		removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_BLE, interruptType(eventType));
 		// Undo interrupt context
 		context.eventHandler = nullptr;
-		context.filled = false;
+		context.filled       = false;
 		return false;
 	}
 	return true;
@@ -123,7 +127,7 @@ bool Ble::scan(bool withDuplicates) {
 		return true;
 	}
 
-	uint8_t *payload = getOutgoingMessagePayload();
+	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
 	bleRequest->header.sdkType     = CS_MICROAPP_SDK_TYPE_BLE;
 	bleRequest->header.ack         = CS_ACK_REQUEST;
@@ -167,7 +171,7 @@ bool Ble::stopScan() {
 	}
 
 	// send a message to bluenet asking it to stop forwarding ads to microapp
-	uint8_t *payload = getOutgoingMessagePayload();
+	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
 
 	bleRequest->header.ack     = CS_ACK_REQUEST;
@@ -182,7 +186,7 @@ bool Ble::stopScan() {
 	}
 
 	_activeFilter.type = BleFilterNone;  // reset filter
-	_isScanning = false;
+	_isScanning        = false;
 	return true;
 }
 
@@ -236,26 +240,18 @@ BleFilter* Ble::getFilter() {
 
 MicroappSdkBleType Ble::requestType(BleEventType type) {
 	switch (type) {
-		case BLEDeviceScanned:
-			return CS_MICROAPP_SDK_BLE_SCAN_REGISTER_INTERRUPT;
-		case BLEConnected:
-			return CS_MICROAPP_SDK_BLE_CONNECTION_REQUEST_CONNECT;
-		case BLEDisconnected:
-			return CS_MICROAPP_SDK_BLE_CONNECTION_REQUEST_DISCONNECT;
-		default:
-			return CS_MICROAPP_SDK_BLE_NONE;
+		case BLEDeviceScanned: return CS_MICROAPP_SDK_BLE_SCAN_REGISTER_INTERRUPT;
+		case BLEConnected: return CS_MICROAPP_SDK_BLE_CONNECTION_REQUEST_CONNECT;
+		case BLEDisconnected: return CS_MICROAPP_SDK_BLE_CONNECTION_REQUEST_DISCONNECT;
+		default: return CS_MICROAPP_SDK_BLE_NONE;
 	}
 }
 
 MicroappSdkBleType Ble::interruptType(BleEventType type) {
 	switch (type) {
-		case BLEDeviceScanned:
-			return CS_MICROAPP_SDK_BLE_SCAN_SCANNED_DEVICE;
-		case BLEConnected:
-			return CS_MICROAPP_SDK_BLE_CONNECTION_CONNECTED;
-		case BLEDisconnected:
-			return CS_MICROAPP_SDK_BLE_CONNECTION_DISCONNECTED;
-		default:
-			return CS_MICROAPP_SDK_BLE_NONE;
+		case BLEDeviceScanned: return CS_MICROAPP_SDK_BLE_SCAN_SCANNED_DEVICE;
+		case BLEConnected: return CS_MICROAPP_SDK_BLE_CONNECTION_CONNECTED;
+		case BLEDisconnected: return CS_MICROAPP_SDK_BLE_CONNECTION_DISCONNECTED;
+		default: return CS_MICROAPP_SDK_BLE_NONE;
 	}
 }

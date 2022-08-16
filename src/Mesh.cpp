@@ -10,15 +10,14 @@ microapp_result_t handleMeshInterrupt(void* buf) {
 	return Mesh.handleIncomingMeshMsg(mesh);
 }
 
-MeshClass::MeshClass() :	_registeredIncomingMeshMsgHandler(nullptr),
-							_stoneId(0) {}
+MeshClass::MeshClass() : _registeredIncomingMeshMsgHandler(nullptr), _stoneId(0) {}
 
 bool MeshClass::listen() {
 	// Register soft interrupt locally
 	interrupt_registration_t interrupt;
-	interrupt.major = CS_MICROAPP_SDK_TYPE_MESH;
-	interrupt.minor = CS_MICROAPP_SDK_MESH_READ;
-	interrupt.handler = handleMeshInterrupt;
+	interrupt.major          = CS_MICROAPP_SDK_TYPE_MESH;
+	interrupt.minor          = CS_MICROAPP_SDK_MESH_READ;
+	interrupt.handler        = handleMeshInterrupt;
 	microapp_result_t result = registerInterrupt(&interrupt);
 	if (result != CS_ACK_SUCCESS) {
 		// No empty interrupt slots available
@@ -26,7 +25,7 @@ bool MeshClass::listen() {
 	}
 
 	// Also send a command to bluenet that we want to listen to mesh
-	uint8_t* payload = getOutgoingMessagePayload();
+	uint8_t* payload                 = getOutgoingMessagePayload();
 	microapp_sdk_mesh_t* meshRequest = (microapp_sdk_mesh_t*)(payload);
 	meshRequest->header.ack          = CS_ACK_REQUEST;
 	meshRequest->header.sdkType      = CS_MICROAPP_SDK_TYPE_MESH;
@@ -52,7 +51,7 @@ microapp_result_t MeshClass::handleIncomingMeshMsg(microapp_sdk_mesh_t* msg) {
 	// that will lead to more memcpy calls however
 	bool full = true;
 	int i;
-	for (i=0; i<MESH_MSG_BUFFER_LEN; i++) {
+	for (i = 0; i < MESH_MSG_BUFFER_LEN; i++) {
 		if (!_incomingMeshMsgBuffer[i].filled) {
 			full = false;
 			break;
@@ -63,8 +62,8 @@ microapp_result_t MeshClass::handleIncomingMeshMsg(microapp_sdk_mesh_t* msg) {
 		return CS_ACK_ERR_NO_SPACE;
 	}
 	MeshMsgBufferEntry& copy = _incomingMeshMsgBuffer[i];
-	copy.stoneId = msg->stoneId;
-	copy.size = msg->size;
+	copy.stoneId             = msg->stoneId;
+	copy.size                = msg->size;
 	memcpy(copy.data, msg->data, msg->size);
 	copy.filled = true;
 
@@ -76,7 +75,7 @@ void MeshClass::setIncomingMeshMsgHandler(void (*handler)(MeshMsg)) {
 }
 
 bool MeshClass::available() {
-	for (int i=0; i<MESH_MSG_BUFFER_LEN; i++) {
+	for (int i = 0; i < MESH_MSG_BUFFER_LEN; i++) {
 		if (_incomingMeshMsgBuffer[i].filled) {
 			return true;
 		}
@@ -85,16 +84,14 @@ bool MeshClass::available() {
 }
 
 void MeshClass::readMeshMsg(MeshMsg* msg) {
-	for (int i=MESH_MSG_BUFFER_LEN-1; i>=0; i--) {
+	for (int i = MESH_MSG_BUFFER_LEN - 1; i >= 0; i--) {
 		if (_incomingMeshMsgBuffer[i].filled) {
 			// copy message data to another location where it can't be overwritten by incoming messages
 			// (do not check if _availableMeshMsg was already filled, just overwrite)
 			_availableMeshMsg.filled = true;
 			memcpy(_availableMeshMsg.data, _incomingMeshMsgBuffer[i].data, MAX_MICROAPP_MESH_PAYLOAD_SIZE);
 			// create a mesh message to return to the user
-			*msg = MeshMsg(	_incomingMeshMsgBuffer[i].stoneId,
-							_availableMeshMsg.data,
-							_incomingMeshMsgBuffer[i].size);
+			*msg = MeshMsg(_incomingMeshMsgBuffer[i].stoneId, _availableMeshMsg.data, _incomingMeshMsgBuffer[i].size);
 			// free the incoming buffer entry
 			_incomingMeshMsgBuffer[i].filled = false;
 			return;
@@ -103,7 +100,7 @@ void MeshClass::readMeshMsg(MeshMsg* msg) {
 }
 
 void MeshClass::sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId) {
-	uint8_t* payload          = getOutgoingMessagePayload();
+	uint8_t* payload                 = getOutgoingMessagePayload();
 	microapp_sdk_mesh_t* meshRequest = reinterpret_cast<microapp_sdk_mesh_t*>(payload);
 	meshRequest->header.ack          = CS_ACK_REQUEST;
 	meshRequest->header.sdkType      = CS_MICROAPP_SDK_TYPE_MESH;
@@ -125,8 +122,8 @@ short MeshClass::id() {
 	if (_stoneId != 0) {
 		return _stoneId;
 	}
-	// If not, ask bluenet via a MESH_GET_INFO message
-	uint8_t* payload = getOutgoingMessagePayload();
+	// If not, ask bluenet via a MESH_READ_CONFIG message
+	uint8_t* payload                 = getOutgoingMessagePayload();
 	microapp_sdk_mesh_t* meshRequest = reinterpret_cast<microapp_sdk_mesh_t*>(payload);
 	meshRequest->header.ack          = CS_ACK_REQUEST;
 	meshRequest->header.sdkType      = CS_MICROAPP_SDK_TYPE_MESH;

@@ -1,9 +1,9 @@
 #pragma once
 
+#include <BleDevice.h>
+#include <BleUtils.h>
 #include <Serial.h>
 #include <microapp.h>
-#include <BleUtils.h>
-#include <BleDevice.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,7 +25,7 @@ enum BleEventType {
 
 // Types of filters which can be used to filter scanned BLE devices
 enum BleFilterType {
-	BleFilterNone = 0, // default
+	BleFilterNone = 0,  // default
 	BleFilterAddress,
 	BleFilterLocalName,
 	BleFilterUuid
@@ -33,19 +33,19 @@ enum BleFilterType {
 
 // Stores the filter for filtering scanned BLE devices
 struct BleFilter {
-	BleFilterType type; // defines which property is currently being filtered on
-	MacAddress    address;
-	char          name[MAX_BLE_ADV_DATA_LENGTH]; // max length of name equals max advertisement length
-	uint16_t      len; // length of the name field
-	uuid16_t      uuid; // service data uuid
+	BleFilterType type;  // defines which property is currently being filtered on
+	MacAddress address;
+	char name[MAX_BLE_ADV_DATA_LENGTH];  // max length of name equals max advertisement length
+	uint16_t len;                        // length of the name field
+	uuid16_t uuid;                       // service data uuid
 };
 
 typedef void (*BleEventHandler)(BleDevice);
 
 // Context for the callback that can be kept local.
 struct BleInterruptContext {
-	BleEventHandler    eventHandler = nullptr;
-	bool               filled       = false;
+	BleEventHandler eventHandler = nullptr;
+	bool filled                  = false;
 	MicroappSdkBleType type;
 };
 
@@ -56,7 +56,6 @@ struct BleInterruptContext {
  */
 class Ble {
 private:
-
 	friend microapp_result_t handleBleInterrupt(void*);
 
 	Ble(){};
@@ -106,8 +105,7 @@ private:
 	microapp_result_t handleInterrupt(microapp_sdk_ble_t* ble);
 
 public:
-
-	static Ble & getInstance() {
+	static Ble& getInstance() {
 		// Guaranteed to be destroyed.
 		static Ble instance;
 
@@ -187,7 +185,8 @@ public:
 	/**
 	 * Registers filter with name name and calls scan()
 	 *
-	 * @param[in] name            String containing the local name to filter on, advertised as either the complete or shortened local name
+	 * @param[in] name            String containing the local name to filter on, advertised as either the complete or
+	 * shortened local name
 	 * @param[in] withDuplicates  If true, returns duplicate advertisements. (Not implemented)
 	 *
 	 * @return                    True if successful
@@ -197,7 +196,8 @@ public:
 	/**
 	 * Registers filter with MAC address address and calls scan()
 	 *
-	 * @param[in] address         MAC address string of the format "AA:BB:CC:DD:EE:FF" to filter on, either lowercase or uppercase letters.
+	 * @param[in] address         MAC address string of the format "AA:BB:CC:DD:EE:FF" to filter on, either lowercase or
+	 * uppercase letters.
 	 * @param[in] withDuplicates  If true, returns duplicate advertisements. (Not implemented)
 	 *
 	 * @return                    True if successful
@@ -207,7 +207,8 @@ public:
 	/**
 	 * Registers filter with service data uuid uuid and calls scan()
 	 *
-	 * @param[in] uuid            16-bit UUID string, e.g. "180D" (Heart Rate), either lowercase or uppercase letters. See https://www.bluetooth.com/specifications/assigned-numbers/
+	 * @param[in] uuid            16-bit UUID string, e.g. "180D" (Heart Rate), either lowercase or uppercase letters.
+	 * See https://www.bluetooth.com/specifications/assigned-numbers/
 	 * @param[in] withDuplicates  If true, returns duplicate advertisements. (Not implemented)
 	 *
 	 * @return                    True if successful
@@ -225,8 +226,6 @@ public:
 	 * @return                  BleDevice object representing the discovered device
 	 */
 	BleDevice available();
-
 };
-
 
 #define BLE Ble::getInstance()
