@@ -1,7 +1,12 @@
 #include <Arduino.h>
+#include <ServiceData.h>
 
 // A microapp example that prints hello world.
 uint16_t counter;
+
+const size_t serviceDataSize = 1;
+const uint16_t serviceDataUuid = 0x1234;
+uint8_t serviceData[serviceDataSize];
 
 // The Arduino setup function.
 void setup() {
@@ -21,5 +26,8 @@ void setup() {
 void loop() {
 	// Print counter ever time we loop (which is every second)
 	Serial.println(counter++);
-	return;
+
+	// Also advertise the counter value in the service data.
+	serviceData[0] = counter;
+	ServiceData.write(serviceDataUuid, serviceData, serviceDataSize);
 }
