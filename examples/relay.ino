@@ -19,6 +19,7 @@ void loop() {
 		return;
 	}
 	// Toggle the relay
+	// relay.switchToggle() can be used alternatively
 	if (relayState) {
 		relay.switchOff();
 	}

@@ -1,4 +1,7 @@
+#include <Arduino.h>
+
 // A microapp example that prints hello world.
+uint16_t counter;
 
 // The Arduino setup function.
 void setup() {
@@ -10,12 +13,13 @@ void setup() {
 
 	// Write something to the log (will be shown in the bluenet code as print statement).
 	Serial.println("Hello world");
+
+	counter = 0;
 }
 
 // The Arduino loop function.
 void loop() {
-	// Say high ever time we loop (which is every second)
-	Serial.println("Hi!");
-
+	// Print counter ever time we loop (which is every second)
+	Serial.println(counter++);
 	return;
 }

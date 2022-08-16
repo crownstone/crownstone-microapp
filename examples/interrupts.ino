@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <ArduinoBLE.h>
 #include <Mesh.h>
-#include <Serial.h>
 
 #define ENABLE_BLE_INTERRUPTS
 #define ENABLE_MESH_INTERRUPTS
@@ -58,7 +57,7 @@ void setup() {
 
 #ifdef ENABLE_BLE_INTERRUPTS
 	// initialize ble
-	if (!BLE.setEventHandler(BleEventDeviceScanned, onScannedDevice)) {
+	if (!BLE.setEventHandler(BLEDeviceScanned, onScannedDevice)) {
 		Serial.println("Setting BLE event handler failed");
 	}
 	if (!BLE.scanForAddress(bleBeaconAddress)) {

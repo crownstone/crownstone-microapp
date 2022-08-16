@@ -1,6 +1,8 @@
 #include <ArduinoBLE.h>
 
-// A ble microapp example for reading advertisements from a Xiaomi Thermometer with custom firmware: https://github.com/atc1441/ATC_MiThermometer
+// A ble microapp example for reading BLE advertisements
+// The beacon used is a Xiaomi Thermometer with custom firmware
+// https://github.com/atc1441/ATC_MiThermometer
 
 uint16_t loopCounter = 0;
 
@@ -59,7 +61,7 @@ void setup() {
 	Serial.println("Setup");
 
 	// Register my_callback_func
-	BLE.setEventHandler(BleEventDeviceScanned, onScannedDevice);
+	BLE.setEventHandler(BLEDeviceScanned, onScannedDevice);
 }
 
 // The Arduino loop function.

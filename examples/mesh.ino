@@ -9,9 +9,9 @@ uint32_t counter;
 void printMeshMsg(MeshMsg* msg) {
 	Serial.print("Received mesh message from stone ");
 	Serial.println(msg->stoneId);
-	for (int i = 0; i < msg->dlen; i++) {
+	for (int i = 0; i < msg->size; i++) {
 		Serial.print(*(msg->dataPtr + i));
-		if (i + 1 == msg->dlen) {
+		if (i + 1 == msg->size) {
 			Serial.println(" ");
 		}
 		else {
