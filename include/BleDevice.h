@@ -10,15 +10,22 @@ struct data_ptr_t {
 	size_t len = 0;
 };
 
-// GAP advertisement types, see
+// Incomplete list of GAP advertisement types, see
 // https://www.bluetooth.com/specifications/assigned-numbers/
 enum GapAdvType {
-	CompleteList16BitServiceUuids  = 0x03,
-	CompleteList128BitServiceUuids = 0x07,
-	ShortenedLocalName             = 0x08,
-	CompleteLocalName              = 0x09,
-	ServiceData                    = 0x16,
-	ManufacturerSpecificData       = 0xFF
+	Flags                             = 0x01,
+	IncompleteList16BitServiceUuids   = 0x02,
+	CompleteList16BitServiceUuids     = 0x03,
+	IncompleteList32BitServiceUuids   = 0x04,
+	CompleteList32BitServiceUuids     = 0x05,
+	IncompleteList128BitServiceUuids  = 0x06,
+	CompleteList128BitServiceUuids    = 0x07,
+	ShortenedLocalName                = 0x08,
+	CompleteLocalName                 = 0x09,
+	ServiceData16BitUuid              = 0x16,
+	ServiceData32BitUuid              = 0x20,
+	ServiceData128BitUuid             = 0x21,
+	ManufacturerSpecificData          = 0xFF,
 };
 
 class BleDevice {
@@ -105,5 +112,13 @@ public:
 	 */
 	bool findAdvertisementDataType(GapAdvType type, data_ptr_t* foundData);
 
+	/**
+	 * Checks if a service with passed uuid is advertised by the device
+	 *
+	 * @param uuid     the uuid to filter
+	 * @return true    if found
+	 * @return false   if not found
+	 */
+	bool findServiceDataUuid(uuid16_t uuid);
 
 };

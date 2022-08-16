@@ -88,7 +88,7 @@ bool Ble::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice
 	interrupt.major              = CS_MICROAPP_SDK_TYPE_BLE;
 	interrupt.minor              = interruptType(eventType);
 	interrupt.handler      = handleBleInterrupt;
-	int result = registerInterrupt(&interrupt);
+	microapp_result_t result = registerInterrupt(&interrupt);
 	if (result != CS_ACK_SUCCESS) {
 		// No empty interrupt slots available on microapp side
 		// Remove interrupt context
@@ -216,18 +216,7 @@ bool Ble::filterScanEvent(BleDevice device) {
 			return true;
 		}
 		case BleFilterUuid: {
-			// TODO: refactor. Now filters ads of type service data with as
-			// first element the filtered uuid, which is not the same as what
-			// the official ArduinoBLE library does
-			data_ptr_t serviceData;
-			if (!device.findAdvertisementDataType(GapAdvType::ServiceData, &serviceData)) {
-				return false;
-			}
-			uint16_t uuid = ((serviceData.data[1] << 8) | serviceData.data[0]);
-			if (uuid != _activeFilter.uuid) {
-				return false;
-			}
-			return true;
+			return device.findServiceDataUuid(_activeFilter.uuid);
 		}
 		case BleFilterNone: {
 			// If no filter is set, we pass the filter by default

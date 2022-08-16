@@ -82,3 +82,22 @@ bool BleDevice::findAdvertisementDataType(GapAdvType type, data_ptr_t* foundData
 	}
 	return false;
 }
+
+bool BleDevice::findServiceDataUuid(uuid16_t uuid) {
+	GapAdvType serviceUuidListTypes[2] = {GapAdvType::IncompleteList16BitServiceUuids,
+										  GapAdvType::CompleteList16BitServiceUuids};
+	data_ptr_t adData;
+	for (int i = 0; i < 2; i++) {
+		if (findAdvertisementDataType(serviceUuidListTypes[i], &adData)) {
+			// check adData for uuid
+			int j = 0;
+			while (j < adData.len) {
+				if (uuid == ((adData.data[j+1] << 8) | adData.data[j])) {
+					return true;
+				}
+				j += 2; // for 16 bit uuids, shift 2 bytes
+			}
+		}
+	}
+	return false;
+}

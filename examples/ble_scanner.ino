@@ -35,7 +35,7 @@ void onScannedDevice(BleDevice device) {
 
 	// parse service data of Xiaomi device advertisement if available
 	data_ptr_t serviceData;
-	if (device.findAdvertisementDataType(GapAdvType::ServiceData, &serviceData)) {
+	if (device.findAdvertisementDataType(GapAdvType::ServiceData16BitUuid, &serviceData)) {
 		if (serviceData.len == 15) { // service data length of the Xiaomi service data advertisements
 			uint16_t temperature = (serviceData.data[8] << 8) | serviceData.data[9];
 			Serial.print("\tTemperature: "); Serial.println(temperature);
