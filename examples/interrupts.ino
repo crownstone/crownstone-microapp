@@ -2,6 +2,18 @@
 #include <ArduinoBLE.h>
 #include <Mesh.h>
 
+/**
+ * A basic microapp example showcasing interrupts.
+ *
+ * The example can configure three types of interrupts:
+ * - BLE device scans
+ * - Received mesh messages
+ * - Button presses
+ * All three can be used at the same time.
+ * On interrupts, LEDs are toggled (for nRF52 development kits),
+ * and messages are printed to UART
+ */
+
 #define ENABLE_BLE_INTERRUPTS
 #define ENABLE_MESH_INTERRUPTS
 #define ENABLE_GPIO_INTERRUPTS

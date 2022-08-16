@@ -1,9 +1,11 @@
-//
-// Relay demo
-//
-
-#include <Arduino.h>
 #include <CrownstoneRelay.h>
+
+/**
+ * A basic microapp example showcasing relay functionality
+ *
+ * This example should be run on a crownstone with switching functionality
+ * This example will not do anything if run on one of the nRF52 development kits.
+ */
 
 CrownstoneRelay relay;
 bool relayState = HIGH;

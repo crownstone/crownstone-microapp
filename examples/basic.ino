@@ -3,16 +3,18 @@
 //
 
 #include <Arduino.h>
+#include <ServiceData.h>
 
 // Show how a counter is incremented
 static int counter = 100;
 
-microapp_service_data_t serviceData;
-
 volatile byte state = LOW;
 volatile byte state2 = LOW;
 
-//
+const size_t serviceDataSize = 1;
+const uint16_t serviceDataUuid = 0x1234;
+uint8_t serviceData[serviceDataSize];
+
 // The blink function will be called on interrupt CHANGE. This means when you press and when you release a button.
 // Therefore two state variables are used to only toggle the state every two interrupts.
 void blink() {
@@ -37,10 +39,6 @@ void setup() {
 
 	// We can also write integers.
 	Serial.println(counter);
-
-	// Set the UUID of this microapp.
-	serviceData.appUuid = 0x1234;
-	serviceData.dlen = 1;
 
 	// Set LED pin to OUTPUT, so we can write.
 	pinMode(LED2_PIN, OUTPUT);
@@ -108,6 +106,6 @@ void loop() {
 	Serial.println(counter);
 
 	// Let's advertise the counter value in the service data.
-	serviceData.data[0] = counter;
-	SerialServiceData.write(&serviceData);
+	serviceData[0] = counter;
+	ServiceData.write(serviceDataUuid, serviceData, serviceDataSize);
 }

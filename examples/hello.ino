@@ -1,7 +1,19 @@
 #include <Arduino.h>
 #include <ServiceData.h>
 
-// A microapp example that prints hello world.
+
+/**
+ * A very basic 'hello world' microapp example.
+ *
+ * Every loop (once per second) a counter is incremented and printed.
+ * For crownstones equipped with UART, the serial prints are sent over UART,
+ * e.g. one of the nRF52 development kits or the crownstone USB dongle.
+ * Most 'real' crownstones do not have an available UART port.
+ * Hence, the counter is also advertised over the service data,
+ * i.e. broadcast over BLE.
+ */
+
+
 uint16_t counter;
 
 const size_t serviceDataSize = 1;

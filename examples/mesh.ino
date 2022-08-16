@@ -1,8 +1,19 @@
 #include <Mesh.h>
 #include <Serial.h>
 
-// #define ROLE_RECEIVER
+/**
+ * A microapp example for transmitting and receiving mesh messages
+ *
+ * Two roles are defined for this example:
+ * - In receiver role, the microapp listens for incoming mesh messages
+ * - In transmitter role, the microapp periodically transmits mesh messages
+ */
+
+// Define or undefine the following to set the role for the crownstone
+#define ROLE_RECEIVER
+#undef ROLE_RECEIVER
 #define ROLE_TRANSMITTER
+// #undef ROLE_TRANSMITTER
 
 uint32_t counter;
 

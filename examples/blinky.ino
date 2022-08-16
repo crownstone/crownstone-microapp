@@ -1,8 +1,13 @@
-//
-// Blinking LEDs
-//
-
 #include <Arduino.h>
+
+/**
+ * A very basic microapp example for toggling LEDs.
+ *
+ * This example should be run on a 'crownstone' equipped with LEDs,
+ * e.g. one of the nRF52 development kits
+ * Most 'real' crownstones are not equipped with LEDs,
+ * so this example will not do anything for these.
+ */
 
 const uint8_t nrLEDs = 3;
 boolean ledState[nrLEDs];
