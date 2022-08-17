@@ -12,8 +12,6 @@ bool relayState = HIGH;
 uint8_t counter = 0;
 
 void setup() {
-	// Initialize the relay
-	relay.init();
 }
 
 void loop() {

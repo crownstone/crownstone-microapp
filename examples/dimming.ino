@@ -12,8 +12,6 @@ CrownstoneDimmer dimmer;
 uint8_t intensity = 0;
 
 void setup() {
-	// Initialize the dimmer
-	dimmer.init();
 }
 
 void loop() {
