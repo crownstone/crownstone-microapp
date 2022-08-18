@@ -104,7 +104,7 @@ bool Ble::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice
 	// Finally, send a message to bluenet registering the interrupt
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
-	bleRequest->header.sdkType     = CS_MICROAPP_SDK_TYPE_BLE;
+	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
 	bleRequest->header.ack         = CS_ACK_REQUEST;
 	bleRequest->type               = requestType(eventType);
 
@@ -129,7 +129,7 @@ bool Ble::scan(bool withDuplicates) {
 
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
-	bleRequest->header.sdkType     = CS_MICROAPP_SDK_TYPE_BLE;
+	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
 	bleRequest->header.ack         = CS_ACK_REQUEST;
 	bleRequest->type               = CS_MICROAPP_SDK_BLE_SCAN_START;
 
@@ -174,9 +174,9 @@ bool Ble::stopScan() {
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
 
-	bleRequest->header.ack     = CS_ACK_REQUEST;
-	bleRequest->header.sdkType = CS_MICROAPP_SDK_TYPE_BLE;
-	bleRequest->type           = CS_MICROAPP_SDK_BLE_SCAN_STOP;
+	bleRequest->header.ack         = CS_ACK_REQUEST;
+	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
+	bleRequest->type               = CS_MICROAPP_SDK_BLE_SCAN_STOP;
 
 	sendMessage();
 

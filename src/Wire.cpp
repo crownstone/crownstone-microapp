@@ -41,7 +41,7 @@ int WireBase_::send(const uint8_t* buf, int length) {
 void WireBase_::begin() {
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_twi_t* twiRequest = reinterpret_cast<microapp_sdk_twi_t*>(payload);
-	twiRequest->header.sdkType     = CS_MICROAPP_SDK_TYPE_TWI;
+	twiRequest->header.messageType = CS_MICROAPP_SDK_TYPE_TWI;
 	twiRequest->header.ack         = CS_ACK_REQUEST;
 	twiRequest->type               = CS_MICROAPP_SDK_TWI_INIT;
 	twiRequest->address            = 0;
@@ -63,7 +63,7 @@ void WireBase_::endTransmission() {
 void WireBase_::requestFrom(const uint8_t address, const int size, bool stop) {
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_twi_t* twiRequest = reinterpret_cast<microapp_sdk_twi_t*>(payload);
-	twiRequest->header.sdkType     = CS_MICROAPP_SDK_TYPE_TWI;
+	twiRequest->header.messageType = CS_MICROAPP_SDK_TYPE_TWI;
 	twiRequest->header.ack         = CS_ACK_REQUEST;
 	twiRequest->address            = address;
 	twiRequest->type               = CS_MICROAPP_SDK_TWI_READ;
@@ -114,7 +114,7 @@ int WireBase_::_write(const uint8_t* buf, int length, Type type) {
 
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_twi_t* twiRequest = reinterpret_cast<microapp_sdk_twi_t*>(payload);
-	twiRequest->header.sdkType     = CS_MICROAPP_SDK_TYPE_TWI;
+	twiRequest->header.messageType = CS_MICROAPP_SDK_TYPE_TWI;
 	twiRequest->header.ack         = CS_ACK_REQUEST;
 	twiRequest->address            = _address;
 	twiRequest->type               = CS_MICROAPP_SDK_TWI_WRITE;

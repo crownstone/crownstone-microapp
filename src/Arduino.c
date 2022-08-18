@@ -12,7 +12,7 @@ void delay(uint32_t delay_ms) {
 	for (uint32_t i = 0; i < ticks; i++) {
 		uint8_t* payload            = getOutgoingMessagePayload();
 		microapp_sdk_yield_t* yield = (microapp_sdk_yield_t*)(payload);
-		yield->header.sdkType       = CS_MICROAPP_SDK_TYPE_YIELD;
+		yield->header.messageType   = CS_MICROAPP_SDK_TYPE_YIELD;
 		yield->type                 = CS_MICROAPP_SDK_YIELD_ASYNC;
 		yield->emptyInterruptSlots  = emptySlotsInStack();
 		sendMessage();
@@ -45,7 +45,7 @@ void pinMode(uint8_t pin, uint8_t mode) {
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_pin_t* pinRequest = reinterpret_cast<microapp_sdk_pin_t*>(payload);
 	pinRequest->header.ack         = CS_ACK_REQUEST;
-	pinRequest->header.sdkType     = CS_MICROAPP_SDK_TYPE_PIN;
+	pinRequest->header.messageType = CS_MICROAPP_SDK_TYPE_PIN;
 	pinRequest->pin                = pin;
 	pinRequest->type               = CS_MICROAPP_SDK_PIN_INIT;
 	pinRequest->direction          = mode;
@@ -62,7 +62,7 @@ void digitalWrite(uint8_t pin, uint8_t val) {
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_pin_t* pinRequest = reinterpret_cast<microapp_sdk_pin_t*>(payload);
 	pinRequest->header.ack         = CS_ACK_REQUEST;
-	pinRequest->header.sdkType     = CS_MICROAPP_SDK_TYPE_PIN;
+	pinRequest->header.messageType = CS_MICROAPP_SDK_TYPE_PIN;
 	pinRequest->pin                = pin;
 	pinRequest->type               = CS_MICROAPP_SDK_PIN_ACTION;
 	pinRequest->action             = CS_MICROAPP_SDK_PIN_WRITE;
@@ -83,7 +83,7 @@ int digitalRead(uint8_t pin) {
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_pin_t* pinRequest = reinterpret_cast<microapp_sdk_pin_t*>(payload);
 	pinRequest->header.ack         = CS_ACK_REQUEST;
-	pinRequest->header.sdkType     = CS_MICROAPP_SDK_TYPE_PIN;
+	pinRequest->header.messageType = CS_MICROAPP_SDK_TYPE_PIN;
 	pinRequest->pin                = pin;
 	pinRequest->type               = CS_MICROAPP_SDK_PIN_ACTION;
 	pinRequest->action             = CS_MICROAPP_SDK_PIN_WRITE;
@@ -122,7 +122,7 @@ bool attachInterrupt(uint8_t interruptIndex, void (*isr)(void), uint8_t mode) {
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_pin_t* pinRequest = reinterpret_cast<microapp_sdk_pin_t*>(payload);
 	pinRequest->header.ack         = CS_ACK_REQUEST;
-	pinRequest->header.sdkType     = CS_MICROAPP_SDK_TYPE_PIN;
+	pinRequest->header.messageType = CS_MICROAPP_SDK_TYPE_PIN;
 	pinRequest->pin                = interruptIndex;
 	pinRequest->type               = CS_MICROAPP_SDK_PIN_INIT;
 	pinRequest->direction          = CS_MICROAPP_SDK_PIN_INPUT_PULLUP;

@@ -297,7 +297,7 @@ microapp_result_t callInterrupt(uint8_t major, uint8_t minor, microapp_sdk_heade
 microapp_result_t handleInterrupt(microapp_sdk_header_t* interruptHeader) {
 	// For all possible interrupt types, get the minor from the incoming message
 	uint8_t minor;
-	switch (interruptHeader->sdkType) {
+	switch (interruptHeader->messageType) {
 		case CS_MICROAPP_SDK_TYPE_PIN: {
 			microapp_sdk_pin_t* pinInterrupt = reinterpret_cast<microapp_sdk_pin_t*>(interruptHeader);
 			minor                            = pinInterrupt->pin;
@@ -318,5 +318,5 @@ microapp_result_t handleInterrupt(microapp_sdk_header_t* interruptHeader) {
 		}
 	}
 	// Call the interrupt
-	return callInterrupt(interruptHeader->sdkType, minor, interruptHeader);
+	return callInterrupt(interruptHeader->messageType, minor, interruptHeader);
 }

@@ -24,7 +24,7 @@ void CrownstoneRelay::switchSmartOn() {
 void CrownstoneRelay::setSwitch(MicroappSdkSwitchValue val) {
 	uint8_t* payload                     = getOutgoingMessagePayload();
 	microapp_sdk_switch_t* switchRequest = reinterpret_cast<microapp_sdk_switch_t*>(payload);
-	switchRequest->header.sdkType        = CS_MICROAPP_SDK_TYPE_SWITCH;
+	switchRequest->header.messageType    = CS_MICROAPP_SDK_TYPE_SWITCH;
 	switchRequest->value                 = val;
 	sendMessage();
 }

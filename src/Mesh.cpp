@@ -28,7 +28,7 @@ bool MeshClass::listen() {
 	uint8_t* payload                 = getOutgoingMessagePayload();
 	microapp_sdk_mesh_t* meshRequest = (microapp_sdk_mesh_t*)(payload);
 	meshRequest->header.ack          = CS_ACK_REQUEST;
-	meshRequest->header.sdkType      = CS_MICROAPP_SDK_TYPE_MESH;
+	meshRequest->header.messageType  = CS_MICROAPP_SDK_TYPE_MESH;
 	meshRequest->type                = CS_MICROAPP_SDK_MESH_LISTEN;
 
 	sendMessage();
@@ -103,7 +103,7 @@ void MeshClass::sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId) {
 	uint8_t* payload                 = getOutgoingMessagePayload();
 	microapp_sdk_mesh_t* meshRequest = reinterpret_cast<microapp_sdk_mesh_t*>(payload);
 	meshRequest->header.ack          = CS_ACK_REQUEST;
-	meshRequest->header.sdkType      = CS_MICROAPP_SDK_TYPE_MESH;
+	meshRequest->header.messageType  = CS_MICROAPP_SDK_TYPE_MESH;
 	meshRequest->type                = CS_MICROAPP_SDK_MESH_SEND;
 	meshRequest->stoneId             = stoneId;
 
@@ -126,7 +126,7 @@ short MeshClass::id() {
 	uint8_t* payload                 = getOutgoingMessagePayload();
 	microapp_sdk_mesh_t* meshRequest = reinterpret_cast<microapp_sdk_mesh_t*>(payload);
 	meshRequest->header.ack          = CS_ACK_REQUEST;
-	meshRequest->header.sdkType      = CS_MICROAPP_SDK_TYPE_MESH;
+	meshRequest->header.messageType  = CS_MICROAPP_SDK_TYPE_MESH;
 	meshRequest->type                = CS_MICROAPP_SDK_MESH_READ_CONFIG;
 	sendMessage();
 

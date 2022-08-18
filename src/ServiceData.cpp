@@ -48,7 +48,7 @@ void ServiceData_::write(uint16_t appUuid, uint8_t* buf, size_t size) {
 
 // Set header fields and call sendMessage
 void ServiceData_::_write(microapp_sdk_service_data_t* serviceData) {
-	serviceData->header.sdkType = CS_MICROAPP_SDK_TYPE_SERVICE_DATA;
-	serviceData->header.ack     = CS_ACK_REQUEST;
+	serviceData->header.messageType = CS_MICROAPP_SDK_TYPE_SERVICE_DATA;
+	serviceData->header.ack         = CS_ACK_REQUEST;
 	sendMessage();
 }

@@ -220,10 +220,10 @@ size_t Serial_::_write(const uint8_t* buf, int length, MicroappSdkLogFlags flags
 // than silently fail.
 //
 size_t Serial_::_write(microapp_sdk_log_header_t* logRequest, Type type, MicroappSdkLogFlags flags) {
-	logRequest->header.sdkType = CS_MICROAPP_SDK_TYPE_LOG;
-	logRequest->header.ack     = CS_ACK_REQUEST;
-	logRequest->type           = type;
-	logRequest->flags          = flags;
+	logRequest->header.messageType = CS_MICROAPP_SDK_TYPE_LOG;
+	logRequest->header.ack         = CS_ACK_REQUEST;
+	logRequest->type               = type;
+	logRequest->flags              = flags;
 	sendMessage();
 	return logRequest->size;
 }

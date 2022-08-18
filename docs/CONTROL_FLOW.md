@@ -42,7 +42,7 @@ sequenceDiagram
     Note over b : A bluenet tick is the initial trigger.
     b ->> b : tickMicroapp()
     b -->> b2m : Write to shared buffer
-    Note over b2m : sdkType = CONTINUE <br> ack = NO_REQUEST
+    Note over b2m : messageType = CONTINUE <br> ack = NO_REQUEST
     b ->> b : callMicroapp()
     b ->> c : nextCoroutine()
     Note over c,m : Resume in the sendMessage() call <br> of signalLoopEnd() of previous loop().
@@ -53,7 +53,7 @@ sequenceDiagram
     m ->> um : loop()
     um ->> m : Serial.println("Loop")
     m -->> m2b : Write to shared buffer
-    Note over m2b: sdkType = SERIAL <br> ack = REQUEST
+    Note over m2b: messageType = SERIAL <br> ack = REQUEST
     m ->> m : sendMessage()
     m ->> c : microapp_callback()
     c ->> b : yieldCoroutine()
@@ -66,7 +66,7 @@ sequenceDiagram
     b -->> m2b : Write to shared buffer
     Note over m2b : ack = SUCCESS
     b ->> b : stopAfterMicroappRequest()
-    Note over b : stopAfterMicroappRequest() will <br> return false for sdkType SERIAL. <br> Hence, call microapp again.
+    Note over b : stopAfterMicroappRequest() will <br> return false for messageType SERIAL. <br> Hence, call microapp again.
     b ->> b : callMicroapp()
     b ->> c : nextCoroutine()
     Note over c,m : Resume in the sendMessage() call <br> of Serial.println().
@@ -80,7 +80,7 @@ sequenceDiagram
     um ->> m : loop() returns
     m ->> m : signalLoopEnd()
     m -->> m2b : Write to shared buffer
-    Note over m2b : sdkType = YIELD <br> ack = NO_REQUEST
+    Note over m2b : messageType = YIELD <br> ack = NO_REQUEST
     m ->> m : sendMessage()
     m ->> c : microapp_callback()
     c ->> b : yieldCoroutine()
@@ -89,11 +89,11 @@ sequenceDiagram
     Note over b : handleAck() confirms request should be handled <br> because of NO_REQUEST from bluenet
     b ->> b : handleRequest()
     m2b -->> b : Read from shared buffer
-    Note over b : handleRequest() does <br> nothing for sdkType YIELD.
+    Note over b : handleRequest() does <br> nothing for messageType YIELD.
     b -->> m2b : Write to shared buffer
     Note over m2b : ack = SUCCESS
     b ->> b : stopAfterMicroappRequest()
-    Note over b : stopAfterMicroappRequest() will <br> return true for sdkType YIELD. <br> Hence, do not call microapp again.
+    Note over b : stopAfterMicroappRequest() will <br> return true for messageType YIELD. <br> Hence, do not call microapp again.
     Note over b : tickMicroapp() ends.
 ```
 
@@ -130,7 +130,7 @@ sequenceDiagram
     b ->> b : onReceivedMeshMessage()
     Note over b : If the mesh message is not of <br> the microapp type, return early.
     b -->> b2m : Write to shared buffer
-    Note over b2m : sdkType = MESH <br> ack = REQUEST
+    Note over b2m : messageType = MESH <br> ack = REQUEST
     b ->> b : generateInterrupt()
     b ->> b : callMicroapp()
     b ->> c : nextCoroutine()
@@ -155,12 +155,12 @@ sequenceDiagram
         Note over b2m : ack = IN_PROGRESS
         Note over m : handleBluenetInterrupt() copies <br> shared buffers to top of <br> request- and interrupt stacks.
         m ->> m : handleInterrupt()
-        Note over m : handleInterrupt() identifies <br> the interrupt handler based on <br> sdkType = MESH and <br> internal data of the mesh message.
+        Note over m : handleInterrupt() identifies <br> the interrupt handler based on <br> messageType = MESH and <br> internal data of the mesh message.
         m ->> m : handleMeshInterrupt()
         m ->> um : receivedMesh()
         um ->> m : Serial.println("Received Mesh")
         m -->> m2b : Write to shared buffer
-        Note over m2b: sdkType = SERIAL <br> ack = REQUEST
+        Note over m2b: messageType = SERIAL <br> ack = REQUEST
         m ->> m : sendMessage()
         m ->> c : microapp_callback()
         c ->> b : yieldCoroutine()
@@ -173,7 +173,7 @@ sequenceDiagram
         b -->> m2b : Write to shared buffer
         Note over m2b : ack = SUCCESS
         b ->> b : stopAfterMicroappRequest()
-        Note over b : stopAfterMicroappRequest() will <br> return false for sdkType SERIAL. <br> Hence, call microapp again.
+        Note over b : stopAfterMicroappRequest() will <br> return false for messageType SERIAL. <br> Hence, call microapp again.
         b ->> b : callMicroapp()
         b ->> c : nextCoroutine()
         Note over c,m : Resume in the sendMessage() call <br> of Serial.println().
@@ -191,7 +191,7 @@ sequenceDiagram
         Note over m : Continue in handleBluenetRequest()
         Note over m : Clear interrupt stack entry <br> and copy top request stack entry <br> back to shared buffer
         m -->> m2b : Write to shared buffer
-        Note over m2b : sdkType = YIELD <br> ack = SUCCESS
+        Note over m2b : messageType = YIELD <br> ack = SUCCESS
         m -->> b2m : Write to shared buffer
         Note over b2m : ack = SUCCESS
         m ->> m : sendMessage()
