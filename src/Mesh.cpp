@@ -3,7 +3,7 @@
 
 microapp_result_t handleMeshInterrupt(void* buf) {
 	if (buf == nullptr) {
-		return CS_ACK_ERR_NOT_FOUND;
+		return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 	}
 	microapp_sdk_mesh_t* mesh = reinterpret_cast<microapp_sdk_mesh_t*>(buf);
 	// The only type of mesh interrupts are for now incoming messages
@@ -19,7 +19,7 @@ bool MeshClass::listen() {
 	interrupt.minor          = CS_MICROAPP_SDK_MESH_READ;
 	interrupt.handler        = handleMeshInterrupt;
 	microapp_result_t result = registerInterrupt(&interrupt);
-	if (result != CS_ACK_SUCCESS) {
+	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		// No empty interrupt slots available
 		return false;
 	}
@@ -27,13 +27,13 @@ bool MeshClass::listen() {
 	// Also send a command to bluenet that we want to listen to mesh
 	uint8_t* payload                 = getOutgoingMessagePayload();
 	microapp_sdk_mesh_t* meshRequest = (microapp_sdk_mesh_t*)(payload);
-	meshRequest->header.ack          = CS_ACK_REQUEST;
+	meshRequest->header.ack          = CS_MICROAPP_SDK_ACK_REQUEST;
 	meshRequest->header.messageType  = CS_MICROAPP_SDK_TYPE_MESH;
 	meshRequest->type                = CS_MICROAPP_SDK_MESH_LISTEN;
 
 	sendMessage();
 
-	return (meshRequest->header.ack == CS_ACK_SUCCESS);
+	return (meshRequest->header.ack == CS_MICROAPP_SDK_ACK_SUCCESS);
 }
 
 microapp_result_t MeshClass::handleIncomingMeshMsg(microapp_sdk_mesh_t* msg) {
@@ -44,7 +44,7 @@ microapp_result_t MeshClass::handleIncomingMeshMsg(microapp_sdk_mesh_t* msg) {
 	if (_registeredIncomingMeshMsgHandler != nullptr) {
 		MeshMsg handlerMsg = MeshMsg(msg->stoneId, msg->data, msg->size);
 		_registeredIncomingMeshMsgHandler(handlerMsg);
-		return CS_ACK_SUCCESS;
+		return CS_MICROAPP_SDK_ACK_SUCCESS;
 	}
 	// Add msg to buffer or discard if full
 	// Q: is it not more logical to discard oldest?
@@ -59,7 +59,7 @@ microapp_result_t MeshClass::handleIncomingMeshMsg(microapp_sdk_mesh_t* msg) {
 	}
 	if (full) {
 		// discard message
-		return CS_ACK_ERR_NO_SPACE;
+		return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
 	}
 	MeshMsgBufferEntry& copy = _incomingMeshMsgBuffer[i];
 	copy.stoneId             = msg->stoneId;
@@ -67,7 +67,7 @@ microapp_result_t MeshClass::handleIncomingMeshMsg(microapp_sdk_mesh_t* msg) {
 	memcpy(copy.data, msg->data, msg->size);
 	copy.filled = true;
 
-	return CS_ACK_SUCCESS;
+	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
 void MeshClass::setIncomingMeshMsgHandler(void (*handler)(MeshMsg)) {
@@ -102,7 +102,7 @@ void MeshClass::readMeshMsg(MeshMsg* msg) {
 void MeshClass::sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId) {
 	uint8_t* payload                 = getOutgoingMessagePayload();
 	microapp_sdk_mesh_t* meshRequest = reinterpret_cast<microapp_sdk_mesh_t*>(payload);
-	meshRequest->header.ack          = CS_ACK_REQUEST;
+	meshRequest->header.ack          = CS_MICROAPP_SDK_ACK_REQUEST;
 	meshRequest->header.messageType  = CS_MICROAPP_SDK_TYPE_MESH;
 	meshRequest->type                = CS_MICROAPP_SDK_MESH_SEND;
 	meshRequest->stoneId             = stoneId;
@@ -125,12 +125,12 @@ short MeshClass::id() {
 	// If not, ask bluenet via a MESH_READ_CONFIG message
 	uint8_t* payload                 = getOutgoingMessagePayload();
 	microapp_sdk_mesh_t* meshRequest = reinterpret_cast<microapp_sdk_mesh_t*>(payload);
-	meshRequest->header.ack          = CS_ACK_REQUEST;
+	meshRequest->header.ack          = CS_MICROAPP_SDK_ACK_REQUEST;
 	meshRequest->header.messageType  = CS_MICROAPP_SDK_TYPE_MESH;
 	meshRequest->type                = CS_MICROAPP_SDK_MESH_READ_CONFIG;
 	sendMessage();
 
-	if (meshRequest->header.ack == CS_ACK_SUCCESS) {
+	if (meshRequest->header.ack == CS_MICROAPP_SDK_ACK_SUCCESS) {
 		_stoneId = meshRequest->stoneId;
 	}
 	return _stoneId;

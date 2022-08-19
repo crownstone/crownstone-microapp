@@ -105,7 +105,7 @@ microapp_result_t checkRamData(bool checkOnce) {
 	if (checkOnce) {
 		// If valid is set, we assume cached values are fine, otherwise load them.
 		if (ipc_data.valid) {
-			return CS_ACK_SUCCESS;
+			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 	}
 
@@ -114,23 +114,23 @@ microapp_result_t checkRamData(bool checkOnce) {
 			getRamData(IPC_INDEX_CROWNSTONE_APP, (uint8_t*)&ipc_data, sizeof(bluenet2microapp_ipcdata_t), &rd_size);
 
 	if (ret_code != 0) {
-		return CS_ACK_ERROR;
+		return CS_MICROAPP_SDK_ACK_ERROR;
 	}
 
 	if (ipc_data.length != sizeof(bluenet2microapp_ipcdata_t)) {
-		return CS_ACK_ERROR;
+		return CS_MICROAPP_SDK_ACK_ERROR;
 	}
 
 	if (ipc_data.protocol != 1) {
-		return CS_ACK_ERROR;
+		return CS_MICROAPP_SDK_ACK_ERROR;
 	}
 
 	if (!ipc_data.microappCallback) {
-		return CS_ACK_ERROR;
+		return CS_MICROAPP_SDK_ACK_ERROR;
 	}
 
 	ipc_data.valid           = true;
-	microapp_result_t result = CS_ACK_SUCCESS;
+	microapp_result_t result = CS_MICROAPP_SDK_ACK_SUCCESS;
 
 	if (checkOnce) {
 		// Write the buffer only once
@@ -169,7 +169,7 @@ void handleBluenetInterrupt() {
 	uint8_t* incomingPayload              = getIncomingMessagePayload();
 	microapp_sdk_header_t* incomingHeader = reinterpret_cast<microapp_sdk_header_t*>(incomingPayload);
 	// First check if this is not just a regular call
-	if (incomingHeader->ack != CS_ACK_REQUEST) {
+	if (incomingHeader->ack != CS_MICROAPP_SDK_ACK_REQUEST) {
 		// No request, so this is not an interrupt
 		return;
 	}
@@ -177,7 +177,7 @@ void handleBluenetInterrupt() {
 	int8_t emptySlots = emptySlotsInStack();
 	if (emptySlots == 0) {
 		// Max depth has been reached, drop the interrupt and return
-		incomingHeader->ack = CS_ACK_ERR_BUSY;
+		incomingHeader->ack = CS_MICROAPP_SDK_ACK_ERR_BUSY;
 		// Yield to bluenet, without writing in the outgoing buffer.
 		// Bluenet will check the written ack field
 		sendMessage();
@@ -188,7 +188,7 @@ void handleBluenetInterrupt() {
 	if (stackIndex < 0) {
 		// Apparently there was no space. Should not happen since we just checked
 		// In any case, let's just drop and return similarly to above
-		incomingHeader->ack = CS_ACK_ERR_BUSY;
+		incomingHeader->ack = CS_MICROAPP_SDK_ACK_ERR_BUSY;
 		sendMessage();
 		return;
 	}
@@ -204,7 +204,7 @@ void handleBluenetInterrupt() {
 	newStackEntry->filled = true;
 
 	// Mark the incoming ack as 'in progress' so bluenet will keep calling
-	incomingHeader->ack = CS_ACK_IN_PROGRESS;
+	incomingHeader->ack = CS_MICROAPP_SDK_ACK_IN_PROGRESS;
 
 	// Now the interrupt will actually be handled
 	// Call the interrupt handler and pass a pointer to the copy of the interrupt buffer
@@ -233,7 +233,7 @@ void handleBluenetInterrupt() {
 microapp_result_t sendMessage() {
 	bool checkOnce           = true;
 	microapp_result_t result = checkRamData(checkOnce);
-	if (result != CS_ACK_SUCCESS) {
+	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		return result;
 	}
 
@@ -255,10 +255,10 @@ microapp_result_t registerInterrupt(interrupt_registration_t* interrupt) {
 			interruptRegistrations[i].handler    = interrupt->handler;
 			interruptRegistrations[i].major      = interrupt->major;
 			interruptRegistrations[i].minor      = interrupt->minor;
-			return CS_ACK_SUCCESS;
+			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 	}
-	return CS_ACK_ERR_NO_SPACE;
+	return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
 }
 
 microapp_result_t removeInterruptRegistration(uint8_t major, uint8_t minor) {
@@ -268,10 +268,10 @@ microapp_result_t removeInterruptRegistration(uint8_t major, uint8_t minor) {
 		}
 		if (interruptRegistrations[i].major == major && interruptRegistrations[i].minor == minor) {
 			interruptRegistrations[i].registered = false;
-			return CS_ACK_SUCCESS;
+			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 	}
-	return CS_ACK_ERR_NOT_FOUND;
+	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 }
 
 microapp_result_t callInterrupt(uint8_t major, uint8_t minor, microapp_sdk_header_t* interruptHeader) {
@@ -287,11 +287,11 @@ microapp_result_t callInterrupt(uint8_t major, uint8_t minor, microapp_sdk_heade
 				return interruptRegistrations[i].handler(interruptHeader);
 			}
 			// Handler does not exist
-			return CS_ACK_ERR_NOT_FOUND;
+			return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 		}
 	}
 	// No soft interrupt of this type with this id registered
-	return CS_ACK_ERR_NOT_FOUND;
+	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 }
 
 microapp_result_t handleInterrupt(microapp_sdk_header_t* interruptHeader) {
@@ -314,7 +314,7 @@ microapp_result_t handleInterrupt(microapp_sdk_header_t* interruptHeader) {
 			break;
 		}
 		default: {
-			return CS_ACK_ERR_UNDEFINED;
+			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 		}
 	}
 	// Call the interrupt

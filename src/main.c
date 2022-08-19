@@ -16,7 +16,7 @@ extern "C" {
 void signalSetupEnd() {
 	uint8_t* payload            = getOutgoingMessagePayload();
 	microapp_sdk_yield_t* yield = reinterpret_cast<microapp_sdk_yield_t*>(payload);
-	yield->header.ack           = CS_ACK_NO_REQUEST;
+	yield->header.ack           = CS_MICROAPP_SDK_ACK_NO_REQUEST;
 	yield->header.messageType   = CS_MICROAPP_SDK_TYPE_YIELD;
 	yield->type                 = CS_MICROAPP_SDK_YIELD_SETUP;
 	sendMessage();
@@ -28,7 +28,7 @@ void signalSetupEnd() {
 void signalLoopEnd() {
 	uint8_t* payload            = getOutgoingMessagePayload();
 	microapp_sdk_yield_t* yield = reinterpret_cast<microapp_sdk_yield_t*>(payload);
-	yield->header.ack           = CS_ACK_NO_REQUEST;
+	yield->header.ack           = CS_MICROAPP_SDK_ACK_NO_REQUEST;
 	yield->header.messageType   = CS_MICROAPP_SDK_TYPE_YIELD;
 	yield->type                 = CS_MICROAPP_SDK_YIELD_LOOP;
 	sendMessage();
