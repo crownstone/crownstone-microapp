@@ -35,7 +35,7 @@ public:
 
 typedef void (*ReceivedMeshMsgHandler)(MeshMsg);
 
-microapp_result_t handleMeshInterrupt(void* buf);
+microapp_sdk_result_t handleMeshInterrupt(void* buf);
 
 /**
  * Mesh class for inter-crownstone messaging.
@@ -49,7 +49,7 @@ private:
 	/**
 	 * Allow c wrapper to call private member functions
 	 */
-	friend microapp_result_t handleMeshInterrupt(void*);
+	friend microapp_sdk_result_t handleMeshInterrupt(void*);
 
 	/**
 	 * Constructors and copy constructors
@@ -83,7 +83,7 @@ private:
 	/**
 	 * Handle an incoming mesh message. Called by c wrapper function
 	 */
-	microapp_result_t handleIncomingMeshMsg(microapp_sdk_mesh_t* msg);
+	microapp_sdk_result_t handleIncomingMeshMsg(microapp_sdk_mesh_t* msg);
 
 public:
 	static MeshClass& getInstance() {

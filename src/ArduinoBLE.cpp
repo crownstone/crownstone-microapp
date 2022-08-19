@@ -3,7 +3,7 @@
 /*
  * An ordinary C function. Calls internal handler
  */
-microapp_result_t handleBleInterrupt(void* buf) {
+microapp_sdk_result_t handleBleInterrupt(void* buf) {
 	if (buf == nullptr) {
 		return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 	}
@@ -15,7 +15,7 @@ microapp_result_t handleBleInterrupt(void* buf) {
  * Internal interrupt handler.
  * Retrieves context, checks type of interrupt and takes appropriate action
  */
-microapp_result_t Ble::handleInterrupt(microapp_sdk_ble_t* bleInterrupt) {
+microapp_sdk_result_t Ble::handleInterrupt(microapp_sdk_ble_t* bleInterrupt) {
 	// First get interrupt context
 	int interruptContextId = -1;
 	for (int i = 0; i < MAX_BLE_INTERRUPT_REGISTRATIONS; ++i) {
@@ -92,7 +92,7 @@ bool Ble::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice
 	interrupt.major          = CS_MICROAPP_SDK_TYPE_BLE;
 	interrupt.minor          = interruptType(eventType);
 	interrupt.handler        = handleBleInterrupt;
-	microapp_result_t result = registerInterrupt(&interrupt);
+	microapp_sdk_result_t result = registerInterrupt(&interrupt);
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		// No empty interrupt slots available on microapp side
 		// Remove interrupt context

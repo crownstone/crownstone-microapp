@@ -56,7 +56,7 @@ struct BleInterruptContext {
  */
 class Ble {
 private:
-	friend microapp_result_t handleBleInterrupt(void*);
+	friend microapp_sdk_result_t handleBleInterrupt(void*);
 
 	Ble(){};
 
@@ -102,7 +102,7 @@ private:
 	/**
 	 * Handles interrupts entering the BLE class
 	 */
-	microapp_result_t handleInterrupt(microapp_sdk_ble_t* ble);
+	microapp_sdk_result_t handleInterrupt(microapp_sdk_ble_t* ble);
 
 public:
 	static Ble& getInstance() {

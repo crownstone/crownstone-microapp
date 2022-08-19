@@ -94,7 +94,7 @@ static bool stack_initialized = false;
 /*
  * Function checkRamData is used in sendMessage.
  */
-microapp_result_t checkRamData(bool checkOnce) {
+microapp_sdk_result_t checkRamData(bool checkOnce) {
 	if (!stack_initialized) {
 		for (int8_t i = 0; i < MAX_INTERRUPT_DEPTH; ++i) {
 			stack[i].filled = false;
@@ -130,7 +130,7 @@ microapp_result_t checkRamData(bool checkOnce) {
 	}
 
 	ipc_data.valid           = true;
-	microapp_result_t result = CS_MICROAPP_SDK_ACK_SUCCESS;
+	microapp_sdk_result_t result = CS_MICROAPP_SDK_ACK_SUCCESS;
 
 	if (checkOnce) {
 		// Write the buffer only once
@@ -211,7 +211,7 @@ void handleBluenetInterrupt() {
 	// Note that new sendMessage calls may occur in the interrupt handler
 	microapp_sdk_header_t* stackEntryHeader =
 			reinterpret_cast<microapp_sdk_header_t*>(newStackEntry->ioBuffer.bluenet2microapp.payload);
-	microapp_result_t result = handleInterrupt(stackEntryHeader);
+	microapp_sdk_result_t result = handleInterrupt(stackEntryHeader);
 
 	// When done with the interrupt handling, we can pop the buffers from the stack again
 	// Though really we only need the outgoing buffer, since we just finished dealing with the incoming buffer
@@ -230,9 +230,9 @@ void handleBluenetInterrupt() {
  *
  * If there are no interrupts it will just return and at some later time be called again.
  */
-microapp_result_t sendMessage() {
+microapp_sdk_result_t sendMessage() {
 	bool checkOnce           = true;
-	microapp_result_t result = checkRamData(checkOnce);
+	microapp_sdk_result_t result = checkRamData(checkOnce);
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		return result;
 	}
@@ -248,7 +248,7 @@ microapp_result_t sendMessage() {
 	return result;
 }
 
-microapp_result_t registerInterrupt(interrupt_registration_t* interrupt) {
+microapp_sdk_result_t registerInterrupt(interrupt_registration_t* interrupt) {
 	for (int i = 0; i < MAX_INTERRUPT_REGISTRATIONS; ++i) {
 		if (!interruptRegistrations[i].registered) {
 			interruptRegistrations[i].registered = true;
@@ -261,7 +261,7 @@ microapp_result_t registerInterrupt(interrupt_registration_t* interrupt) {
 	return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
 }
 
-microapp_result_t removeInterruptRegistration(uint8_t major, uint8_t minor) {
+microapp_sdk_result_t removeInterruptRegistration(uint8_t major, uint8_t minor) {
 	for (int i = 0; i < MAX_INTERRUPT_REGISTRATIONS; ++i) {
 		if (!interruptRegistrations[i].registered) {
 			continue;
@@ -274,7 +274,7 @@ microapp_result_t removeInterruptRegistration(uint8_t major, uint8_t minor) {
 	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 }
 
-microapp_result_t callInterrupt(uint8_t major, uint8_t minor, microapp_sdk_header_t* interruptHeader) {
+microapp_sdk_result_t callInterrupt(uint8_t major, uint8_t minor, microapp_sdk_header_t* interruptHeader) {
 	for (int i = 0; i < MAX_INTERRUPT_REGISTRATIONS; ++i) {
 		if (!interruptRegistrations[i].registered) {
 			continue;
@@ -294,7 +294,7 @@ microapp_result_t callInterrupt(uint8_t major, uint8_t minor, microapp_sdk_heade
 	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 }
 
-microapp_result_t handleInterrupt(microapp_sdk_header_t* interruptHeader) {
+microapp_sdk_result_t handleInterrupt(microapp_sdk_header_t* interruptHeader) {
 	// For all possible interrupt types, get the minor from the incoming message
 	uint8_t minor;
 	switch (interruptHeader->messageType) {

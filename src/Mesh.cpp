@@ -1,7 +1,7 @@
 #include <Mesh.h>
 #include <Serial.h>
 
-microapp_result_t handleMeshInterrupt(void* buf) {
+microapp_sdk_result_t handleMeshInterrupt(void* buf) {
 	if (buf == nullptr) {
 		return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 	}
@@ -18,7 +18,7 @@ bool MeshClass::listen() {
 	interrupt.major          = CS_MICROAPP_SDK_TYPE_MESH;
 	interrupt.minor          = CS_MICROAPP_SDK_MESH_READ;
 	interrupt.handler        = handleMeshInterrupt;
-	microapp_result_t result = registerInterrupt(&interrupt);
+	microapp_sdk_result_t result = registerInterrupt(&interrupt);
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		// No empty interrupt slots available
 		return false;
@@ -36,7 +36,7 @@ bool MeshClass::listen() {
 	return (meshRequest->header.ack == CS_MICROAPP_SDK_ACK_SUCCESS);
 }
 
-microapp_result_t MeshClass::handleIncomingMeshMsg(microapp_sdk_mesh_t* msg) {
+microapp_sdk_result_t MeshClass::handleIncomingMeshMsg(microapp_sdk_mesh_t* msg) {
 	// If a handler is registered, we do not need to copy anything to the buffer,
 	// since the handler will deal with it right away.
 	// The microapp's softInterrupt handler has copied the msg to a localCopy

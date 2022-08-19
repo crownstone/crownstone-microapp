@@ -44,7 +44,7 @@ void pinMode(uint8_t pin, uint8_t mode) {
 
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_pin_t* pinRequest = reinterpret_cast<microapp_sdk_pin_t*>(payload);
-	pinRequest->header.ack         = CS_ACK_REQUEST;
+	pinRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
 	pinRequest->header.messageType = CS_MICROAPP_SDK_TYPE_PIN;
 	pinRequest->pin                = pin;
 	pinRequest->type               = CS_MICROAPP_SDK_PIN_INIT;
@@ -61,7 +61,7 @@ void digitalWrite(uint8_t pin, uint8_t val) {
 
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_pin_t* pinRequest = reinterpret_cast<microapp_sdk_pin_t*>(payload);
-	pinRequest->header.ack         = CS_ACK_REQUEST;
+	pinRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
 	pinRequest->header.messageType = CS_MICROAPP_SDK_TYPE_PIN;
 	pinRequest->pin                = pin;
 	pinRequest->type               = CS_MICROAPP_SDK_PIN_ACTION;
@@ -82,7 +82,7 @@ int digitalRead(uint8_t pin) {
 
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_pin_t* pinRequest = reinterpret_cast<microapp_sdk_pin_t*>(payload);
-	pinRequest->header.ack         = CS_ACK_REQUEST;
+	pinRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
 	pinRequest->header.messageType = CS_MICROAPP_SDK_TYPE_PIN;
 	pinRequest->pin                = pin;
 	pinRequest->type               = CS_MICROAPP_SDK_PIN_ACTION;
@@ -91,7 +91,7 @@ int digitalRead(uint8_t pin) {
 
 	sendMessage();
 
-	if (pinRequest->header.ack != CS_ACK_SUCCESS) {
+	if (pinRequest->header.ack != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		return 0;
 	}
 	// TODO, perhaps a larger type then uint8_t is required / desired
@@ -114,14 +114,14 @@ bool attachInterrupt(uint8_t interruptIndex, void (*isr)(void), uint8_t mode) {
 	interrupt.major          = CS_MICROAPP_SDK_TYPE_PIN;
 	interrupt.minor          = interruptIndex;
 	interrupt.handler        = reinterpret_cast<interruptFunction>(isr);
-	microapp_result_t result = registerInterrupt(&interrupt);
-	if (result != CS_ACK_SUCCESS) {
+	microapp_sdk_result_t result = registerInterrupt(&interrupt);
+	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		return false;
 	}
 
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_pin_t* pinRequest = reinterpret_cast<microapp_sdk_pin_t*>(payload);
-	pinRequest->header.ack         = CS_ACK_REQUEST;
+	pinRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
 	pinRequest->header.messageType = CS_MICROAPP_SDK_TYPE_PIN;
 	pinRequest->pin                = interruptIndex;
 	pinRequest->type               = CS_MICROAPP_SDK_PIN_INIT;
@@ -129,7 +129,7 @@ bool attachInterrupt(uint8_t interruptIndex, void (*isr)(void), uint8_t mode) {
 	pinRequest->polarity           = mode;
 
 	result = sendMessage();
-	if (result != CS_ACK_SUCCESS) {
+	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		// Remove locally registered interrupt
 		result = removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_PIN, interruptIndex);
 		// Do nothing with the result. We return false anyway
