@@ -18,6 +18,8 @@ all: init $(TARGET).hex $(TARGET).bin $(TARGET).info
 
 clean:
 	@rm -f $(TARGET).*
+	@rm -f include/microapp_symbols.ld
+	@rm -f include/microapp_header_symbols.ld
 	@echo "Cleaned build directory"
 
 init: $(TARGET_CONFIG_FILE)
