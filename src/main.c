@@ -19,6 +19,7 @@ void signalSetupEnd() {
 	yield->header.ack           = CS_MICROAPP_SDK_ACK_NO_REQUEST;
 	yield->header.messageType   = CS_MICROAPP_SDK_TYPE_YIELD;
 	yield->type                 = CS_MICROAPP_SDK_YIELD_SETUP;
+	yield->emptyInterruptSlots  = emptySlotsInStack();
 	sendMessage();
 }
 
@@ -31,6 +32,7 @@ void signalLoopEnd() {
 	yield->header.ack           = CS_MICROAPP_SDK_ACK_NO_REQUEST;
 	yield->header.messageType   = CS_MICROAPP_SDK_TYPE_YIELD;
 	yield->type                 = CS_MICROAPP_SDK_YIELD_LOOP;
+	yield->emptyInterruptSlots  = emptySlotsInStack();
 	sendMessage();
 }
 
