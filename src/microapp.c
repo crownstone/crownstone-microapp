@@ -55,7 +55,7 @@ void* memcpy(void* dest, const void* src, size_t num) {
  * A global object for messages in and out.
  * Accessible by both bluenet and the microapp
  */
-static bluenet_io_buffer_t shared_io_buffer;
+static bluenet_io_buffers_t shared_io_buffers;
 
 /*
  * A global object for ipc data as well.
@@ -63,18 +63,18 @@ static bluenet_io_buffer_t shared_io_buffer;
 static bluenet2microapp_ipcdata_t ipc_data;
 
 uint8_t* getOutgoingMessagePayload() {
-	return shared_io_buffer.microapp2bluenet.payload;
+	return shared_io_buffers.microapp2bluenet.payload;
 }
 
 uint8_t* getIncomingMessagePayload() {
-	return shared_io_buffer.bluenet2microapp.payload;
+	return shared_io_buffers.bluenet2microapp.payload;
 }
 
 /*
  * Struct that stores copies of the shared io buffer
  */
 struct stack_entry_t {
-	bluenet_io_buffer_t ioBuffer;
+	bluenet_io_buffers_t ioBuffer;
 	bool filled;
 };
 
@@ -135,7 +135,7 @@ microapp_sdk_result_t checkRamData(bool checkOnce) {
 	if (checkOnce) {
 		// Write the buffer only once
 		microappCallbackFunc callbackFunctionIntoBluenet = ipc_data.microappCallback;
-		result = callbackFunctionIntoBluenet(CS_MICROAPP_CALLBACK_UPDATE_IO_BUFFER, &shared_io_buffer);
+		result = callbackFunctionIntoBluenet(CS_MICROAPP_CALLBACK_UPDATE_IO_BUFFER, &shared_io_buffers);
 	}
 	return result;
 }
@@ -240,7 +240,7 @@ microapp_sdk_result_t sendMessage() {
 	// The callback will yield control to bluenet.
 	microappCallbackFunc callbackFunctionIntoBluenet = ipc_data.microappCallback;
 	uint8_t opcode = checkOnce ? CS_MICROAPP_CALLBACK_SIGNAL : CS_MICROAPP_CALLBACK_UPDATE_IO_BUFFER;
-	result         = callbackFunctionIntoBluenet(opcode, &shared_io_buffer);
+	result         = callbackFunctionIntoBluenet(opcode, &shared_io_buffers);
 
 	// Here the microapp resumes execution, check for incoming interrupts
 	handleBluenetInterrupt();
