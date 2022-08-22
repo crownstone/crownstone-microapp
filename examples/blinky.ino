@@ -9,9 +9,11 @@
  * so this example will not do anything for these.
  */
 
-const uint8_t nrLEDs = 3;
+// We use the first two leds here.
+// Leds 3 and 4 are reserved for relay and dimmer on PCA10040 boards.
+const uint8_t nrLEDs = 2;
 boolean ledState[nrLEDs];
-const uint8_t ledPins[nrLEDs] = {LED1_PIN, LED2_PIN, LED3_PIN};
+const uint8_t ledPins[nrLEDs] = {LED1_PIN, LED2_PIN};
 uint8_t counter = 0;
 
 void setup() {
