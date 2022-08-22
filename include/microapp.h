@@ -12,8 +12,8 @@ typedef microapp_sdk_result_t (*interruptFunction)(void*);
 
 // Store interrupts in the microapp
 struct interrupt_registration_t {
-	uint8_t major;
-	uint8_t minor;
+	MicroappSdkMessageType type;
+	uint8_t id;
 	interruptFunction handler;
 	bool registered;
 };
@@ -90,7 +90,7 @@ microapp_sdk_result_t registerInterrupt(interrupt_registration_t* interrupt);
 /**
  * Remove a registered softInterrupt locally
  */
-microapp_sdk_result_t removeInterruptRegistration(uint8_t major, uint8_t minor);
+microapp_sdk_result_t removeInterruptRegistration(MicroappSdkMessageType type, uint8_t id);
 
 /**
  * Handle interrupts

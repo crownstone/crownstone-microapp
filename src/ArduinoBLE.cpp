@@ -89,8 +89,8 @@ bool Ble::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice
 
 	// Also register interrupt on the microapp side
 	interrupt_registration_t interrupt;
-	interrupt.major          = CS_MICROAPP_SDK_TYPE_BLE;
-	interrupt.minor          = interruptType(eventType);
+	interrupt.type          = CS_MICROAPP_SDK_TYPE_BLE;
+	interrupt.id          = interruptType(eventType);
 	interrupt.handler        = handleBleInterrupt;
 	microapp_sdk_result_t result = registerInterrupt(&interrupt);
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {

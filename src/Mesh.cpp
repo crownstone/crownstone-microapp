@@ -15,8 +15,8 @@ MeshClass::MeshClass() : _registeredIncomingMeshMsgHandler(nullptr), _stoneId(0)
 bool MeshClass::listen() {
 	// Register soft interrupt locally
 	interrupt_registration_t interrupt;
-	interrupt.major          = CS_MICROAPP_SDK_TYPE_MESH;
-	interrupt.minor          = CS_MICROAPP_SDK_MESH_READ;
+	interrupt.type          = CS_MICROAPP_SDK_TYPE_MESH;
+	interrupt.id          = CS_MICROAPP_SDK_MESH_READ;
 	interrupt.handler        = handleMeshInterrupt;
 	microapp_sdk_result_t result = registerInterrupt(&interrupt);
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {

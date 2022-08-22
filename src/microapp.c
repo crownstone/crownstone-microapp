@@ -253,20 +253,20 @@ microapp_sdk_result_t registerInterrupt(interrupt_registration_t* interrupt) {
 		if (!interruptRegistrations[i].registered) {
 			interruptRegistrations[i].registered = true;
 			interruptRegistrations[i].handler    = interrupt->handler;
-			interruptRegistrations[i].major      = interrupt->major;
-			interruptRegistrations[i].minor      = interrupt->minor;
+			interruptRegistrations[i].type      = interrupt->type;
+			interruptRegistrations[i].id      = interrupt->id;
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 	}
 	return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
 }
 
-microapp_sdk_result_t removeInterruptRegistration(uint8_t major, uint8_t minor) {
+microapp_sdk_result_t removeInterruptRegistration(MicroappSdkMessageType type, uint8_t id) {
 	for (int i = 0; i < MAX_INTERRUPT_REGISTRATIONS; ++i) {
 		if (!interruptRegistrations[i].registered) {
 			continue;
 		}
-		if (interruptRegistrations[i].major == major && interruptRegistrations[i].minor == minor) {
+		if (interruptRegistrations[i].type == type && interruptRegistrations[i].id == id) {
 			interruptRegistrations[i].registered = false;
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
@@ -274,15 +274,15 @@ microapp_sdk_result_t removeInterruptRegistration(uint8_t major, uint8_t minor) 
 	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 }
 
-microapp_sdk_result_t callInterrupt(uint8_t major, uint8_t minor, microapp_sdk_header_t* interruptHeader) {
+microapp_sdk_result_t callInterrupt(MicroappSdkMessageType type, uint8_t id, microapp_sdk_header_t* interruptHeader) {
 	for (int i = 0; i < MAX_INTERRUPT_REGISTRATIONS; ++i) {
 		if (!interruptRegistrations[i].registered) {
 			continue;
 		}
-		if (interruptRegistrations[i].major != major) {
+		if (interruptRegistrations[i].type != type) {
 			continue;
 		}
-		if (interruptRegistrations[i].minor == minor) {
+		if (interruptRegistrations[i].id == id) {
 			if (interruptRegistrations[i].handler) {
 				return interruptRegistrations[i].handler(interruptHeader);
 			}
@@ -295,22 +295,22 @@ microapp_sdk_result_t callInterrupt(uint8_t major, uint8_t minor, microapp_sdk_h
 }
 
 microapp_sdk_result_t handleInterrupt(microapp_sdk_header_t* interruptHeader) {
-	// For all possible interrupt types, get the minor from the incoming message
-	uint8_t minor;
+	// For all possible interrupt types, get the id from the incoming message
+	uint8_t id;
 	switch (interruptHeader->messageType) {
 		case CS_MICROAPP_SDK_TYPE_PIN: {
 			microapp_sdk_pin_t* pinInterrupt = reinterpret_cast<microapp_sdk_pin_t*>(interruptHeader);
-			minor                            = pinInterrupt->pin;
+			id                            = pinInterrupt->pin;
 			break;
 		}
 		case CS_MICROAPP_SDK_TYPE_BLE: {
 			microapp_sdk_ble_t* bleInterrupt = reinterpret_cast<microapp_sdk_ble_t*>(interruptHeader);
-			minor                            = bleInterrupt->type;
+			id                            = bleInterrupt->type;
 			break;
 		}
 		case CS_MICROAPP_SDK_TYPE_MESH: {
 			microapp_sdk_mesh_t* meshInterrupt = reinterpret_cast<microapp_sdk_mesh_t*>(interruptHeader);
-			minor                              = meshInterrupt->type;
+			id                              = meshInterrupt->type;
 			break;
 		}
 		default: {
@@ -318,5 +318,6 @@ microapp_sdk_result_t handleInterrupt(microapp_sdk_header_t* interruptHeader) {
 		}
 	}
 	// Call the interrupt
-	return callInterrupt(interruptHeader->messageType, minor, interruptHeader);
+	MicroappSdkMessageType type = (MicroappSdkMessageType)interruptHeader->messageType;
+	return callInterrupt(type, id, interruptHeader);
 }
