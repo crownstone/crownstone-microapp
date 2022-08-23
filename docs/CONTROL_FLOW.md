@@ -96,6 +96,8 @@ sequenceDiagram
     Note over b : stopAfterMicroappRequest() will <br> return true for messageType YIELD. <br> Hence, do not call microapp again.
     Note over b : tickMicroapp() ends.
 ```
+This sequence of events can be visualized as follows.
+![simple loop](/docs/gifs/serial_in_loop.gif)
 
 ## Interrupt example
 Now, consider that an interrupt handler has been registered for e.g. incoming mesh messages. A very simple microapp for this could look like this:
@@ -203,3 +205,6 @@ sequenceDiagram
         Note over b : generateInterrupt() ends.
     end
 ```
+
+This sequence of events can be visualized as follows.
+![simple interrupt](/docs/gifs/serial_in_interrupt.gif)
