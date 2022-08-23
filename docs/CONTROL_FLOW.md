@@ -19,13 +19,13 @@ However, it will also want to store the original content of the shared buffers. 
 Hence, before handling a new interrupt, the microapp will copy the contents of the shared buffers to an internal stack.
 Once it finishes handling the interrupt, the top buffer can be popped from the stack and back to the shared buffer.
 In most common use cases, an interrupt will be handled and return before bluenet generates another interrupt. However, when an interrupt handler generates too many consecutive requests, or contains async calls, bluenet may generate an interrupt before the previous one is finished. This leads to nested interrupts.
-The microapp limits the maximum amount of concurrent interrupts via the stack height. If the stack is full when a new interrupt is generated, the interrupt is dropped.
+The microapp limits the maximum amount of concurrent interrupts via the maximum stack height. If the stack is full when a new interrupt is generated, the interrupt is dropped.
 
 ## Minimal example
 Let's consider the following `loop()` in the microapp:
 ```
 void loop() {
-    Serial.println("Loop");
+    Serial.println("Hello");
 }
 ```
 This is what is happening under the hood:
@@ -51,7 +51,7 @@ sequenceDiagram
     b2m -->> m : Read from shared buffer
     Note over m : handleBluenetInterrupt() returns <br> early because of NO_REQUEST.
     m ->> um : loop()
-    um ->> m : Serial.println("Loop")
+    um ->> m : Serial.println("Hello")
     m -->> m2b : Write to shared buffer
     Note over m2b: messageType = SERIAL <br> ack = REQUEST
     m ->> m : sendMessage()
@@ -98,15 +98,15 @@ sequenceDiagram
 ```
 
 ## Interrupt example
-Now, consider that an interruptHandler has been registered for e.g. incoming mesh messages. A very simple microapp for this could look like this:
+Now, consider that an interrupt handler has been registered for e.g. incoming mesh messages. A very simple microapp for this could look like this:
 
 ```
-void receivedMesh(MeshMsg msg) {
-    Serial.println("Received mesh");
+void callback(MeshMsg msg) {
+    Serial.println("Hello");
 }
 
 void setup() {
-    Mesh.setIncomingMeshMsgHandler(receivedMesh);
+    Mesh.setIncomingMeshMsgHandler(callback);
     Mesh.listen();
 }
 
@@ -157,8 +157,8 @@ sequenceDiagram
         m ->> m : handleInterrupt()
         Note over m : handleInterrupt() identifies <br> the interrupt handler based on <br> messageType = MESH and <br> internal data of the mesh message.
         m ->> m : handleMeshInterrupt()
-        m ->> um : receivedMesh()
-        um ->> m : Serial.println("Received Mesh")
+        m ->> um : callback()
+        um ->> m : Serial.println("Hello")
         m -->> m2b : Write to shared buffer
         Note over m2b: messageType = SERIAL <br> ack = REQUEST
         m ->> m : sendMessage()
@@ -184,7 +184,7 @@ sequenceDiagram
         m2b -->> m : Read from shared buffer
         Note over m : Check ack from bluenet to see if <br> serial request was successfull
         m ->> um : Serial.println() returns
-        um ->> m : receivedMesh() returns
+        um ->> m : callback() returns
         m ->> m : handleMeshInterrupt() returns
         Note over m : The user handler or internal handler <br> may return a return code, e.g. SUCCESS
         m ->> m : handleInterrupt() returns
