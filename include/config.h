@@ -1,5 +1,4 @@
 #pragma once
 
-#define SDK_VERSION_MAJOR 0
-#define SDK_VERSION_MINOR 2
-
+#define SDK_VERSION_MAJOR 1
+#define SDK_VERSION_MINOR 0

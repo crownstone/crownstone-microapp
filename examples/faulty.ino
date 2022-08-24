@@ -1,8 +1,11 @@
-//
-// An example to show a few functions being implemented.
-//
-
 #include <Arduino.h>
+
+/**
+ * An microapp example to be used to simulate faults in microapps,
+ * i.e. getting stuck in an infinite loop.
+ *
+ * Use the defines to determine where the fault will be generated.
+ */
 
 // Show how a counter is incremented
 static int counter = 0;

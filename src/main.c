@@ -11,33 +11,28 @@ extern "C" {
 #endif
 
 /*
- * Implementation sends a message under the hood. The microapp itself is reponsible for looping for long enough.
- * A tick takes 100 ms. Hence the loop should be the delay in ms divided by 100.
+ * Yield to bluenet and indicate end of setup
  */
-void delay(uint32_t delay_ms) {
-	const uint8_t bluenet_tick_duration_ms = 100;
-	uint32_t ticks = delay_ms / (bluenet_tick_duration_ms * MICROAPP_LOOP_FREQUENCY);
-	for (uint32_t i = 0; i < ticks; i++) {
-		uint8_t *payload = getOutgoingMessagePayload();
-		microapp_delay_cmd_t *delay_cmd = (microapp_delay_cmd_t*)(payload);
-		delay_cmd->header.cmd = CS_MICROAPP_COMMAND_DELAY;
-		delay_cmd->period = ticks;
-		sendMessage();
-	}
-}
-
 void signalSetupEnd() {
-	uint8_t *payload = getOutgoingMessagePayload();
-	microapp_cmd_t *cmd = (microapp_cmd_t*)(payload);
-	cmd->cmd = CS_MICROAPP_COMMAND_SETUP_END;
-	cmd->interruptCmd = CS_MICROAPP_COMMAND_NONE;
+	uint8_t* payload            = getOutgoingMessagePayload();
+	microapp_sdk_yield_t* yield = reinterpret_cast<microapp_sdk_yield_t*>(payload);
+	yield->header.ack           = CS_MICROAPP_SDK_ACK_NO_REQUEST;
+	yield->header.messageType   = CS_MICROAPP_SDK_TYPE_YIELD;
+	yield->type                 = CS_MICROAPP_SDK_YIELD_SETUP;
+	yield->emptyInterruptSlots  = emptySlotsInStack();
 	sendMessage();
 }
 
+/*
+ * Yield to bluenet and indicate end of loop
+ */
 void signalLoopEnd() {
-	uint8_t *payload = getOutgoingMessagePayload();
-	microapp_cmd_t *cmd = (microapp_cmd_t*)(payload);
-	cmd->cmd = CS_MICROAPP_COMMAND_LOOP_END;
+	uint8_t* payload            = getOutgoingMessagePayload();
+	microapp_sdk_yield_t* yield = reinterpret_cast<microapp_sdk_yield_t*>(payload);
+	yield->header.ack           = CS_MICROAPP_SDK_ACK_NO_REQUEST;
+	yield->header.messageType   = CS_MICROAPP_SDK_TYPE_YIELD;
+	yield->type                 = CS_MICROAPP_SDK_YIELD_LOOP;
+	yield->emptyInterruptSlots  = emptySlotsInStack();
 	sendMessage();
 }
 
@@ -51,7 +46,7 @@ void signalLoopEnd() {
 int __attribute__((optimize("O0"))) dummy_main() {
 	setup();
 	signalSetupEnd();
-	while(1) {
+	while (1) {
 		loop();
 		signalLoopEnd();
 	}
@@ -71,11 +66,10 @@ int main() {
 /*
  * We will enter from the Reset_Handler. This is the very first instruction as defined in the assembly file startup.S.
  */
-__attribute__((weak)) void _start(void){
+__attribute__((weak)) void _start(void) {
 	main();
 }
 
 #ifdef __cplusplus
 }
 #endif
-

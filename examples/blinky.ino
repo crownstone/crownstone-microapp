@@ -1,12 +1,19 @@
-//
-// Blinking LEDs
-//
-
 #include <Arduino.h>
 
-const uint8_t nrLEDs = 3;
+/**
+ * A very basic microapp example for toggling LEDs.
+ *
+ * This example should be run on a 'crownstone' equipped with LEDs,
+ * e.g. one of the nRF52 development kits
+ * Most 'real' crownstones are not equipped with LEDs,
+ * so this example will not do anything for these.
+ */
+
+// We use the first two leds here.
+// Leds 3 and 4 are reserved for relay and dimmer on PCA10040 boards.
+const uint8_t nrLEDs = 2;
 boolean ledState[nrLEDs];
-const uint8_t ledPins[nrLEDs] = {LED1_PIN, LED2_PIN, LED3_PIN};
+const uint8_t ledPins[nrLEDs] = {LED1_PIN, LED2_PIN};
 uint8_t counter = 0;
 
 void setup() {

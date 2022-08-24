@@ -1,23 +1,24 @@
 #include <Mesh.h>
 #include <Serial.h>
 
-// #define ROLE_RECEIVER
-#define ROLE_TRANSMITTER
+/**
+ * A microapp example for transmitting and receiving mesh messages
+ *
+ * Two roles are defined for this example:
+ * - In receiver role, the microapp listens for incoming mesh messages
+ * - In transmitter role, the microapp periodically transmits mesh messages
+ */
+
+// Define or undefine the following to set the role for the crownstone
+#define ROLE_RECEIVER
+// #define ROLE_TRANSMITTER
 
 uint32_t counter;
 
 void printMeshMsg(MeshMsg* msg) {
 	Serial.print("Received mesh message from stone ");
 	Serial.println(msg->stoneId);
-	for (int i = 0; i < msg->dlen; i++) {
-		Serial.print(*(msg->dataPtr + i));
-		if (i + 1 == msg->dlen) {
-			Serial.println(" ");
-		}
-		else {
-			Serial.print(" ");
-		}
-	}
+	Serial.println(msg->dataPtr, msg->size);
 }
 
 void meshCallback(MeshMsg msg) {
@@ -55,7 +56,7 @@ void loop() {
 	if (counter % 10 == 0) {
 		// Send Mesh
 		Serial.println("Sending mesh msg");
-		uint8_t msg[2] = {20, 19};
+		uint8_t msg[2] = {0xAB, 0xCD};
 		// use 0 as stoneId for broadcast
 		uint8_t stoneId = 0;
 		Mesh.sendMeshMsg(msg, sizeof(msg), stoneId);

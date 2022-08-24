@@ -1,7 +1,17 @@
 #include <Arduino.h>
 
+/**
+ * A basic microapp example showcasing interrupt functionality.
+ *
+ * This example should be run on a 'crownstone' equipped with buttons and LEDs,
+ * e.g. one of the nRF52 development kits.
+ * Most 'real' crownstones are not equipped with buttons and LEDs,
+ * so this example will not do anything for these.
+ */
+
 boolean state = LOW;
 
+// Callback for a button press
 void blink() {
 	Serial.println("blink");
 
@@ -10,6 +20,7 @@ void blink() {
 	digitalWrite(LED1_PIN, state);
 }
 
+// In setup, configure button and LED GPIO pins and register callback
 void setup() {
 	Serial.begin();
 
@@ -24,6 +35,7 @@ void setup() {
 
 }
 
+// Do nothing in the loop
 void loop() {
 
 }

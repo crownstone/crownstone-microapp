@@ -1,4 +1,15 @@
-// an example to interface with the MCP9808 I2C temperature sensor.
+#include <Arduino.h>
+#include <Wire.h>
+
+/**
+ * A basic microapp example showcasing I2C/TWI functionality
+ *
+ * This example should be run on a crownstone connected to an I2C slave
+ * Most 'real' crownstones do not have exposed pins for I2C connection,
+ * so this example will not do anything for these.
+ *
+ * Specifically, this example interfaces with the MCP9808 I2C temperature sensor.
+ */
 
 static int counter = 0;
 

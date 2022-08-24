@@ -1,20 +1,18 @@
 #include <CrownstoneDimmer.h>
 #include <Serial.h>
 
-void CrownstoneDimmer::init() {
-	_initialized = true;
-}
-
+/*
+ * Sends a message to bluenet with a dimming request.
+ * Complies with the control command protocol
+ */
 void CrownstoneDimmer::setIntensity(uint8_t intensity) {
-	if (!_initialized) {
-		Serial.println("Dimmer not initialized");
-		return;
+	uint8_t* payload                     = getOutgoingMessagePayload();
+	microapp_sdk_switch_t* switchRequest = reinterpret_cast<microapp_sdk_switch_t*>(payload);
+	switchRequest->header.ack            = CS_MICROAPP_SDK_ACK_REQUEST;
+	switchRequest->header.messageType    = CS_MICROAPP_SDK_TYPE_SWITCH;
+	if (intensity > 100) {
+		intensity = 100;
 	}
-	uint8_t *payload = getOutgoingMessagePayload();
-	microapp_dimmer_switch_cmd_t* dimmer_cmd = reinterpret_cast<microapp_dimmer_switch_cmd_t*>(payload);
-	dimmer_cmd->header.cmd = CS_MICROAPP_COMMAND_SWITCH_DIMMER;
-	dimmer_cmd->opcode = CS_MICROAPP_COMMAND_DIMMER;
-	dimmer_cmd->value = intensity;
-
+	switchRequest->value = intensity;
 	sendMessage();
 }

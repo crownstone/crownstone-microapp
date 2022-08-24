@@ -1,7 +1,18 @@
 #include <Arduino.h>
 #include <ArduinoBLE.h>
 #include <Mesh.h>
-#include <Serial.h>
+
+/**
+ * A basic microapp example showcasing interrupts.
+ *
+ * The example can configure three types of interrupts:
+ * - BLE device scans
+ * - Received mesh messages
+ * - Button presses
+ * All three can be used at the same time.
+ * On interrupts, LEDs are toggled (for nRF52 development kits),
+ * and messages are printed to UART
+ */
 
 #define ENABLE_BLE_INTERRUPTS
 #define ENABLE_MESH_INTERRUPTS
@@ -58,7 +69,7 @@ void setup() {
 
 #ifdef ENABLE_BLE_INTERRUPTS
 	// initialize ble
-	if (!BLE.setEventHandler(BleEventDeviceScanned, onScannedDevice)) {
+	if (!BLE.setEventHandler(BLEDeviceScanned, onScannedDevice)) {
 		Serial.println("Setting BLE event handler failed");
 	}
 	if (!BLE.scanForAddress(bleBeaconAddress)) {
