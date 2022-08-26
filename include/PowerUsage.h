@@ -2,7 +2,7 @@
 
 #include <microapp.h>
 
-class PowerUsage{
+class PowerUsage {
 public:
 	// Empty constructor
 	PowerUsage(){};
