@@ -1,5 +1,4 @@
 #include <CrownstoneRelay.h>
-#include <Serial.h>
 
 void CrownstoneRelay::switchOff() {
 	setSwitch(CS_MICROAPP_SDK_SWITCH_OFF);
