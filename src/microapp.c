@@ -130,12 +130,11 @@ microapp_sdk_result_t checkRamData(bool checkOnce) {
 	ipc_data.bluenet2microappData.valid = true;
 	microapp_sdk_result_t result = CS_MICROAPP_SDK_ACK_SUCCESS;
 
-	if (!ipc_data.bluenet2microappData.protocol) {
-		// Do nothing for now
+	// Check protocol and write back the protocol that is understood
+	if (ipc_data.bluenet2microappData.dataProtocol != MICROAPP_IPC_DATA_PROTOCOL) {
+		ipc_data.bluenet2microappData.dataProtocol = MICROAPP_IPC_DATA_PROTOCOL;
+		return CS_MICROAPP_SDK_ACK_ERROR;
 	}
-
-	// The microapp indicates which data protocol it will use
-	ipc_data.bluenet2microappData.protocol = MICROAPP_IPC_CURRENT_PROTOCOL_VERSION;
 
 	if (checkOnce) {
 		// Write the buffer only once
