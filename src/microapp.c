@@ -112,23 +112,14 @@ microapp_sdk_result_t checkRamData(bool checkOnce) {
 		}
 	}
 
-	bluenet_ipc_data_header_t header;
-	header.index = IPC_INDEX_CROWNSTONE_APP;
-	uint8_t ret_code = getRamData(&header, ipc_data.raw, sizeof(ipc_data.raw));
+	uint8_t dataSize;
+	uint8_t ret_code = getRamData(IPC_INDEX_CROWNSTONE_APP, ipc_data.raw, &dataSize, sizeof(ipc_data.raw));
 
 	if (ret_code != 0) {
 		return CS_MICROAPP_SDK_ACK_ERROR;
 	}
 
-	if (header.dataSize != sizeof(bluenet2microapp_ipcdata_t)) {
-		return CS_MICROAPP_SDK_ACK_ERROR;
-	}
-
-	if (header.major < MICROAPP_IPC_CURRENT_PROTOCOL_MAJOR) {
-		return CS_MICROAPP_SDK_ACK_ERROR;
-	}
-	
-	if (header.minor < MICROAPP_IPC_CURRENT_PROTOCOL_MINOR) {
+	if (dataSize != sizeof(bluenet2microapp_ipcdata_t)) {
 		return CS_MICROAPP_SDK_ACK_ERROR;
 	}
 
