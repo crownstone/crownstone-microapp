@@ -4,6 +4,9 @@
 // Define array with soft interrupts
 interrupt_registration_t interruptRegistrations[MAX_INTERRUPT_REGISTRATIONS];
 
+// Incremental version apart from IPC struct
+const uint8_t MICROAPP_IPC_CURRENT_PROTOCOL_VERSION           = 1;
+
 // Important: Do not include <string.h> / <cstring>. This bloats up the binary unnecessary.
 // On Arduino there is the String class. Roll your own functions like strlen, see below.
 
@@ -60,7 +63,7 @@ static bluenet_io_buffers_t shared_io_buffers;
 /*
  * A global object for ipc data as well.
  */
-static bluenet2microapp_ipcdata_t ipc_data;
+static bluenet_ipc_data_cpp_t ipc_data;
 
 uint8_t* getOutgoingMessagePayload() {
 	return shared_io_buffers.microapp2bluenet.payload;
@@ -104,37 +107,38 @@ microapp_sdk_result_t checkRamData(bool checkOnce) {
 
 	if (checkOnce) {
 		// If valid is set, we assume cached values are fine, otherwise load them.
-		if (ipc_data.valid) {
+		if (ipc_data.bluenet2microappData.valid) {
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 	}
 
-	uint8_t rd_size = 0;
-	uint8_t ret_code =
-			getRamData(IPC_INDEX_CROWNSTONE_APP, (uint8_t*)&ipc_data, sizeof(bluenet2microapp_ipcdata_t), &rd_size);
+	uint8_t dataSize;
+	uint8_t ret_code = getRamData(IPC_INDEX_CROWNSTONE_APP, ipc_data.raw, &dataSize, sizeof(ipc_data.raw));
 
 	if (ret_code != 0) {
 		return CS_MICROAPP_SDK_ACK_ERROR;
 	}
 
-	if (ipc_data.length != sizeof(bluenet2microapp_ipcdata_t)) {
+	if (dataSize != sizeof(bluenet2microapp_ipcdata_t)) {
 		return CS_MICROAPP_SDK_ACK_ERROR;
 	}
 
-	if (ipc_data.protocol != 1) {
+	if (!ipc_data.bluenet2microappData.microappCallback) {
 		return CS_MICROAPP_SDK_ACK_ERROR;
 	}
 
-	if (!ipc_data.microappCallback) {
-		return CS_MICROAPP_SDK_ACK_ERROR;
-	}
-
-	ipc_data.valid           = true;
+	ipc_data.bluenet2microappData.valid = true;
 	microapp_sdk_result_t result = CS_MICROAPP_SDK_ACK_SUCCESS;
+
+	// Check protocol and write back the protocol that is understood
+	if (ipc_data.bluenet2microappData.dataProtocol != MICROAPP_IPC_DATA_PROTOCOL) {
+		ipc_data.bluenet2microappData.dataProtocol = MICROAPP_IPC_DATA_PROTOCOL;
+		return CS_MICROAPP_SDK_ACK_ERROR;
+	}
 
 	if (checkOnce) {
 		// Write the buffer only once
-		microappCallbackFunc callbackFunctionIntoBluenet = ipc_data.microappCallback;
+		microappCallbackFunc callbackFunctionIntoBluenet = ipc_data.bluenet2microappData.microappCallback;
 		result = callbackFunctionIntoBluenet(CS_MICROAPP_CALLBACK_UPDATE_IO_BUFFER, &shared_io_buffers);
 	}
 	return result;
@@ -238,7 +242,7 @@ microapp_sdk_result_t sendMessage() {
 	}
 
 	// The callback will yield control to bluenet.
-	microappCallbackFunc callbackFunctionIntoBluenet = ipc_data.microappCallback;
+	microappCallbackFunc callbackFunctionIntoBluenet = ipc_data.bluenet2microappData.microappCallback;
 	uint8_t opcode = checkOnce ? CS_MICROAPP_CALLBACK_SIGNAL : CS_MICROAPP_CALLBACK_UPDATE_IO_BUFFER;
 	result         = callbackFunctionIntoBluenet(opcode, &shared_io_buffers);
 
