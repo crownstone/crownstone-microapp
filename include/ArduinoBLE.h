@@ -46,7 +46,8 @@ typedef void (*BleEventHandler)(BleDevice);
 struct BleInterruptContext {
 	BleEventHandler eventHandler = nullptr;
 	bool filled                  = false;
-	MicroappSdkBleType type;
+	MicroappSdkBleType type      = CS_MICROAPP_SDK_BLE_NONE;
+	BleEventType eventType;
 };
 
 /**
@@ -89,20 +90,20 @@ private:
 	BleFilter* getFilter();
 
 	/**
-	 * Map the BleEventType to the MicroappSdkBleType for requests
-	 *
-	 */
-	MicroappSdkBleType requestType(BleEventType type);
-
-	/**
-	 * Map the BleEventType to the MicroappSdkBleType for interrupts
-	 */
-	MicroappSdkBleType interruptType(BleEventType type);
-
-	/**
 	 * Handles interrupts entering the BLE class
 	 */
 	microapp_sdk_result_t handleInterrupt(microapp_sdk_ble_t* ble);
+
+	/**
+	 * Converts a (user-facing) event type to the corresponding MicroappSdkBleType
+	 */
+	MicroappSdkBleType getBleType(BleEventType eventType);
+
+	microapp_sdk_result_t setInterruptContext(BleEventType eventType, void (*eventHandler)(BleDevice));
+
+	microapp_sdk_result_t getInterruptContext(BleEventType eventType, BleInterruptContext& context);
+
+	microapp_sdk_result_t removeInterruptContext(BleEventType eventType);
 
 public:
 	static Ble& getInstance() {

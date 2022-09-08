@@ -1,51 +1,51 @@
 #include <BleUtils.h>
 
-MacAddress::MacAddress(const uint8_t* mac) {
-	memcpy(_mac, mac, MAC_ADDRESS_LENGTH);
-	convertMacToString(_mac, _mac_str);
+MacAddress::MacAddress(const uint8_t* address) {
+	memcpy(_address, address, MAC_ADDRESS_LENGTH);
 	_initialized = true;
 }
 
-MacAddress::MacAddress(const char* mac_str) {
-	if (strlen(mac_str) != MAC_ADDRESS_STRING_LENGTH) {
+MacAddress::MacAddress(const char* addressString) {
+	if (strlen(addressString) != MAC_ADDRESS_STRING_LENGTH) {
 		return;
 	}
-	memcpy(_mac_str, mac_str, MAC_ADDRESS_STRING_LENGTH);
-	convertStringToMac(_mac_str, _mac);
+	memcpy(_addressString, addressString, MAC_ADDRESS_STRING_LENGTH);
+	_cachedAddressString = true;
+	convertStringToMac(_addressString, _address);
 	_initialized = true;
 }
 
-void MacAddress::convertMacToString(const uint8_t* mac, char* mac_str) {
+void MacAddress::convertMacToString(const uint8_t* address, char* emptyAddressString) {
 	for (uint8_t i = 0; i < MAC_ADDRESS_LENGTH; i++) {
-		convertByteToTwoHexChars(mac[i], mac_str + 3 * i);
+		convertByteToTwoHexChars(address[i], emptyAddressString + 3 * i);
 		if (3 * i + 2 < MAC_ADDRESS_STRING_LENGTH) {  // do not add colon after last byte
-			mac_str[3 * i + 2] = ':';
+			emptyAddressString[3 * i + 2] = ':';
 		}
 	}
 }
 
-void MacAddress::convertStringToMac(const char* mac_str, uint8_t* mac) {
+void MacAddress::convertStringToMac(const char* addressString, uint8_t* emptyAddress) {
 	for (uint8_t i = 0; i < MAC_ADDRESS_LENGTH; i++) {
-		mac[i] = convertTwoHexCharsToByte(mac_str + 3 * i);
+		emptyAddress[i] = convertTwoHexCharsToByte(addressString + 3 * i);
 	}
 }
 
-bool MacAddress::isInitialized() {
-	return _initialized;
-}
-
-String MacAddress::getString() {
-	if (!_initialized) {
-		return String("XX:XX:XX:XX:XX");
-	}
-	return String(_mac_str, MAC_ADDRESS_STRING_LENGTH);
-}
-
-uint8_t* MacAddress::getBytes() {
+const char* MacAddress::string() {
 	if (!_initialized) {
 		return nullptr;
 	}
-	return _mac;
+	if (!_cachedAddressString) {
+		convertMacToString(_address, _addressString);
+		_cachedAddressString = true;
+	}
+	return _addressString;
+}
+
+const uint8_t* MacAddress::bytes() {
+	if (!_initialized) {
+		return nullptr;
+	}
+	return _address;
 }
 
 // Convert a pair of chars to a byte, e.g. convert "A3" to 0xA3

@@ -1,21 +1,17 @@
 #include <BleDevice.h>
 
-BleDevice::BleDevice(microapp_sdk_ble_t* dev) {
-	_device               = dev;
-	_address              = MacAddress(_device->address);
+BleDevice::BleDevice(microapp_sdk_ble_scan_event_t* scanEvent) {
+	_scanEvent            = scanEvent;
+	_address              = MacAddress(_scanEvent->address.address);
 	_flags.flags.nonEmpty = true;
 }
 
 String BleDevice::address() {
-	if (_address.isInitialized()) {  // if already cached address
-		return _address.getString();
-	}
-	_address = MacAddress(_device->address);
-	return _address.getString();
+	return String(_address.string());
 }
 
 int8_t BleDevice::rssi() {
-	return _device->rssi;
+	return _scanEvent->rssi;
 }
 
 bool BleDevice::hasLocalName() {
@@ -68,14 +64,14 @@ bool BleDevice::findAdvertisementDataType(GapAdvType type, data_ptr_t* foundData
 	uint8_t i       = 0;
 	foundData->data = nullptr;
 	foundData->len  = 0;
-	while (i < _device->size - 1) {
-		uint8_t fieldLen  = _device->data[i];
-		uint8_t fieldType = _device->data[i + 1];
-		if (fieldLen == 0 || i + 1 + fieldLen > _device->size) {
+	while (i < _scanEvent->size - 1) {
+		uint8_t fieldLen  = _scanEvent->data[i];
+		uint8_t fieldType = _scanEvent->data[i + 1];
+		if (fieldLen == 0 || i + 1 + fieldLen > _scanEvent->size) {
 			return false;
 		}
 		if (fieldType == type) {
-			foundData->data = &_device->data[i + 2];
+			foundData->data = &_scanEvent->data[i + 2];
 			foundData->len  = fieldLen - 1;
 			return true;
 		}

@@ -257,8 +257,8 @@ microapp_sdk_result_t registerInterrupt(interrupt_registration_t* interrupt) {
 		if (!interruptRegistrations[i].registered) {
 			interruptRegistrations[i].registered = true;
 			interruptRegistrations[i].handler    = interrupt->handler;
-			interruptRegistrations[i].type      = interrupt->type;
-			interruptRegistrations[i].id      = interrupt->id;
+			interruptRegistrations[i].type       = interrupt->type;
+			interruptRegistrations[i].id         = interrupt->id;
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 	}

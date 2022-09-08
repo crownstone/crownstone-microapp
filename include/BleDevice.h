@@ -35,7 +35,7 @@ private:
 
 	BleDevice(){};  // default constructor
 
-	microapp_sdk_ble_t* _device;  // the raw advertisement data
+	microapp_sdk_ble_scan_event_t* _scanEvent;
 
 	MacAddress _address;
 
@@ -55,7 +55,7 @@ private:
 	} _flags;
 
 public:
-	BleDevice(microapp_sdk_ble_t* dev);  // non-empty constructor
+	BleDevice(microapp_sdk_ble_scan_event_t* scanEvent);  // non-empty constructor
 
 	// return true if BleDevice is nontrivial, i.e. initialized from an actual advertisement
 	explicit operator bool() const { return _flags.flags.nonEmpty; }

@@ -16,88 +16,66 @@ microapp_sdk_result_t handleBleInterrupt(void* buf) {
  * Retrieves context, checks type of interrupt and takes appropriate action
  */
 microapp_sdk_result_t Ble::handleInterrupt(microapp_sdk_ble_t* bleInterrupt) {
-	// First get interrupt context
-	int interruptContextId = -1;
-	for (int i = 0; i < MAX_BLE_INTERRUPT_REGISTRATIONS; ++i) {
-		if (_bleInterruptContext[i].filled == false) {
-			continue;
-		}
-		if (_bleInterruptContext[i].type == bleInterrupt->type) {
-			interruptContextId = i;
-			break;
-		}
-	}
-	if (interruptContextId < 0) {
-		// Interrupt context not found
-		return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
-	}
-	BleInterruptContext& context = _bleInterruptContext[interruptContextId];
-
-	if (context.eventHandler == nullptr) {
-		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
-	}
-
 	// Based on the type of event we will take action
-	switch (context.type) {
-		case CS_MICROAPP_SDK_BLE_SCAN_SCANNED_DEVICE: {
-			// Save to the stack
-			// Create temporary object on the stack
-			BleDevice bleDevice = BleDevice(bleInterrupt);
-			if (filterScanEvent(bleDevice)) {
-				// Call the event handler with a copy of this object
-				context.eventHandler(bleDevice);
+	switch (bleInterrupt->type) {
+		case CS_MICROAPP_SDK_BLE_SCAN: {
+			// for scan type, only interrupt type is EVENT_SCAN
+			switch (bleInterrupt->scan.type) {
+				case CS_MICROAPP_SDK_BLE_SCAN_EVENT_SCAN: {
+					// Get the interrupt context with the eventHandler
+					BleInterruptContext context;
+					getInterruptContext(BLEDeviceScanned, context);
+					// Create temporary object on the stack
+					// Lifetime of bleDevice is only as long as the lifetime of the interrupt stack
+					BleDevice bleDevice = BleDevice(&bleInterrupt->scan.eventScan);
+					if (filterScanEvent(bleDevice)) {
+						context.eventHandler(bleDevice);
+					}
+					return CS_MICROAPP_SDK_ACK_SUCCESS;
+				}
+				default: {
+					return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
+				}
 			}
-			break;
 		}
-		case CS_MICROAPP_SDK_BLE_CONNECTION_CONNECTED: {
+		case CS_MICROAPP_SDK_BLE_CENTRAL: {
 			// TODO: implement
 			return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
 		}
-		case CS_MICROAPP_SDK_BLE_CONNECTION_DISCONNECTED: {
+		case CS_MICROAPP_SDK_BLE_PERIPHERAL: {
 			// TODO: implement
 			return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
 		}
 		default: {
-			return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
+			// For the UUID_REGISTER type, no interrupt handling is defined
+			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 		}
 	}
-	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
 /*
- * Set interrupt handler, but not directly...
+ * Set event handler provided by user, but not directly...
  * We register a wrapper function that calls the passed handler
  */
 bool Ble::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice)) {
 
 	// Register the interrupt context locally
-	int interruptContextId = -1;
-	for (int i = 0; i < MAX_BLE_INTERRUPT_REGISTRATIONS; ++i) {
-		if (_bleInterruptContext[i].filled == false) {
-			interruptContextId = i;
-			break;
-		}
-	}
-	if (interruptContextId < 0) {
-		// No empty slots for storing interruptContext
+	microapp_sdk_result_t result = setInterruptContext(eventType, eventHandler);
+	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		return false;
 	}
-	BleInterruptContext& context = _bleInterruptContext[interruptContextId];
-	context.eventHandler         = eventHandler;
-	context.filled               = true;
-	context.type                 = interruptType(eventType);
 
-	// Also register interrupt on the microapp side
+	// Also register interrupt on the microapp side,
+	// with an indirect handler
 	interrupt_registration_t interrupt;
-	interrupt.type          = CS_MICROAPP_SDK_TYPE_BLE;
-	interrupt.id          = interruptType(eventType);
-	interrupt.handler        = handleBleInterrupt;
-	microapp_sdk_result_t result = registerInterrupt(&interrupt);
+	interrupt.type    = CS_MICROAPP_SDK_TYPE_BLE;
+	interrupt.id      = getBleType(eventType);
+	interrupt.handler = handleBleInterrupt;
+	result            = registerInterrupt(&interrupt);
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		// No empty interrupt slots available on microapp side
 		// Remove interrupt context
-		context.eventHandler = nullptr;
-		context.filled       = false;
+		removeInterruptContext(eventType);
 		return false;
 	}
 
@@ -106,17 +84,16 @@ bool Ble::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice
 	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
 	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
 	bleRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
-	bleRequest->type               = requestType(eventType);
+	bleRequest->type               = getBleType(eventType);
 
 	sendMessage();
 
 	// Bluenet will set ack to true upon success
 	if (bleRequest->header.ack != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		// Undo local interrupt registration
-		removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_BLE, interruptType(eventType));
+		removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_BLE, getBleType(eventType));
 		// Undo interrupt context
-		context.eventHandler = nullptr;
-		context.filled       = false;
+		removeInterruptContext(eventType);
 		return false;
 	}
 	return true;
@@ -238,20 +215,69 @@ BleFilter* Ble::getFilter() {
 	return &_activeFilter;
 }
 
-MicroappSdkBleType Ble::requestType(BleEventType type) {
-	switch (type) {
-		case BLEDeviceScanned: return CS_MICROAPP_SDK_BLE_SCAN_REGISTER_INTERRUPT;
-		case BLEConnected: return CS_MICROAPP_SDK_BLE_CONNECTION_REQUEST_CONNECT;
-		case BLEDisconnected: return CS_MICROAPP_SDK_BLE_CONNECTION_REQUEST_DISCONNECT;
+MicroappSdkBleType Ble::getBleType(BleEventType eventType) {
+	switch (eventType) {
+		case BLEDeviceScanned: return CS_MICROAPP_SDK_BLE_SCAN;
+		case BLEConnected:
+			// todo: can also be peripheral?
+			return CS_MICROAPP_SDK_BLE_CENTRAL;
+		case BLEDisconnected:
+			// todo: can also be peripheral?
+			return CS_MICROAPP_SDK_BLE_CENTRAL;
 		default: return CS_MICROAPP_SDK_BLE_NONE;
 	}
 }
 
-MicroappSdkBleType Ble::interruptType(BleEventType type) {
-	switch (type) {
-		case BLEDeviceScanned: return CS_MICROAPP_SDK_BLE_SCAN_SCANNED_DEVICE;
-		case BLEConnected: return CS_MICROAPP_SDK_BLE_CONNECTION_CONNECTED;
-		case BLEDisconnected: return CS_MICROAPP_SDK_BLE_CONNECTION_DISCONNECTED;
-		default: return CS_MICROAPP_SDK_BLE_NONE;
+microapp_sdk_result_t Ble::setInterruptContext(BleEventType eventType, void (*eventHandler)(BleDevice)) {
+	int interruptContextId = -1;
+	for (int i = 0; i < MAX_BLE_INTERRUPT_REGISTRATIONS; ++i) {
+		if (_bleInterruptContext[i].filled == false) {
+			interruptContextId = i;
+			break;
+		}
+		if (_bleInterruptContext[i].eventType == eventType) {
+			return CS_MICROAPP_SDK_ACK_ERR_ALREADY_EXISTS;
+		}
 	}
+	if (interruptContextId < 0) {
+		// No empty slots for storing interruptContext
+		return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
+	}
+	BleInterruptContext& context = _bleInterruptContext[interruptContextId];
+	context.eventHandler         = eventHandler;
+	context.filled               = true;
+	context.type                 = getBleType(eventType);
+	context.eventType            = eventType;
+	return CS_MICROAPP_SDK_ACK_SUCCESS;
+}
+
+microapp_sdk_result_t Ble::getInterruptContext(BleEventType eventType, BleInterruptContext& context) {
+	for (int i = 0; i < MAX_BLE_INTERRUPT_REGISTRATIONS; ++i) {
+		if (_bleInterruptContext[i].filled == false) {
+			continue;
+		}
+		if (_bleInterruptContext[i].eventType == eventType) {
+			if (_bleInterruptContext[i].eventHandler == nullptr) {
+				return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
+			}
+			context = _bleInterruptContext[i];
+			return CS_MICROAPP_SDK_ACK_SUCCESS;
+		}
+	}
+	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
+}
+
+microapp_sdk_result_t Ble::removeInterruptContext(BleEventType eventType) {
+	for (int i = 0; i < MAX_BLE_INTERRUPT_REGISTRATIONS; ++i) {
+		if (_bleInterruptContext[i].filled == false) {
+			continue;
+		}
+		if (_bleInterruptContext[i].eventType == eventType) {
+			_bleInterruptContext[i].eventHandler = nullptr;
+			_bleInterruptContext[i].type         = CS_MICROAPP_SDK_BLE_NONE;
+			_bleInterruptContext[i].filled       = false;
+			return CS_MICROAPP_SDK_ACK_SUCCESS;
+		}
+	}
+	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 }
