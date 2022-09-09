@@ -17,18 +17,18 @@ MacAddress::MacAddress(const char* addressString) {
 
 void MacAddress::convertMacToString(const uint8_t* address, char* emptyAddressString) {
 	for (uint8_t i = 0; i < MAC_ADDRESS_LENGTH; i++) {
-		convertByteToTwoHexChars(address[i], emptyAddressString + 3 * i);
+		convertByteToTwoHexChars(address[MAC_ADDRESS_LENGTH - i - 1], emptyAddressString + 3 * i);
 		if (3 * i + 2 < MAC_ADDRESS_STRING_LENGTH) {  // do not add colon after last byte
 			emptyAddressString[3 * i + 2] = ':';
 		}
 	}
 	// string termination
-	emptyAddressString[MAC_ADDRESS_STRING_LENGTH-1] = 0;
+	emptyAddressString[MAC_ADDRESS_STRING_LENGTH - 1] = 0;
 }
 
 void MacAddress::convertStringToMac(const char* addressString, uint8_t* emptyAddress) {
 	for (uint8_t i = 0; i < MAC_ADDRESS_LENGTH; i++) {
-		emptyAddress[i] = convertTwoHexCharsToByte(addressString + 3 * i);
+		emptyAddress[MAC_ADDRESS_LENGTH - i - 1] = convertTwoHexCharsToByte(addressString + 3 * i);
 	}
 }
 
