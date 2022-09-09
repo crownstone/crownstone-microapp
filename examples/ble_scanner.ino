@@ -62,7 +62,9 @@ void setup() {
 	Serial.println("BLE scanner example");
 
 	// Register scan handler
-	BLE.setEventHandler(BLEDeviceScanned, onScannedDevice);
+	if (!BLE.setEventHandler(BLEDeviceScanned, onScannedDevice)) {
+		Serial.println("Setting event handler failed");
+	}
 }
 
 // The Arduino loop function.

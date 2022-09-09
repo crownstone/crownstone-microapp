@@ -6,7 +6,7 @@ MacAddress::MacAddress(const uint8_t* address) {
 }
 
 MacAddress::MacAddress(const char* addressString) {
-	if (strlen(addressString) != MAC_ADDRESS_STRING_LENGTH) {
+	if (strlen(addressString) != MAC_ADDRESS_STRING_LENGTH - 1) {
 		return;
 	}
 	memcpy(_addressString, addressString, MAC_ADDRESS_STRING_LENGTH);
@@ -22,6 +22,8 @@ void MacAddress::convertMacToString(const uint8_t* address, char* emptyAddressSt
 			emptyAddressString[3 * i + 2] = ':';
 		}
 	}
+	// string termination
+	emptyAddressString[MAC_ADDRESS_STRING_LENGTH-1] = 0;
 }
 
 void MacAddress::convertStringToMac(const char* addressString, uint8_t* emptyAddress) {

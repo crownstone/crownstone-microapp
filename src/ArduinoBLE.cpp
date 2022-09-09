@@ -85,6 +85,22 @@ bool Ble::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice
 	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
 	bleRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
 	bleRequest->type               = getBleType(eventType);
+	switch (bleRequest->type) {
+		case CS_MICROAPP_SDK_BLE_SCAN:
+			bleRequest->scan.type = CS_MICROAPP_SDK_BLE_SCAN_REGISTER_INTERRUPT;
+			break;
+		case CS_MICROAPP_SDK_BLE_CENTRAL:
+			bleRequest->central.type = CS_MICROAPP_SDK_BLE_CENTRAL_REGISTER_INTERRUPT;
+			break;
+		case CS_MICROAPP_SDK_BLE_PERIPHERAL:
+			bleRequest->peripheral.type = CS_MICROAPP_SDK_BLE_PERIPHERAL_REQUEST_REGISTER_INTERRUPT;
+			break;
+		default:
+			// unsupported ble type for setting event handler
+			removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_BLE, getBleType(eventType));
+			removeInterruptContext(eventType);
+			return false;
+	}
 
 	sendMessage();
 
@@ -108,7 +124,8 @@ bool Ble::scan(bool withDuplicates) {
 	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
 	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
 	bleRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
-	bleRequest->type               = CS_MICROAPP_SDK_BLE_SCAN_START;
+	bleRequest->type               = CS_MICROAPP_SDK_BLE_SCAN;
+	bleRequest->scan.type          = CS_MICROAPP_SDK_BLE_SCAN_START;
 
 	sendMessage();
 
@@ -153,7 +170,8 @@ bool Ble::stopScan() {
 
 	bleRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
 	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
-	bleRequest->type               = CS_MICROAPP_SDK_BLE_SCAN_STOP;
+	bleRequest->type               = CS_MICROAPP_SDK_BLE_SCAN;
+	bleRequest->scan.type          = CS_MICROAPP_SDK_BLE_SCAN_STOP;
 
 	sendMessage();
 
@@ -217,7 +235,8 @@ BleFilter* Ble::getFilter() {
 
 MicroappSdkBleType Ble::getBleType(BleEventType eventType) {
 	switch (eventType) {
-		case BLEDeviceScanned: return CS_MICROAPP_SDK_BLE_SCAN;
+		case BLEDeviceScanned:
+			return CS_MICROAPP_SDK_BLE_SCAN;
 		case BLEConnected:
 			// todo: can also be peripheral?
 			return CS_MICROAPP_SDK_BLE_CENTRAL;

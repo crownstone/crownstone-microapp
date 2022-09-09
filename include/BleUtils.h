@@ -7,8 +7,8 @@
 
 // length of mac address is defined on bluenet side
 extern const uint8_t MAC_ADDRESS_LENGTH;
-// length of 'stringified' mac address of format "AA:BB:CC:DD:EE:FF"
-const uint8_t MAC_ADDRESS_STRING_LENGTH = 17;
+// length of 'stringified' mac address of format "AA:BB:CC:DD:EE:FF" plus escape char
+const uint8_t MAC_ADDRESS_STRING_LENGTH = 18;
 
 // The MacAddress class stores a buffer containing a mac address
 // This class enables e.g. easy comparison of addresses, and getting a string version of the address
