@@ -97,6 +97,7 @@ public:
 	String localName();
 
 	bool connect();
+	bool disconnect();
 	bool connected();
 
 	/**

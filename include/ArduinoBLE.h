@@ -120,7 +120,7 @@ public:
 	}
 
 	/**
-	 * Initializes the BLE module
+	 * Initializes the BLE device
 	 *
 	 * @return true on success
 	 * @return false otherwise
@@ -128,7 +128,7 @@ public:
 	bool begin();
 
 	/**
-	 * Stops the BLE module
+	 * Stops the BLE device
 	 */
 	void end();
 
@@ -158,26 +158,47 @@ public:
 	bool connected();
 
 	/**
-	 * Disconnect any connected BLE device
+	 * Disconnect any BLE devices that are connected
 	 *
-	 * @return true on success
+	 * @return true if any BLE device that was previously connected was disconnected
 	 * @return false otherwise
 	 */
 	bool disconnect();
 
 	/**
-	 * Get the MAC address of the own device
+	 * Query the Bluetooth address of the BLE device
 	 *
-	 * @return String representation of the MAC address
+	 * @return the Bluetooth address of the BLE device as a string
 	 */
 	String address();
 
 	/**
-	 * Get the RSSI of the connected BLE device
+	 * Query the RSSI of the connected BLE device
 	 *
-	 * @return RSSI of connected device. 127 if not BLE device is connected
+	 * @return the RSSI of connected BLE device. 127 if no BLE device is connected
 	 */
 	int8_t rssi();
+
+	/**
+	 * Add a BLEService to the set of services the BLE device provides
+	 *
+	 * @param service BLEService to add
+	 */
+	void addService(BleService service);
+
+	/**
+	 * Query the central BLE device connected
+	 *
+	 * @return BleDevice representing the central
+	 */
+	BleDevice central();
+
+	/**
+	 * Set if the device is connectable after advertising, defaults to true
+	 *
+	 * @param connectable if true the device will be connectable, if false not connectable
+	 */
+	void setConnectable(bool connectable);
 
 	/**
 	 * Sends command to bluenet to call registered microapp callback function upon receiving advertisements
@@ -232,28 +253,6 @@ public:
 	 * @return                  BleDevice object representing the discovered device
 	 */
 	BleDevice available();
-
-	/**
-	 * Add a BLEService to the set of services the BLE device provides
-	 *
-	 * @param service BLEService to add
-	 */
-	void addService(BleService service);
-
-	/**
-	 * Query the central BLE device connected
-	 *
-	 * @return BleDevice representing the central
-	 */
-	BleDevice central();
-
-	/**
-	 * Set if the device is connectable after advertising, defaults to true
-	 *
-	 * @param connectable if true the device will be connectable, if false not connectable
-	 */
-	void setConnectable(bool connectable);
-
 };
 
 #define BLE Ble::getInstance()

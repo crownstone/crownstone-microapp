@@ -12,7 +12,7 @@
 // This is the value to be used in the temperature characteristic
 uint8_t temperatureValue = 20;
 
-void updateTemperatureValue() {
+void updateTemperature() {
 	if (temperatureValue < 30) {
 		temperatureValue++;
 	}
@@ -50,11 +50,15 @@ void setup() {
 	if (!BLE.setEventHandler(BLEDisconnected, onCentralDisconnected)) {
 		Serial.println("Setting event handler failed");
 	}
+	temperatureService.addCharacteristic(temperatureCharacteristic);
+	BLE.addService(temperatureService);
 	temperatureCharacteristic.writeValue(temperatureValue);
 }
 
 // The Arduino loop function.
 void loop() {
+	updateTemperature();
+
 	BleDevice central = BLE.central();
 
 	if (central) {
