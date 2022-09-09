@@ -1,6 +1,7 @@
 #pragma once
 
 #include <BleDevice.h>
+#include <BleService.h>
 #include <BleUtils.h>
 #include <Serial.h>
 #include <microapp.h>
@@ -21,6 +22,10 @@ enum BleEventType {
 	BLEDeviceScanned = 0x01,
 	BLEConnected     = 0x02,
 	BLEDisconnected  = 0x03,
+	BLESubscribed    = 0x04,
+	BLEUnsubscribed  = 0x05,
+	BLERead          = 0x06,
+	BLEWritten       = 0x07,
 };
 
 // Types of filters which can be used to filter scanned BLE devices
@@ -227,6 +232,28 @@ public:
 	 * @return                  BleDevice object representing the discovered device
 	 */
 	BleDevice available();
+
+	/**
+	 * Add a BLEService to the set of services the BLE device provides
+	 *
+	 * @param service BLEService to add
+	 */
+	void addService(BleService service);
+
+	/**
+	 * Query the central BLE device connected
+	 *
+	 * @return BleDevice representing the central
+	 */
+	BleDevice central();
+
+	/**
+	 * Set if the device is connectable after advertising, defaults to true
+	 *
+	 * @param connectable if true the device will be connectable, if false not connectable
+	 */
+	void setConnectable(bool connectable);
+
 };
 
 #define BLE Ble::getInstance()
