@@ -3,20 +3,40 @@
 #include <String.h>
 #include <microapp.h>
 
-// UTILITIES FOR THE MICROAPP BLE LIBRARY
+/* UTILITIES FOR THE MICROAPP BLE LIBRARY
+ * - BLE event types
+ * - MAC address class
+ * - 16-bit UUID class
+ * - 128-bit UUID class
+ * - conversion between hex and chars
+ */
+
+// Types of BLE event for which event handlers can be set
+// The naming of these corresponds with ArduinoBLE syntax
+enum BleEventType {
+	BLEDeviceScanned = 0x01,
+	BLEConnected     = 0x02,
+	BLEDisconnected  = 0x03,
+	BLESubscribed    = 0x04,
+	BLEUnsubscribed  = 0x05,
+	BLERead          = 0x06,
+	BLEWritten       = 0x07,
+};
 
 // length of mac address is defined on bluenet side
 extern const uint8_t MAC_ADDRESS_LENGTH;
-// length of 'stringified' mac address of format "AA:BB:CC:DD:EE:FF" plus escape char
-const uint8_t MAC_ADDRESS_STRING_LENGTH = 18;
+// format "AA:BB:CC:DD:EE:FF"
+const size_t MAC_ADDRESS_STRING_LENGTH = 17;
 
-// The MacAddress class stores a buffer containing a mac address
-// This class enables e.g. easy comparison of addresses, and getting a string version of the address
+/*
+ * The MacAddress class stores a buffer containing a mac address
+ * This class enables e.g. easy comparison of addresses, and getting a string version of the address
+ */
 class MacAddress {
-
 private:
 	bool _initialized         = false;
 	bool _cachedAddressString = false;
+
 	/**
 	 * Convert from address byte array to string.
 	 *
@@ -37,7 +57,7 @@ private:
 
 protected:
 	uint8_t _address[MAC_ADDRESS_LENGTH];
-	char _addressString[MAC_ADDRESS_STRING_LENGTH];
+	char _addressString[MAC_ADDRESS_STRING_LENGTH + 1]; // plus termination char
 
 public:
 	// Constructors: either empty, from an external struct, or from a string
@@ -55,6 +75,94 @@ public:
 
 // type for 16-bit uuid
 typedef uint16_t uuid16_t;
+// amount of bytes in a 16-bit uuid
+const size_t UUID_16BIT_BYTE_LENGTH = 2;
+// format "ABCD"
+const size_t UUID_16BIT_STRING_LENGTH = 4;
+
+class UUID16Bit {
+private:
+	bool _initialized = false;
+	bool _cachedUuidString = false;
+	uuid16_t _uuid;
+	char _uuidString[UUID_16BIT_STRING_LENGTH + 1];
+
+	/**
+	 * Convert from 16-bit UUID string in format "ABCD" to uint16_t 0xABCD
+	 *
+	 * @param[in] uuidString Null-terminated string of the format "ABCD", with either uppercase or lowercase letters
+	 * @return               A 16-bit UUID int of the format 0xABCD
+	 */
+	uuid16_t convertStringToUuid(const char* uuidString);
+
+	/**
+	 * Convert from 16-bit UUID to string version
+	 *
+	 * @param[in] uuid             16-bit UUID to convert in format 0xABCD
+	 * @param[out] emptyUuidString Stringified output in format "ABCD"
+	 */
+	void convertUuidToString(const uuid16_t uuid, char* emptyUuidString);
+
+public:
+	UUID16Bit(){};
+	UUID16Bit(const char* uuidString);
+	UUID16Bit(uuid16_t uuid);
+
+	uuid16_t uuid();
+	const char* string();
+
+	explicit operator bool() const { return this->_initialized; }
+	bool operator==(const UUID16Bit& other) { return (this->_uuid == other._uuid); }
+	bool operator!=(const UUID16Bit& other) { return (this->_uuid != other._uuid); }
+};
+
+// amount of bytes in a 128-bit uuid
+const size_t UUID_128BIT_BYTE_LENGTH = 16;
+// format "12345678-ABCD-1234-5678-ABCDEF123456"
+const size_t UUID_128BIT_STRING_LENGTH = 36;
+
+const uint8_t BASE_UUID_128BIT[UUID_128BIT_BYTE_LENGTH] = {0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB};
+const char BASE_UUID_128BIT_STRING[UUID_128BIT_STRING_LENGTH + 1] = "00000000-0000-1000-8000-00805F9B34FB";
+const uint8_t CUSTOM_UUID_BYTE_OFFSET = 2;
+const uint8_t CUSTOM_UUID_CHAR_OFFSET = 4;
+
+class UUID128Bit {
+private:
+	bool _initialized = false;
+	bool _cachedUuidString = false;
+	uint8_t _uuid[UUID_128BIT_BYTE_LENGTH];
+	char _uuidString[UUID_128BIT_STRING_LENGTH + 1];
+
+	/**
+	 * Convert from 128-bit UUID string "12345678-ABCD-1234-5678-ABCDEF123456" to byte array
+	 *
+	 * @param[in] uuidString Null-terminated string of the format "12345678-ABCD-1234-5678-ABCDEF123456", with either uppercase or lowercase letters.
+	 * @param[out] emptyUuid A byte array where the resulting UUID will be placed
+	 */
+	void convertStringToUuid(const char* uuidString, uint8_t* emptyUuid);
+
+	/**
+	 * Convert from 128-bit UUID to string representation in format "12345678-ABCD-1234-5678-ABCDEF123456"
+	 *
+	 * @param[in] uuid             Pointer to byte array containing 128-bit UUID
+	 * @param[out] emptyUuidString Char array where the stringified UUID will be placed
+	 */
+	void convertUuidToString(const uint8_t* uuid, char* emptyUuidString);
+
+public:
+	UUID128Bit(){};
+	UUID128Bit(const char* uuidString);
+	UUID128Bit(const uint8_t* uuid, size_t len);
+	UUID128Bit(uuid16_t uuid); // with custom base uuid
+
+	const uint8_t* bytes();
+	const char* string();
+
+	explicit operator bool() const { return this->_initialized; }
+	bool operator==(const UUID128Bit& other) { return memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) == 0; }
+	bool operator!=(const UUID128Bit& other) { return memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) != 0; }
+};
 
 /**
  * Convert a pair of chars to a byte, e.g. convert "A3" to 0xA3.
@@ -72,12 +180,3 @@ uint8_t convertTwoHexCharsToByte(const char* chars);
  * @param[out] res   Pointer to a pair of chars.
  */
 void convertByteToTwoHexChars(uint8_t byte, char* res);
-
-/**
- * Convert from 16-bit UUID string "180D" to uint16_t 0x180D.
- *
- * @param[in] uuid_str   Null-terminated string of the format "180D", with either uppercase or lowercase letters.
- *
- * @return               A 16-bit UUID int of the format 0x180D.
- */
-uuid16_t convertStringToUuid(const char* uuid_str);

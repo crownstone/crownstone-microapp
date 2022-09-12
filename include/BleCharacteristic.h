@@ -1,9 +1,8 @@
 #pragma once
 
-#include <BleUtils.h>
+#include <ArduinoBLE.h>
 #include <microapp.h>
 
-// BleCharacteristicProperties
 class BleCharacteristicProperties {
 public:
 	static const uint8_t BLEBroadcast            = 1 << 0;

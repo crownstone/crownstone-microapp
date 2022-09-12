@@ -13,6 +13,11 @@ private:
 	 */
 	friend class Ble;
 
+	bool _customUuid = false;
+	bool _initialized = false;
+
+	UUID128Bit _uuid128;
+
 public:
 	/**
 	 * Create a new BLE service

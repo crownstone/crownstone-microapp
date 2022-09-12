@@ -43,12 +43,19 @@ void setup() {
 	// Write something to the log (will be shown in the bluenet code as print statement).
 	Serial.println("BLE scanner example");
 
+	if (!BLE.begin()) {
+		Serial.println("BLE.begin failed");
+		return;
+	}
+
 	// Register scan handler
 	if (!BLE.setEventHandler(BLEConnected, onCentralConnected)) {
 		Serial.println("Setting event handler failed");
+		return;
 	}
 	if (!BLE.setEventHandler(BLEDisconnected, onCentralDisconnected)) {
 		Serial.println("Setting event handler failed");
+		return;
 	}
 	temperatureService.addCharacteristic(temperatureCharacteristic);
 	BLE.addService(temperatureService);

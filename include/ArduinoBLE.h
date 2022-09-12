@@ -16,18 +16,6 @@ extern "C" {
 }
 #endif
 
-// Types of BLE event for which event handlers can be set
-// The naming of these corresponds with ArduinoBLE syntax
-enum BleEventType {
-	BLEDeviceScanned = 0x01,
-	BLEConnected     = 0x02,
-	BLEDisconnected  = 0x03,
-	BLESubscribed    = 0x04,
-	BLEUnsubscribed  = 0x05,
-	BLERead          = 0x06,
-	BLEWritten       = 0x07,
-};
-
 // Types of filters which can be used to filter scanned BLE devices
 enum BleFilterType {
 	BleFilterNone = 0,  // default
@@ -40,9 +28,9 @@ enum BleFilterType {
 struct BleFilter {
 	BleFilterType type;  // defines which property is currently being filtered on
 	MacAddress address;
-	char name[MAX_BLE_ADV_DATA_LENGTH];  // max length of name equals max advertisement length
-	uint16_t len;                        // length of the name field
-	uuid16_t uuid;                       // service data uuid
+	char localName[MAX_BLE_ADV_DATA_LENGTH];  // max length of name equals max advertisement length
+	uint16_t localNameLen;                    // length of the name field
+	UUID16Bit uuid;                           // service data uuid
 };
 
 typedef void (*BleEventHandler)(BleDevice);
@@ -66,11 +54,13 @@ private:
 
 	Ble(){};
 
-	BleDevice _activeDevice;
+	MacAddress _address; // address of the crownstone
 
-	BleFilter _activeFilter;
-
+	BleDevice _scanDevice;
+	BleFilter _scanFilter;
 	bool _isScanning = false;
+
+	BleDevice _connectedDevice;
 
 	static const uint8_t MAX_BLE_INTERRUPT_REGISTRATIONS = 3;
 
@@ -85,29 +75,47 @@ private:
 	 * @param[in] rawDevice the scanned BLE device
 	 *
 	 */
-	bool filterScanEvent(BleDevice rawDevice);
+	bool matchesFilter(BleDevice rawDevice);
 
 	/**
-	 * Get the currently set filter for scanned devices
+	 * Handles interrupts entering the BLE class from bluenet
 	 *
-	 * @return A pointer to the BleFilter object
-	 */
-	BleFilter* getFilter();
-
-	/**
-	 * Handles interrupts entering the BLE class
+	 * @param[in] ble the SDK packet with the incoming message from bluenet
 	 */
 	microapp_sdk_result_t handleInterrupt(microapp_sdk_ble_t* ble);
 
 	/**
-	 * Converts a (user-facing) event type to the corresponding MicroappSdkBleType
+	 * Maps a (user-facing) event type to the corresponding MicroappSdkBleType
+	 *
+	 * @param eventType the BLE event type
+	 * @return the SDK BLE type corresponding to the event type
 	 */
 	MicroappSdkBleType getBleType(BleEventType eventType);
 
+	/**
+	 * Set interrupt context for a new callback set by the user
+	 *
+	 * @param eventType BleEventType indicating he type of event, e.g. BLEConnected
+	 * @param eventHandler callback to call upon the event specified by eventType
+	 * @return microapp_sdk_result_t
+	 */
 	microapp_sdk_result_t setInterruptContext(BleEventType eventType, void (*eventHandler)(BleDevice));
 
+	/**
+	 * Based on the event type, get the context with event handler
+	 *
+	 * @param eventType the type of BLE event for which to get the context
+	 * @param context an empty instance of BleInterruptContext in which the result is placed
+	 * @return microapp_sdk_result_t
+	 */
 	microapp_sdk_result_t getInterruptContext(BleEventType eventType, BleInterruptContext& context);
 
+	/**
+	 * Delete the interrupt context
+	 *
+	 * @param eventType the type of BLE event for which to remove the context
+	 * @return microapp_sdk_result_t
+	 */
 	microapp_sdk_result_t removeInterruptContext(BleEventType eventType);
 
 public:

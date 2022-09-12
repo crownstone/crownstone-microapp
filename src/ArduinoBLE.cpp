@@ -1,4 +1,5 @@
 #include <ArduinoBLE.h>
+#include <Arduino.h>
 
 /*
  * An ordinary C function. Calls internal handler
@@ -27,9 +28,16 @@ microapp_sdk_result_t Ble::handleInterrupt(microapp_sdk_ble_t* bleInterrupt) {
 					getInterruptContext(BLEDeviceScanned, context);
 					// Create temporary object on the stack
 					// Lifetime of bleDevice is only as long as the lifetime of the interrupt stack
-					BleDevice bleDevice = BleDevice(&bleInterrupt->scan.eventScan);
-					if (filterScanEvent(bleDevice)) {
-						context.eventHandler(bleDevice);
+					// todo:
+					// BleScan scan(&bleInterupt->scan.eventScan); // only pointer
+					// if (matchesFilter(scan)) {
+					// 	_scanDevice = BleDevice(scan); // copies scan data
+					// 	context.eventHandler(_scanDevice);
+					// }
+					}
+					_scanDevice = BleDevice(&bleInterrupt->scan.eventScan);
+					if (matchesFilter(_scanDevice)) {
+						context.eventHandler(_scanDevice);
 					}
 					return CS_MICROAPP_SDK_ACK_SUCCESS;
 				}
@@ -51,6 +59,25 @@ microapp_sdk_result_t Ble::handleInterrupt(microapp_sdk_ble_t* bleInterrupt) {
 			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 		}
 	}
+}
+
+bool Ble::begin() {
+	// todo: make roundtrip to bluenet to request own ble address
+	// todo: register for peripheral interrupts
+	// todo: set initialized flag
+	return true;
+}
+
+void Ble::end() {
+	// todo: clear initialized flag
+	return;
+}
+
+void Ble::poll(int timeout = 0) {
+	if (timeout == 0) {
+		return;
+	}
+	delay(timeout);
 }
 
 /*
@@ -115,6 +142,10 @@ bool Ble::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice
 	return true;
 }
 
+bool Ble::connected() {
+	return _connectedDevice.connected();
+}
+
 bool Ble::scan(bool withDuplicates) {
 	if (_isScanning) {
 		return true;
@@ -138,23 +169,30 @@ bool Ble::scan(bool withDuplicates) {
 }
 
 bool Ble::scanForName(const char* name, bool withDuplicates) {
-	_activeFilter.type = BleFilterLocalName;
-	_activeFilter.len  = strlen(name);
-	memcpy(_activeFilter.name, name, _activeFilter.len);
+	_scanFilter.type = BleFilterLocalName;
+	_scanFilter.localNameLen = strlen(name);
+	if (_scanFilter.localNameLen > MAX_BLE_ADV_DATA_LENGTH) {
+		_scanFilter.localNameLen = MAX_BLE_ADV_DATA_LENGTH;
+	}
+
+	memcpy(_scanFilter.localName, name, _scanFilter.localNameLen);
 	// TODO: do something with withDuplicates argument
 	return scan(withDuplicates);
 }
 
 bool Ble::scanForAddress(const char* address, bool withDuplicates) {
-	_activeFilter.type    = BleFilterAddress;
-	_activeFilter.address = MacAddress(address);
+	_scanFilter.type    = BleFilterAddress;
+	_scanFilter.address = MacAddress(address);
 	// TODO: do something with withDuplicates argument
 	return scan(withDuplicates);
 }
 
 bool Ble::scanForUuid(const char* uuid, bool withDuplicates) {
-	_activeFilter.type = BleFilterUuid;
-	_activeFilter.uuid = convertStringToUuid(uuid);
+	if (strlen(uuid) != UUID_16BIT_STRING_LENGTH) {
+		return false;
+	}
+	_scanFilter.type = BleFilterUuid;
+	_scanFilter.uuid = UUID16Bit(uuid);
 	// TODO: do something with withDuplicates argument
 	return scan(withDuplicates);
 }
@@ -180,22 +218,22 @@ bool Ble::stopScan() {
 		return false;
 	}
 
-	_activeFilter.type = BleFilterNone;  // reset filter
+	_scanFilter.type = BleFilterNone;  // reset filter
 	_isScanning        = false;
 	return true;
 }
 
 BleDevice Ble::available() {
-	return _activeDevice;
+	return _scanDevice;
 }
 
-bool Ble::filterScanEvent(BleDevice device) {
+bool Ble::matchesFilter(BleDevice device) {
 	if (!_isScanning) {  // return false by default if not scanning
 		return false;
 	}
-	switch (_activeFilter.type) {
+	switch (_scanFilter.type) {
 		case BleFilterAddress: {
-			if (device._address != _activeFilter.address) {
+			if (device._address != _scanFilter.address) {
 				return false;
 			}
 			return true;
@@ -205,17 +243,17 @@ bool Ble::filterScanEvent(BleDevice device) {
 				return false;
 			}
 			String deviceName = device.localName();
-			if (deviceName.length() != _activeFilter.len) {
+			if (deviceName.length() != _scanFilter.localNameLen) {
 				return false;
 			}
 			// compare local name to name in filter
-			if (memcmp(deviceName.c_str(), _activeFilter.name, _activeFilter.len) != 0) {
+			if (memcmp(deviceName.c_str(), _scanFilter.localName, _scanFilter.localNameLen) != 0) {
 				return false;
 			}
 			return true;
 		}
 		case BleFilterUuid: {
-			return device.findServiceDataUuid(_activeFilter.uuid);
+			return device.findServiceDataUuid(_scanFilter.uuid.uuid());
 		}
 		case BleFilterNone: {
 			// If no filter is set, we pass the filter by default
@@ -227,10 +265,6 @@ bool Ble::filterScanEvent(BleDevice device) {
 		}
 	}
 	return false;
-}
-
-BleFilter* Ble::getFilter() {
-	return &_activeFilter;
 }
 
 MicroappSdkBleType Ble::getBleType(BleEventType eventType) {
