@@ -1,7 +1,7 @@
 #pragma once
 
-#include <BleUtils.h>
 #include <BleCharacteristic.h>
+#include <BleUtils.h>
 #include <String.h>
 #include <microapp.h>
 
@@ -13,10 +13,21 @@ private:
 	 */
 	friend class Ble;
 
-	bool _customUuid = false;
+	// Default constructor
+	BleService(){};
+
+	// Same as public constructor except allows for setting remote flag
+	BleService(const char* uuid, bool remote);
+
+	bool _customUuid  = false;
 	bool _initialized = false;
+	bool _remote      = false;
 
 	UUID128Bit _uuid128;
+
+	static const uint8_t MAX_CHARACTERISTICS = 6;
+	BleCharacteristic* _characteristics[MAX_CHARACTERISTICS];
+	uint8_t _characteristicCount = 0;
 
 public:
 	/**
@@ -38,7 +49,7 @@ public:
 	 *
 	 * @param characteristic BleCharacteristic to add
 	 */
-	void addCharacteristic(BleCharacteristic characteristic);
+	void addCharacteristic(BleCharacteristic& characteristic);
 
 	/**
 	 * Query the number of characteristics discovered for the BLE service
@@ -51,11 +62,10 @@ public:
 	 * Query if the BLE service has a particular characteristic
 	 *
 	 * @param uuid UUID of the characteristic to check as a string
-	 * @param index (optional) index of characteristic to check if the device provides more than one. Defaults to 0
 	 * @return true if the service provides the characteristic
 	 * @return false otherwise
 	 */
-	bool hasCharacteristic(const char* uuid, int index = 0);
+	bool hasCharacteristic(const char* uuid);
 
 	/**
 	 * Get a BleCharacteristic representing a BLE characteristic the service provides

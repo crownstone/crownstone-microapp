@@ -1,6 +1,8 @@
 #pragma once
 
-#include <ArduinoBLE.h>
+#include <BleDevice.h>
+#include <BleUtils.h>
+#include <String.h>
 #include <microapp.h>
 
 class BleCharacteristicProperties {
@@ -17,14 +19,29 @@ class BleCharacteristic {
 
 private:
 	/*
-	 * Allow full access for Ble class
+	 * Allow full access for Ble class and BleService class
 	 */
 	friend class Ble;
+	friend class BleService;
 
-protected:
-	union value_t {
-		uint8_t byte;
-	} _value;
+	// default constructor
+	BleCharacteristic(){};
+
+	// Same as public constructor except allows for setting remote flag
+	BleCharacteristic(const char* uuid, uint8_t properties, bool remote);
+
+	bool _initialized   = false;
+	bool _remote        = false;
+	bool _subscribed    = false;
+	bool _written       = false;
+	uint8_t _properties = 0;
+
+	static const size_t MAX_CHARACTERISTIC_VALUE_SIZE = 256;
+	uint8_t* _value                                   = nullptr;
+	size_t _valueLength                               = 0;
+
+	bool _customUuid = false;
+	UUID128Bit _uuid;
 
 public:
 	/**
@@ -56,12 +73,36 @@ public:
 	int valueSize();
 
 	/**
+	 * Query the current value of the specified BLECharacteristic
+	 *
+	 * @return The current value of the characteristic, as a byte buffer
+	 */
+	uint8_t* value();
+
+	/**
+	 * Query the current value size of the specified BLECharacteristic
+	 *
+	 * @return the current value size of the characteristic (in bytes)
+	 */
+	int valueLength();
+
+	/**
+	 * Write the value of the characteristic
+	 *
+	 * @param buffer byte array to write value with
+	 * @param length number of bytes of the buffer argument to write
+	 * @return true on success
+	 * @return false on failure
+	 */
+	bool writeValue(uint8_t* buffer, size_t length);
+
+	/**
 	 * Set the event handler (callback) function that will be called when the specified event occurs
 	 *
 	 * @param eventType event type (BLESubscribed, BLEUnsubscribed, BLERead, BLEWritten)
 	 * @param eventHandler function to call when the event occurs
 	 */
-	void setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice));
+	void setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice, BleCharacteristic));
 
 	/**
 	 * Query if the characteristic value has been written by another BLE device
@@ -78,35 +119,4 @@ public:
 	 * @return false otherwise
 	 */
 	bool subscribed();
-
-};
-
-class BleByteCharacteristic : public BleCharacteristic {
-public:
-	BleByteCharacteristic(const char* uuid, uint8_t properties) : BleCharacteristic(uuid, properties){};
-	BleByteCharacteristic(const char* uuid, uint8_t properties, uint8_t value) : BleCharacteristic(uuid, properties) {
-		_value.byte = value;
-	}
-
-	/**
-	 * Query the current value of the specified BLECharacteristic
-	 *
-	 * @return the current value of the characteristic, a byte
-	 */
-	uint8_t value() {
-		return _value.byte;
-	}
-
-	/**
-	 * Write the value of the characteristic
-	 *
-	 * @param value the value to write
-	 * @return true on success
-	 * @return false on failure
-	 */
-	bool writeValue(uint8_t value) {
-		_value.byte = value;
-		return true;
-	}
-
 };

@@ -16,6 +16,8 @@ public:
 	String(char* str, unsigned int len) {
 		_len      = len;
 		_str      = str;
+		// this is dangerous, we're writing to a memory address outside
+		// of the indicated len!
 		_str[len] = 0;
 	}
 

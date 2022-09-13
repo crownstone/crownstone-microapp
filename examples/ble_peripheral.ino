@@ -10,23 +10,27 @@
  */
 
 // This is the value to be used in the temperature characteristic
-uint8_t temperatureValue = 20;
-
-void updateTemperature() {
-	if (temperatureValue < 30) {
-		temperatureValue++;
-	}
-	else {
-		temperatureValue = 15;
-	}
-	temperatureCharacteristic.writeValue(temperatureValue);
-}
-
+static const uint8_t NR_TEMPERATURE_BYTES = 2;
+uint8_t temperatureValue[NR_TEMPERATURE_BYTES] = {20, 25};
 // See Bluetooth SIG assigned numbers for the 16-bit UUIDs
 // 0x181A: Environmental Sensing
 BleService temperatureService("181A");
 // 0x2A1C: Temperature measurement
-BleByteCharacteristic temperatureCharacteristic("2A1C", BleCharacteristicProperties::BLERead);
+BleCharacteristic temperatureCharacteristic("2A1C", BleCharacteristicProperties::BLERead);
+
+
+void updateTemperature() {
+	// Simulate some temperature changes
+	for (int i = 0; i < NR_TEMPERATURE_BYTES; i++){
+		if (temperatureValue[i] < 30) {
+			temperatureValue[i]++;
+		}
+		else {
+			temperatureValue[i] = 15;
+		}
+	}
+	temperatureCharacteristic.writeValue(temperatureValue, NR_TEMPERATURE_BYTES);
+}
 
 void onCentralConnected(BleDevice device) {
 	Serial.println("BLE central connected");
@@ -59,7 +63,7 @@ void setup() {
 	}
 	temperatureService.addCharacteristic(temperatureCharacteristic);
 	BLE.addService(temperatureService);
-	temperatureCharacteristic.writeValue(temperatureValue);
+	temperatureCharacteristic.writeValue(temperatureValue, NR_TEMPERATURE_BYTES);
 }
 
 // The Arduino loop function.

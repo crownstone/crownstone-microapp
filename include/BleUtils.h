@@ -4,12 +4,30 @@
 #include <microapp.h>
 
 /* UTILITIES FOR THE MICROAPP BLE LIBRARY
- * - BLE event types
+ * - BLE enums
  * - MAC address class
  * - 16-bit UUID class
  * - 128-bit UUID class
  * - conversion between hex and chars
  */
+
+// Incomplete list of GAP advertisement types, see
+// https://www.bluetooth.com/specifications/assigned-numbers/
+enum GapAdvType {
+	Flags                            = 0x01,
+	IncompleteList16BitServiceUuids  = 0x02,
+	CompleteList16BitServiceUuids    = 0x03,
+	IncompleteList32BitServiceUuids  = 0x04,
+	CompleteList32BitServiceUuids    = 0x05,
+	IncompleteList128BitServiceUuids = 0x06,
+	CompleteList128BitServiceUuids   = 0x07,
+	ShortenedLocalName               = 0x08,
+	CompleteLocalName                = 0x09,
+	ServiceData16BitUuid             = 0x16,
+	ServiceData32BitUuid             = 0x20,
+	ServiceData128BitUuid            = 0x21,
+	ManufacturerSpecificData         = 0xFF,
+};
 
 // Types of BLE event for which event handlers can be set
 // The naming of these corresponds with ArduinoBLE syntax
@@ -22,6 +40,8 @@ enum BleEventType {
 	BLERead          = 0x06,
 	BLEWritten       = 0x07,
 };
+
+typedef int8_t rssi_t;
 
 // length of mac address is defined on bluenet side
 extern const uint8_t MAC_ADDRESS_LENGTH;

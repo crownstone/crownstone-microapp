@@ -1,32 +1,9 @@
 #pragma once
 
 #include <BleUtils.h>
+#include <BleScan.h>
 #include <String.h>
 #include <microapp.h>
-
-// struct containing a pointer to a block of data, and a length field to indicate the length of the block
-struct data_ptr_t {
-	uint8_t* data = nullptr;
-	size_t len    = 0;
-};
-
-// Incomplete list of GAP advertisement types, see
-// https://www.bluetooth.com/specifications/assigned-numbers/
-enum GapAdvType {
-	Flags                            = 0x01,
-	IncompleteList16BitServiceUuids  = 0x02,
-	CompleteList16BitServiceUuids    = 0x03,
-	IncompleteList32BitServiceUuids  = 0x04,
-	CompleteList32BitServiceUuids    = 0x05,
-	IncompleteList128BitServiceUuids = 0x06,
-	CompleteList128BitServiceUuids   = 0x07,
-	ShortenedLocalName               = 0x08,
-	CompleteLocalName                = 0x09,
-	ServiceData16BitUuid             = 0x16,
-	ServiceData32BitUuid             = 0x20,
-	ServiceData128BitUuid            = 0x21,
-	ManufacturerSpecificData         = 0xFF,
-};
 
 class BleDevice {
 
@@ -35,30 +12,49 @@ private:
 
 	BleDevice(){};  // default constructor
 
-	microapp_sdk_ble_scan_event_t* _scanEvent;
-
+	uint8_t _scanData[MAX_BLE_ADV_DATA_LENGTH];  // raw scan data
+	BleScan _scan;                               // wrapper class pointing to _scanData
 	MacAddress _address;
-
-	char _localName[MAX_BLE_ADV_DATA_LENGTH];  // maximum length equals max ble advertisement length (31 bytes)
-	uint8_t _localNameLen = 0;
+	rssi_t _rssi;
 
 	union __attribute__((packed)) flags_t {
 		struct __attribute__((packed)) {
-			bool nonEmpty : 1;               // device is not empty
-			bool hasCompleteLocalName : 1;   // has a complete local name field
-			bool hasShortenedLocalName : 1;  // has a shortened local name field
-			bool checkedLocalName : 1;       // _device has already been checked for local name field
-			bool cachedLocalName : 1;        // local name is cached in _localName
-			bool connected : 1;              // whether peripheral device is connected
+			bool initialized : 1;   // device is initialized with nondefault constructor
+			bool connected : 1;     // whether device is connected
+			bool isCentral : 1;     // device has central role
+			bool isPeripheral : 1;  // device has peripheral role
 		} flags;
 		uint8_t asInt = 0;  // initialize to zero
 	} _flags;
 
 public:
-	BleDevice(microapp_sdk_ble_scan_event_t* scanEvent);  // non-empty constructor
+	BleDevice(BleScan scan, MacAddress address, rssi_t rssi);
 
 	// return true if BleDevice is nontrivial, i.e. initialized from an actual advertisement
-	explicit operator bool() const { return _flags.flags.nonEmpty; }
+	explicit operator bool() const { return _flags.flags.initialized; }
+
+	/**
+	 * Poll for BLE events and handle them
+	 *
+	 * @param timeout
+	 */
+	void poll(int timeout = 0);
+
+	/**
+	 * Query if a BLE device is connected
+	 *
+	 * @return true if the BLE device is connected
+	 * @return false otherwise
+	 */
+	bool connected();
+
+	/**
+	 * Disconnect the BLE device, if connected
+	 *
+	 * @return true if the BLE device was disconnected
+	 * @return false otherwise
+	 */
+	bool disconnect();
 
 	/**
 	 * Get device address of the last scanned advertisement which matched the filter.
@@ -73,12 +69,6 @@ public:
 	 * @return       RSSI value of the last scanned advertisement which matched the filter.
 	 */
 	int8_t rssi();
-
-	/**
-	 * Get type of advertisement
-	 *
-	 */
-	uint8_t type();
 
 	/**
 	 * Returns whether the device has advertised a local name
@@ -96,29 +86,21 @@ public:
 	 */
 	String localName();
 
+	/**
+	 * Connect to a BLE device
+	 *
+	 * @return true if the connection was successful
+	 * @return false otherwise
+	 */
 	bool connect();
-	bool disconnect();
-	bool connected();
 
 	/**
-	 * Tries to find an ad of specified GAP ad data type. and if found returns true and a pointer to its location.
+	 * Find an advertisement of type type in the scanned advertisement data
 	 *
-	 * @param[in] type          GAP advertisement type according to
-	 * https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile.
-	 * @param[out] foundData    data_ptr_t containing a pointer to the first byte of advData containing the data of type
-	 * type and its length.
-	 *
-	 * @return true             if the advertisement data of given type is found.
-	 * @return false            if the advertisement data of given type is not found.
+	 * @param[in] type the type of ad to look for
+	 * @param[out] foundData pointer to found ad + length of the ad, if present
+	 * @return true if the advertisement contains an ad of type type
+	 * @return false otherwise
 	 */
-	bool findAdvertisementDataType(GapAdvType type, data_ptr_t* foundData);
-
-	/**
-	 * Checks if a service with passed uuid is advertised by the device
-	 *
-	 * @param uuid     the uuid to filter
-	 * @return true    if found
-	 * @return false   if not found
-	 */
-	bool findServiceDataUuid(uuid16_t uuid);
+	bool findAdvertisementDataType(GapAdvType type, ble_ad_t* foundData);
 };

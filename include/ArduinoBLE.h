@@ -1,8 +1,9 @@
 #pragma once
 
-#include <BleDevice.h>
-#include <BleService.h>
 #include <BleUtils.h>
+#include <BleService.h>
+#include <BleScan.h>
+#include <BleDevice.h>
 #include <Serial.h>
 #include <microapp.h>
 
@@ -56,11 +57,20 @@ private:
 
 	MacAddress _address; // address of the crownstone
 
+	// Device only used for incoming scans
+	// Is overwritten as new scans come in that pass the filter
 	BleDevice _scanDevice;
+	// Filter for device scans
 	BleFilter _scanFilter;
+	// Boolean determining if scanning at all
 	bool _isScanning = false;
 
-	BleDevice _connectedDevice;
+	// Main device acting as either central or peripheral
+	BleDevice _device;
+
+	static const uint8_t MAX_SERVICES = 2;
+	BleService* _services[MAX_SERVICES]; // array of pointers
+	uint8_t _serviceCount = 0;
 
 	static const uint8_t MAX_BLE_INTERRUPT_REGISTRATIONS = 3;
 
@@ -72,10 +82,12 @@ private:
 	/**
 	 * Compares the scanned device device against the filter and returns true upon a match
 	 *
-	 * @param[in] rawDevice the scanned BLE device
-	 *
+	 * @param[in] scan the scan data
+	 * @param[in] address the address of the scanned device
+	 * @return true if the scan passes the filter
+	 * @return false otherwise
 	 */
-	bool matchesFilter(BleDevice rawDevice);
+	bool matchesFilter(BleScan scan, MacAddress address);
 
 	/**
 	 * Handles interrupts entering the BLE class from bluenet
@@ -192,7 +204,7 @@ public:
 	 *
 	 * @param service BLEService to add
 	 */
-	void addService(BleService service);
+	void addService(BleService& service);
 
 	/**
 	 * Query the central BLE device connected

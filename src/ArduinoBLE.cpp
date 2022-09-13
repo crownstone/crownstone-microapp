@@ -23,20 +23,20 @@ microapp_sdk_result_t Ble::handleInterrupt(microapp_sdk_ble_t* bleInterrupt) {
 			// for scan type, only interrupt type is EVENT_SCAN
 			switch (bleInterrupt->scan.type) {
 				case CS_MICROAPP_SDK_BLE_SCAN_EVENT_SCAN: {
+					if (!_isScanning) {
+						return CS_MICROAPP_SDK_ACK_SUCCESS;
+					}
 					// Get the interrupt context with the eventHandler
 					BleInterruptContext context;
 					getInterruptContext(BLEDeviceScanned, context);
-					// Create temporary object on the stack
-					// Lifetime of bleDevice is only as long as the lifetime of the interrupt stack
-					// todo:
-					// BleScan scan(&bleInterupt->scan.eventScan); // only pointer
-					// if (matchesFilter(scan)) {
-					// 	_scanDevice = BleDevice(scan); // copies scan data
-					// 	context.eventHandler(_scanDevice);
-					// }
-					}
-					_scanDevice = BleDevice(&bleInterrupt->scan.eventScan);
-					if (matchesFilter(_scanDevice)) {
+					// Apply a wrapper BleScan (no copy) to parse scan data
+					BleScan scan(bleInterrupt->scan.eventScan.data, bleInterrupt->scan.eventScan.size);
+					MacAddress address(bleInterrupt->scan.eventScan.address.address);
+					if (matchesFilter(scan, address)) {
+						// Copy the scan data into the _scanDevice
+						rssi_t rssi = bleInterrupt->scan.eventScan.rssi;
+						_scanDevice = BleDevice(scan, address, rssi);
+						// Call the event handler stored in the context
 						context.eventHandler(_scanDevice);
 					}
 					return CS_MICROAPP_SDK_ACK_SUCCESS;
@@ -73,7 +73,7 @@ void Ble::end() {
 	return;
 }
 
-void Ble::poll(int timeout = 0) {
+void Ble::poll(int timeout) {
 	if (timeout == 0) {
 		return;
 	}
@@ -143,7 +143,48 @@ bool Ble::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice
 }
 
 bool Ble::connected() {
-	return _connectedDevice.connected();
+	return _device.connected();
+}
+
+bool Ble::disconnect() {
+	if (!_device.connected()) {
+		return false;
+	}
+	else {
+		return _device.disconnect();
+	}
+}
+
+String Ble::address() {
+	return String(_address.string());
+}
+
+int8_t Ble::rssi() {
+	// If not connected return 127 as per the official arduino library
+	if (!_device.connected()) {
+		return 127;
+	}
+	else {
+		return _device.rssi();
+	}
+}
+
+void Ble::addService(BleService& service) {
+	if (_serviceCount >= MAX_SERVICES) {
+		return;
+	}
+	_services[_serviceCount] = &service;
+	_serviceCount++;
+	//todo: send request to bluenet
+}
+
+BleDevice Ble::central() {
+	if (_device.connected() && _device._flags.flags.isCentral) {
+		return _device;
+	}
+	else {
+		return BleDevice();
+	}
 }
 
 bool Ble::scan(bool withDuplicates) {
@@ -224,36 +265,37 @@ bool Ble::stopScan() {
 }
 
 BleDevice Ble::available() {
-	return _scanDevice;
+	// Set main (persistent) device as the latest scanned device
+	_device = _scanDevice;
+	// Devices called via available() are peripheral devices
+	_device._flags.flags.isPeripheral = true;
+	return _device;
 }
 
-bool Ble::matchesFilter(BleDevice device) {
-	if (!_isScanning) {  // return false by default if not scanning
-		return false;
-	}
+bool Ble::matchesFilter(BleScan scan, MacAddress address) {
 	switch (_scanFilter.type) {
 		case BleFilterAddress: {
-			if (device._address != _scanFilter.address) {
+			if (address != _scanFilter.address) {
 				return false;
 			}
 			return true;
 		}
 		case BleFilterLocalName: {
-			if (!device.hasLocalName()) {
+			ble_ad_t localName = scan.localName();
+			if (localName.len == 0) {
 				return false;
 			}
-			String deviceName = device.localName();
-			if (deviceName.length() != _scanFilter.localNameLen) {
+			if (localName.len != _scanFilter.localNameLen) {
 				return false;
 			}
 			// compare local name to name in filter
-			if (memcmp(deviceName.c_str(), _scanFilter.localName, _scanFilter.localNameLen) != 0) {
+			if (memcmp(localName.data, _scanFilter.localName, _scanFilter.localNameLen) != 0) {
 				return false;
 			}
 			return true;
 		}
 		case BleFilterUuid: {
-			return device.findServiceDataUuid(_scanFilter.uuid.uuid());
+			return scan.hasServiceDataUuid(_scanFilter.uuid.uuid());
 		}
 		case BleFilterNone: {
 			// If no filter is set, we pass the filter by default
