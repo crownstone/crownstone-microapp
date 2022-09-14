@@ -55,7 +55,6 @@ const size_t MAC_ADDRESS_STRING_LENGTH = 17;
 class MacAddress {
 private:
 	bool _initialized         = false;
-	bool _cachedAddressString = false;
 
 	/**
 	 * Convert from address byte array to string.
@@ -77,7 +76,6 @@ private:
 
 protected:
 	uint8_t _address[MAC_ADDRESS_LENGTH];
-	char _addressString[MAC_ADDRESS_STRING_LENGTH + 1]; // plus termination char
 
 public:
 	// Constructors: either empty, from an external struct, or from a string
@@ -100,12 +98,10 @@ const size_t UUID_16BIT_BYTE_LENGTH = 2;
 // format "ABCD"
 const size_t UUID_16BIT_STRING_LENGTH = 4;
 
-class UUID16Bit {
+class Uuid16Bit {
 private:
 	bool _initialized = false;
-	bool _cachedUuidString = false;
 	uuid16_t _uuid;
-	char _uuidString[UUID_16BIT_STRING_LENGTH + 1];
 
 	/**
 	 * Convert from 16-bit UUID string in format "ABCD" to uint16_t 0xABCD
@@ -124,16 +120,16 @@ private:
 	void convertUuidToString(const uuid16_t uuid, char* emptyUuidString);
 
 public:
-	UUID16Bit(){};
-	UUID16Bit(const char* uuidString);
-	UUID16Bit(uuid16_t uuid);
+	Uuid16Bit(){};
+	Uuid16Bit(const char* uuidString);
+	Uuid16Bit(uuid16_t uuid);
 
 	uuid16_t uuid();
 	const char* string();
 
 	explicit operator bool() const { return this->_initialized; }
-	bool operator==(const UUID16Bit& other) { return (this->_uuid == other._uuid); }
-	bool operator!=(const UUID16Bit& other) { return (this->_uuid != other._uuid); }
+	bool operator==(const Uuid16Bit& other) { return (this->_uuid == other._uuid); }
+	bool operator!=(const Uuid16Bit& other) { return (this->_uuid != other._uuid); }
 };
 
 // amount of bytes in a 128-bit uuid
@@ -143,16 +139,12 @@ const size_t UUID_128BIT_STRING_LENGTH = 36;
 
 const uint8_t BASE_UUID_128BIT[UUID_128BIT_BYTE_LENGTH] = {0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB};
-const char BASE_UUID_128BIT_STRING[UUID_128BIT_STRING_LENGTH + 1] = "00000000-0000-1000-8000-00805F9B34FB";
 const uint8_t CUSTOM_UUID_BYTE_OFFSET = 2;
-const uint8_t CUSTOM_UUID_CHAR_OFFSET = 4;
 
-class UUID128Bit {
+class Uuid128Bit {
 private:
 	bool _initialized = false;
-	bool _cachedUuidString = false;
 	uint8_t _uuid[UUID_128BIT_BYTE_LENGTH];
-	char _uuidString[UUID_128BIT_STRING_LENGTH + 1];
 
 	/**
 	 * Convert from 128-bit UUID string "12345678-ABCD-1234-5678-ABCDEF123456" to byte array
@@ -171,17 +163,17 @@ private:
 	void convertUuidToString(const uint8_t* uuid, char* emptyUuidString);
 
 public:
-	UUID128Bit(){};
-	UUID128Bit(const char* uuidString);
-	UUID128Bit(const uint8_t* uuid, size_t len);
-	UUID128Bit(uuid16_t uuid); // with custom base uuid
+	Uuid128Bit(){};
+	Uuid128Bit(const char* uuidString);
+	Uuid128Bit(const uint8_t* uuid, size_t len);
+	Uuid128Bit(uuid16_t uuid); // with custom base uuid
 
 	const uint8_t* bytes();
 	const char* string();
 
 	explicit operator bool() const { return this->_initialized; }
-	bool operator==(const UUID128Bit& other) { return memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) == 0; }
-	bool operator!=(const UUID128Bit& other) { return memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) != 0; }
+	bool operator==(const Uuid128Bit& other) { return memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) == 0; }
+	bool operator!=(const Uuid128Bit& other) { return memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) != 0; }
 };
 
 /**
