@@ -1,39 +1,66 @@
 #include <Arduino.h>
 #include <BleUtils.h>
 
-void setup() {
-	Uuid16Bit uuid16bit_one(0xABCD);
-	Uuid16Bit uuid16bit_two("ABCD");
-	Serial.println(uuid16bit_one.string());
-	Serial.println(uuid16bit_two.uuid());
-
-	if (uuid16bit_one == uuid16bit_two) {
-		Serial.println("Equal");
-	}
-	else {
-		Serial.println("Not equal");
-	}
-
-	const uint8_t uuid_one_bytes[UUID_128BIT_BYTE_LENGTH] = {0x12, 0x34, 0x56, 0x78, 0xAB, 0xCD,
+const uint8_t uuid_bytes_16bit[UUID_16BIT_BYTE_LENGTH] = {0xAB, 0xCD};
+const uint8_t uuid_bytes_128bit[UUID_128BIT_BYTE_LENGTH] = {0x12, 0x34, 0x56, 0x78, 0xAB, 0xCD,
 		0x12, 0x34, 0x56, 0x78, 0xAB, 0xCD, 0xEF, 0x12, 0x34, 0x56};
-	Uuid128Bit uuid128bit_one(uuid_one_bytes, UUID_128BIT_BYTE_LENGTH);
-	Uuid128Bit uuid128bit_two("12345678-ABCD-1234-5678-ABCDEF123456");
-	Serial.println(uuid128bit_one.string());
-	Serial.println(uuid128bit_two.bytes(), UUID_128BIT_BYTE_LENGTH);
 
-	if (uuid128bit_one != uuid128bit_two) {
-		Serial.println("Not equal");
-	}
-	else {
+void setup() {
+
+	Uuid uuid_1(uuid_bytes_16bit, UUID_16BIT_BYTE_LENGTH);
+	Serial.println(uuid_1.length());
+	Serial.println(uuid_1.string());
+	Serial.println(uuid_1.fullString());
+	Serial.println(uuid_1.bytes(), UUID_16BIT_BYTE_LENGTH);
+	Serial.println(uuid_1.fullBytes(), UUID_128BIT_BYTE_LENGTH);
+	Serial.println("-----");
+
+	delay(2000);
+
+
+	Uuid uuid_2("ABCD");
+	Serial.println(uuid_2.length());
+	Serial.println(uuid_2.string());
+	Serial.println(uuid_2.fullString());
+	Serial.println(uuid_2.bytes(), UUID_16BIT_BYTE_LENGTH);
+	Serial.println(uuid_2.fullBytes(), UUID_128BIT_BYTE_LENGTH);
+	Serial.println("-----");
+
+	delay(2000);
+
+	Uuid uuid_3(uuid_bytes_128bit, UUID_128BIT_BYTE_LENGTH);
+	Serial.println(uuid_3.length());
+	Serial.println(uuid_3.string());
+	Serial.println(uuid_3.fullString());
+	Serial.println(uuid_3.bytes(), UUID_128BIT_BYTE_LENGTH);
+	Serial.println(uuid_3.fullBytes(), UUID_128BIT_BYTE_LENGTH);
+	Serial.println("-----");
+
+	delay(2000);
+
+	Uuid uuid_4("12345678-ABCD-1234-5678-ABCDEF123456");
+	Serial.println(uuid_4.length());
+	Serial.println(uuid_4.string());
+	Serial.println(uuid_4.bytes(), UUID_128BIT_BYTE_LENGTH);
+	Serial.println(uuid_4.fullBytes(), UUID_128BIT_BYTE_LENGTH);
+	Serial.println("-----");
+
+	delay(2000);
+
+	Uuid uuid_5(0x1234);
+	Serial.println(uuid_5.length());
+	Serial.println(uuid_5.fullString());
+	Serial.println(uuid_5.uuid16());
+	Serial.println("-----");
+
+	delay(2000);
+
+	if (uuid_1 == uuid_2) {
 		Serial.println("Equal");
 	}
-
-	Uuid128Bit uuid128bit_three("ABCD");
-	Serial.println(uuid128bit_three.bytes(), UUID_128BIT_BYTE_LENGTH);
-	Serial.println(uuid128bit_three.string());
-
-	// Now print one again to check persistency, static usage etc
-	Serial.println(uuid128bit_one.string());
+	else {
+		Serial.println("Not equal");
+	}
 }
 
 void loop() {

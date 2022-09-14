@@ -8,7 +8,7 @@ BleService::BleService(const char* uuid, bool remote) {
 	if (len == UUID_128BIT_STRING_LENGTH) {
 		_customUuid = true;
 	}
-	_uuid128 = UUID128Bit(uuid);
+	_uuid = Uuid(uuid);
 	_remote = remote;
 	_initialized = true;
 }
@@ -21,7 +21,7 @@ String BleService::uuid() {
 	if (!_initialized) {
 		return String(nullptr);
 	}
-	return String(_uuid128.string());
+	return String(_uuid.string());
 }
 
 void BleService::addCharacteristic(BleCharacteristic& characteristic) {
@@ -36,10 +36,10 @@ int BleService::characteristicCount() {
 	return _characteristicCount;
 }
 
-bool BleService::hasCharacteristic(const char* uuid) {
-	UUID128Bit uuid128(uuid);
+bool BleService::hasCharacteristic(const char* uuidString) {
+	Uuid uuid(uuidString);
 	for (int i = 0; i < _characteristicCount; i++) {
-		if (_characteristics[i]->_uuid == uuid128) {
+		if (_characteristics[i]->_uuid == uuid) {
 			return true;
 		}
 	}
@@ -47,10 +47,10 @@ bool BleService::hasCharacteristic(const char* uuid) {
 }
 
 // Returns a copy of the characteristic
-BleCharacteristic BleService::characteristic(const char* uuid) {
-	UUID128Bit uuid128(uuid);
+BleCharacteristic BleService::characteristic(const char* uuidString) {
+	Uuid uuid(uuidString);
 	for (int i = 0; i < _characteristicCount; i++) {
-		if (_characteristics[i]->_uuid == uuid128) {
+		if (_characteristics[i]->_uuid == uuid) {
 			return *_characteristics[i];
 		}
 	}

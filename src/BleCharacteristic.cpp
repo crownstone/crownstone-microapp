@@ -6,9 +6,9 @@ BleCharacteristic::BleCharacteristic(const char* uuid, uint8_t properties, bool 
 		return;
 	}
 	if (len == UUID_128BIT_STRING_LENGTH) {
-		_customUuid = true;
+		_flags.flags.vendorSpecific = true;
 	}
-	_uuid        = UUID128Bit(uuid);
+	_uuid        = Uuid(uuid);
 	_properties  = properties;
 	_remote      = remote;
 	_initialized = true;

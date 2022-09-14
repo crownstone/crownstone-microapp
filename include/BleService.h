@@ -23,7 +23,7 @@ private:
 	bool _initialized = false;
 	bool _remote      = false;
 
-	UUID128Bit _uuid128;
+	Uuid _uuid;
 
 	static const uint8_t MAX_CHARACTERISTICS = 6;
 	BleCharacteristic* _characteristics[MAX_CHARACTERISTICS];

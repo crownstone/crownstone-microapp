@@ -43,62 +43,17 @@ const uint8_t* MacAddress::bytes() {
 	return _address;
 }
 
-Uuid16Bit::Uuid16Bit(const char* uuidString) {
-	if (strlen(uuidString) != UUID_16BIT_STRING_LENGTH) {
-		return;
+////////////////////////////////////////////////////////////////////////
+
+Uuid::Uuid(const char* uuid) {
+	if (strlen(uuid) == UUID_128BIT_STRING_LENGTH) {
+		convertStringToUuid128Bit(uuid, _uuid);
+		_length = UUID_128BIT_BYTE_LENGTH;
 	}
-	_uuid = convertStringToUuid(uuidString);
-	_initialized = true;
-}
-
-Uuid16Bit::Uuid16Bit(uuid16_t uuid) {
-	_uuid = uuid;
-	_initialized = true;
-}
-
-uuid16_t Uuid16Bit::convertStringToUuid(const char* uuidString) {
-	uint8_t byte[UUID_16BIT_BYTE_LENGTH];
-	for (uint8_t i = 0; i < UUID_16BIT_BYTE_LENGTH; i++) {
-		byte[i] = convertTwoHexCharsToByte(uuidString + 2 * i);
-	}
-	uuid16_t res = (byte[0] << 8) | (byte[1] & 0xFF);
-	return res;
-}
-
-void Uuid16Bit::convertUuidToString(const uuid16_t uuid, char* emptyUuidString) {
-	uint8_t msb = ((uuid >> 8) & 0xFF);
-	uint8_t lsb = (uuid & 0xFF);
-	convertByteToTwoHexChars(msb, emptyUuidString);
-	convertByteToTwoHexChars(lsb, emptyUuidString + 2);
-	// string termination
-	emptyUuidString[UUID_16BIT_STRING_LENGTH] = 0;
-}
-
-uuid16_t Uuid16Bit::uuid() {
-	if (!_initialized) {
-		return 0;
-	}
-	return _uuid;
-}
-
-const char* Uuid16Bit::string() {
-	if (!_initialized) {
-		return nullptr;
-	}
-	static char uuidString[UUID_16BIT_STRING_LENGTH + 1];
-	convertUuidToString(_uuid, uuidString);
-	return uuidString;
-}
-
-// Can be initialized with either 16-bit or 128-bit uuid strings
-Uuid128Bit::Uuid128Bit(const char* uuidString) {
-	if (strlen(uuidString) == UUID_128BIT_STRING_LENGTH) {
-		convertStringToUuid(uuidString, _uuid);
-	}
-	else if (strlen(uuidString) == UUID_16BIT_STRING_LENGTH) {
+	else if (strlen(uuid) == UUID_16BIT_STRING_LENGTH) {
 		memcpy(_uuid, BASE_UUID_128BIT, UUID_128BIT_BYTE_LENGTH);
-		_uuid[CUSTOM_UUID_BYTE_OFFSET] = convertTwoHexCharsToByte(uuidString);
-		_uuid[CUSTOM_UUID_BYTE_OFFSET + 1] = convertTwoHexCharsToByte(uuidString + 2);
+		convertStringToUuid16Bit(uuid, _uuid + BASE_UUID_OFFSET_16BIT);
+		_length = UUID_16BIT_BYTE_LENGTH;
 	}
 	else {
 		return;
@@ -106,26 +61,96 @@ Uuid128Bit::Uuid128Bit(const char* uuidString) {
 	_initialized = true;
 }
 
-Uuid128Bit::Uuid128Bit(const uint8_t* uuid, size_t len) {
-	if (len != UUID_128BIT_BYTE_LENGTH) {
+Uuid::Uuid(const uint8_t* uuid, uint8_t length) {
+	if (length == UUID_128BIT_BYTE_LENGTH) {
+		memcpy(_uuid, uuid, length);
+		_length = UUID_128BIT_BYTE_LENGTH;
+	}
+	else if (length == UUID_16BIT_BYTE_LENGTH) {
+		memcpy(_uuid, BASE_UUID_128BIT, UUID_128BIT_BYTE_LENGTH);
+		memcpy(_uuid + BASE_UUID_OFFSET_16BIT, uuid, length);
+		_length = UUID_16BIT_BYTE_LENGTH;
+	}
+	else {
 		return;
 	}
-	memcpy(_uuid, uuid, len);
 	_initialized = true;
 }
 
-Uuid128Bit::Uuid128Bit(uuid16_t uuid) {
-	// first use the base uuid
+Uuid::Uuid(const uuid16_t uuid) {
 	memcpy(_uuid, BASE_UUID_128BIT, UUID_128BIT_BYTE_LENGTH);
-	// overwrite the two custom uuid bytes with the provided uuid
-	uint8_t byte[UUID_16BIT_BYTE_LENGTH];
-	byte[0] = ((uuid >> 8) & 0xFF);
-	byte[1] = (uuid & 0xFF);
-	memcpy(_uuid + CUSTOM_UUID_BYTE_OFFSET, byte, UUID_16BIT_BYTE_LENGTH);
+	_uuid[BASE_UUID_OFFSET_16BIT] = (uuid >> 8) & 0xFF;
+	_uuid[BASE_UUID_OFFSET_16BIT + 1] = uuid & 0xFF;
+	_length = UUID_16BIT_BYTE_LENGTH;
 	_initialized = true;
 }
 
-void Uuid128Bit::convertStringToUuid(const char* uuidString, uint8_t* emptyUuid) {
+uint8_t Uuid::length() {
+	return _length;
+}
+
+const char* Uuid::string() {
+	if (!_initialized) {
+		return nullptr;
+	}
+	if (_length == UUID_128BIT_BYTE_LENGTH) {
+		static char uuidString128[UUID_128BIT_STRING_LENGTH + 1];
+		convertUuid128BitToString(_uuid, uuidString128);
+		return uuidString128;
+	}
+	else if (_length == UUID_16BIT_BYTE_LENGTH) {
+		static char uuidString16[UUID_16BIT_STRING_LENGTH + 1];
+		convertUuid16BitToString(_uuid + BASE_UUID_OFFSET_16BIT, uuidString16);
+		return uuidString16;
+	}
+	else {
+		return nullptr;
+	}
+}
+
+const char* Uuid::fullString() {
+	if (!_initialized) {
+		return nullptr;
+	}
+	if (_length != UUID_128BIT_BYTE_LENGTH && _length != UUID_16BIT_BYTE_LENGTH) {
+		return nullptr;
+	}
+	static char uuidString128[UUID_128BIT_STRING_LENGTH + 1];
+	convertUuid128BitToString(_uuid, uuidString128);
+	return uuidString128;
+}
+
+const uint8_t* Uuid::bytes() {
+	if (!_initialized) {
+		return nullptr;
+	}
+	if (_length == UUID_16BIT_BYTE_LENGTH) {
+		return _uuid + BASE_UUID_OFFSET_16BIT;
+	}
+	return _uuid;
+}
+
+const uint8_t* Uuid::fullBytes() {
+	if (!_initialized) {
+		return nullptr;
+	}
+	return _uuid;
+}
+
+uuid16_t Uuid::uuid16() {
+	return (_uuid[BASE_UUID_OFFSET_16BIT] << 8) | (_uuid[BASE_UUID_OFFSET_16BIT + 1] & 0xFF);
+}
+
+void Uuid::convertStringToUuid16Bit(const char* uuidString, uint8_t* emptyUuid) {
+	if (strlen(uuidString) != UUID_16BIT_STRING_LENGTH) {
+		return;
+	}
+	for (uint8_t i = 0; i < UUID_16BIT_BYTE_LENGTH; i++) {
+		emptyUuid[i] = convertTwoHexCharsToByte(uuidString + 2 * i);
+	}
+}
+
+void Uuid::convertStringToUuid128Bit(const char* uuidString, uint8_t* emptyUuid) {
 	if (strlen(uuidString) != UUID_128BIT_STRING_LENGTH) {
 		return;
 	}
@@ -142,7 +167,14 @@ void Uuid128Bit::convertStringToUuid(const char* uuidString, uint8_t* emptyUuid)
 	}
 }
 
-void Uuid128Bit::convertUuidToString(const uint8_t* uuid, char* emptyUuidString) {
+void Uuid::convertUuid16BitToString(const uint8_t* uuid, char* emptyUuidString) {
+	for (uint8_t i = 0; i < UUID_16BIT_BYTE_LENGTH; i++) {
+		convertByteToTwoHexChars(*(uuid + i), emptyUuidString + 2 * i);
+	}
+	emptyUuidString[UUID_16BIT_STRING_LENGTH] = 0;
+}
+
+void Uuid::convertUuid128BitToString(const uint8_t* uuid, char* emptyUuidString) {
 	uint8_t j = 0;
 	for (uint8_t i = 0; i < UUID_128BIT_BYTE_LENGTH; i++) {
 		convertByteToTwoHexChars(uuid[i], &emptyUuidString[j]);
@@ -155,21 +187,7 @@ void Uuid128Bit::convertUuidToString(const uint8_t* uuid, char* emptyUuidString)
 	emptyUuidString[UUID_128BIT_STRING_LENGTH] = 0;
 }
 
-const uint8_t* Uuid128Bit::bytes() {
-	if (!_initialized) {
-		return 0;
-	}
-	return _uuid;
-}
-
-const char* Uuid128Bit::string() {
-	if (!_initialized) {
-		return nullptr;
-	}
-	static char uuidString[UUID_128BIT_STRING_LENGTH + 1];
-	convertUuidToString(_uuid, uuidString);
-	return uuidString;
-}
+/////////////////////////////////////////////////////////////////////////
 
 // Convert a pair of chars to a byte, e.g. convert "A3" to 0xA3
 uint8_t convertTwoHexCharsToByte(const char* chars) {

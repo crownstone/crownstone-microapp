@@ -30,18 +30,31 @@ private:
 	// Same as public constructor except allows for setting remote flag
 	BleCharacteristic(const char* uuid, uint8_t properties, bool remote);
 
-	bool _initialized   = false;
-	bool _remote        = false;
-	bool _subscribed    = false;
-	bool _written       = false;
-	uint8_t _properties = 0;
-
 	static const size_t MAX_CHARACTERISTIC_VALUE_SIZE = 256;
-	uint8_t* _value                                   = nullptr;
-	size_t _valueLength                               = 0;
 
-	bool _customUuid = false;
-	UUID128Bit _uuid;
+	union __attribute__((packed)) flags_t {
+		struct __attribute__((packed)) {
+			bool initialized    : 1;
+			bool remote         : 1;
+			bool subscribed     : 1;
+			bool written        : 1;
+			bool vendorSpecific : 1;
+		} flags;
+		uint8_t asInt = 0;  // initialize to zero
+	} _flags;
+
+	bool _initialized = false;
+	bool _remote      = false;
+	bool _subscribed  = false;
+	bool _written     = false;
+	bool _customUuid  = false;
+
+	uint8_t _properties   = 0;
+	uint8_t* _value       = nullptr;
+	size_t _valueLength   = 0;
+	uint16_t _valueHandle = 0;
+
+	Uuid _uuid;
 
 public:
 	/**

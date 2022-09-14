@@ -35,18 +35,22 @@ int8_t BleDevice::rssi() {
 }
 
 bool BleDevice::hasLocalName() {
-	ble_ad_t localName = _scan.localName();
-	return (localName.len != 0);
+	return (_scan.localName().len != 0);
 }
 
 String BleDevice::localName() {
-	// todo: implement
-	// copy localName to a local buffer with termination char and return
-	// for now this is deemed to cost too much memory with little gain
-	return String(nullptr);
+	ble_ad_t localName = _scan.localName();
+	if (localName.len == 0) {
+		return String(nullptr);
+	}
+	static char localNameString[MAX_BLE_ADV_DATA_LENGTH + 1];
+	memcpy(localNameString, localName.data, localName.len);
+	localNameString[localName.len] = 0;
+	return String(localNameString);
 }
 
 bool BleDevice::connect() {
+	// Only defined for peripheral role
 	// todo: implement
 	// this will be a blocking function
 	return false;

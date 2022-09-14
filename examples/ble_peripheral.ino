@@ -70,7 +70,8 @@ void setup() {
 void loop() {
 	updateTemperature();
 
-	BleDevice central = BLE.central();
+	// central returns a reference. Making copies can break stuff
+	BleDevice& central = BLE.central();
 
 	if (central) {
 		Serial.println("Central device connected");

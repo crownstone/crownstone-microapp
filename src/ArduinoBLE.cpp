@@ -1,5 +1,5 @@
-#include <ArduinoBLE.h>
 #include <Arduino.h>
+#include <ArduinoBLE.h>
 
 /*
  * An ordinary C function. Calls internal handler
@@ -9,71 +9,91 @@ microapp_sdk_result_t handleBleInterrupt(void* buf) {
 		return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 	}
 	microapp_sdk_ble_t* bleInterrupt = reinterpret_cast<microapp_sdk_ble_t*>(buf);
-	return BLE.handleInterrupt(bleInterrupt);
+	return BLE.handleEvent(bleInterrupt);
 }
 
 /*
  * Internal interrupt handler.
- * Retrieves context, checks type of interrupt and takes appropriate action
+ * Checks type of interrupt and takes appropriate action
  */
-microapp_sdk_result_t Ble::handleInterrupt(microapp_sdk_ble_t* bleInterrupt) {
+microapp_sdk_result_t Ble::handleEvent(microapp_sdk_ble_t* bleInterrupt) {
 	// Based on the type of event we will take action
 	switch (bleInterrupt->type) {
 		case CS_MICROAPP_SDK_BLE_SCAN: {
-			// for scan type, only interrupt type is EVENT_SCAN
-			switch (bleInterrupt->scan.type) {
-				case CS_MICROAPP_SDK_BLE_SCAN_EVENT_SCAN: {
-					if (!_isScanning) {
-						return CS_MICROAPP_SDK_ACK_SUCCESS;
-					}
-					// Get the interrupt context with the eventHandler
-					BleInterruptContext context;
-					getInterruptContext(BLEDeviceScanned, context);
-					// Apply a wrapper BleScan (no copy) to parse scan data
-					BleScan scan(bleInterrupt->scan.eventScan.data, bleInterrupt->scan.eventScan.size);
-					MacAddress address(bleInterrupt->scan.eventScan.address.address);
-					if (matchesFilter(scan, address)) {
-						// Copy the scan data into the _scanDevice
-						rssi_t rssi = bleInterrupt->scan.eventScan.rssi;
-						_scanDevice = BleDevice(scan, address, rssi);
-						// Call the event handler stored in the context
-						context.eventHandler(_scanDevice);
-					}
-					return CS_MICROAPP_SDK_ACK_SUCCESS;
-				}
-				default: {
-					return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
-				}
-			}
+			return handleScanEvent(&bleInterrupt->scan);
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL: {
-			// TODO: implement
-			return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
+			return handleCentralEvent(&bleInterrupt->central);
 		}
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL: {
-			// TODO: implement
-			return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
+			return handlePeripheralEvent(&bleInterrupt->peripheral);
 		}
 		default: {
-			// For the UUID_REGISTER type, no interrupt handling is defined
+			// For the other types, no interrupt handling is defined
 			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 		}
 	}
 }
 
+microapp_sdk_result_t Ble::handleScanEvent(microapp_sdk_ble_scan_t* scanInterrupt) {
+	// for scan type, only interrupt type is EVENT_SCAN for now
+	switch (scanInterrupt->type) {
+		case CS_MICROAPP_SDK_BLE_SCAN_EVENT_SCAN: {
+			if (!_flags.flags.isScanning) {
+				return CS_MICROAPP_SDK_ACK_SUCCESS;
+			}
+			// Apply a wrapper BleScan (no copy) to parse scan data
+			BleScan scan(scanInterrupt->eventScan.data, scanInterrupt->eventScan.size);
+			MacAddress address(scanInterrupt->eventScan.address.address);
+			if (!matchesFilter(scan, address)) {
+				return CS_MICROAPP_SDK_ACK_SUCCESS;
+			}
+			// Copy the scan data into the _scanDevice
+			rssi_t rssi = scanInterrupt->eventScan.rssi;
+			_scanDevice = BleDevice(scan, address, rssi);
+			// Get the interrupt context with the eventHandler
+			BleInterruptContext context;
+			microapp_sdk_result_t result = getInterruptContext(BLEDeviceScanned, context);
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				// Most likely no event handler was registered
+				// We do not return an error but silently return
+				return CS_MICROAPP_SDK_ACK_SUCCESS;
+			}
+			// Call the event handler stored in the context
+			context.eventHandler(_scanDevice);
+			return CS_MICROAPP_SDK_ACK_SUCCESS;
+		}
+		default: {
+			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
+		}
+	}
+}
+
+microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* central) {
+
+	return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
+}
+
+microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* peripheral) {
+	return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
+}
+
 bool Ble::begin() {
 	// todo: make roundtrip to bluenet to request own ble address
 	// todo: register for peripheral interrupts
-	// todo: set initialized flag
+	_flags.flags.initialized = true;
 	return true;
 }
 
 void Ble::end() {
-	// todo: clear initialized flag
+	_flags.flags.initialized = false;
 	return;
 }
 
 void Ble::poll(int timeout) {
+	if (!_flags.flags.initialized) {
+		return;
+	}
 	if (timeout == 0) {
 		return;
 	}
@@ -114,7 +134,7 @@ bool Ble::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice
 	bleRequest->type               = getBleType(eventType);
 	switch (bleRequest->type) {
 		case CS_MICROAPP_SDK_BLE_SCAN:
-			bleRequest->scan.type = CS_MICROAPP_SDK_BLE_SCAN_REGISTER_INTERRUPT;
+			bleRequest->scan.type = CS_MICROAPP_SDK_BLE_SCAN_REQUEST_REGISTER_INTERRUPT;
 			break;
 		case CS_MICROAPP_SDK_BLE_CENTRAL:
 			bleRequest->central.type = CS_MICROAPP_SDK_BLE_CENTRAL_REGISTER_INTERRUPT;
@@ -143,11 +163,14 @@ bool Ble::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice
 }
 
 bool Ble::connected() {
+	if (!_flags.flags.initialized) {
+		return false;
+	}
 	return _device.connected();
 }
 
 bool Ble::disconnect() {
-	if (!_device.connected()) {
+	if (!_device.connected() || !_flags.flags.initialized) {
 		return false;
 	}
 	else {
@@ -156,12 +179,15 @@ bool Ble::disconnect() {
 }
 
 String Ble::address() {
+	if (!_flags.flags.initialized) {
+		return String(nullptr);
+	}
 	return String(_address.string());
 }
 
 int8_t Ble::rssi() {
 	// If not connected return 127 as per the official arduino library
-	if (!_device.connected()) {
+	if (!_device.connected() || !_flags.flags.initialized) {
 		return 127;
 	}
 	else {
@@ -170,25 +196,29 @@ int8_t Ble::rssi() {
 }
 
 void Ble::addService(BleService& service) {
-	if (_serviceCount >= MAX_SERVICES) {
+	if (_serviceCount >= MAX_SERVICES || !_flags.flags.initialized) {
 		return;
 	}
 	_services[_serviceCount] = &service;
 	_serviceCount++;
-	//todo: send request to bluenet
+	// todo: send request to bluenet
 }
 
-BleDevice Ble::central() {
+BleDevice& Ble::central() {
 	if (_device.connected() && _device._flags.flags.isCentral) {
 		return _device;
 	}
 	else {
-		return BleDevice();
+		static BleDevice empty;
+		return empty;
 	}
 }
 
 bool Ble::scan(bool withDuplicates) {
-	if (_isScanning) {
+	if (!_flags.flags.initialized) {
+		return false;
+	}
+	if (_flags.flags.isScanning) {
 		return true;
 	}
 
@@ -197,7 +227,7 @@ bool Ble::scan(bool withDuplicates) {
 	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
 	bleRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
 	bleRequest->type               = CS_MICROAPP_SDK_BLE_SCAN;
-	bleRequest->scan.type          = CS_MICROAPP_SDK_BLE_SCAN_START;
+	bleRequest->scan.type          = CS_MICROAPP_SDK_BLE_SCAN_REQUEST_START;
 
 	sendMessage();
 
@@ -205,12 +235,15 @@ bool Ble::scan(bool withDuplicates) {
 	if (!success) {
 		return false;
 	}
-	_isScanning = true;
+	_flags.flags.isScanning = true;
 	return true;
 }
 
 bool Ble::scanForName(const char* name, bool withDuplicates) {
-	_scanFilter.type = BleFilterLocalName;
+	if (!_flags.flags.initialized) {
+		return false;
+	}
+	_scanFilter.type         = BleFilterLocalName;
 	_scanFilter.localNameLen = strlen(name);
 	if (_scanFilter.localNameLen > MAX_BLE_ADV_DATA_LENGTH) {
 		_scanFilter.localNameLen = MAX_BLE_ADV_DATA_LENGTH;
@@ -222,6 +255,9 @@ bool Ble::scanForName(const char* name, bool withDuplicates) {
 }
 
 bool Ble::scanForAddress(const char* address, bool withDuplicates) {
+	if (!_flags.flags.initialized) {
+		return false;
+	}
 	_scanFilter.type    = BleFilterAddress;
 	_scanFilter.address = MacAddress(address);
 	// TODO: do something with withDuplicates argument
@@ -229,17 +265,23 @@ bool Ble::scanForAddress(const char* address, bool withDuplicates) {
 }
 
 bool Ble::scanForUuid(const char* uuid, bool withDuplicates) {
+	if (!_flags.flags.initialized) {
+		return false;
+	}
 	if (strlen(uuid) != UUID_16BIT_STRING_LENGTH) {
 		return false;
 	}
 	_scanFilter.type = BleFilterUuid;
-	_scanFilter.uuid = UUID16Bit(uuid);
+	_scanFilter.uuid = Uuid(uuid);
 	// TODO: do something with withDuplicates argument
 	return scan(withDuplicates);
 }
 
 bool Ble::stopScan() {
-	if (!_isScanning) {  // already not scanning
+	if (!_flags.flags.initialized) {
+		return false;
+	}
+	if (!_flags.flags.isScanning) {  // already not scanning
 		return true;
 	}
 
@@ -250,7 +292,7 @@ bool Ble::stopScan() {
 	bleRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
 	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
 	bleRequest->type               = CS_MICROAPP_SDK_BLE_SCAN;
-	bleRequest->scan.type          = CS_MICROAPP_SDK_BLE_SCAN_STOP;
+	bleRequest->scan.type          = CS_MICROAPP_SDK_BLE_SCAN_REQUEST_STOP;
 
 	sendMessage();
 
@@ -259,12 +301,16 @@ bool Ble::stopScan() {
 		return false;
 	}
 
-	_scanFilter.type = BleFilterNone;  // reset filter
-	_isScanning        = false;
+	_scanFilter.type        = BleFilterNone;  // reset filter
+	_flags.flags.isScanning = false;
 	return true;
 }
 
-BleDevice Ble::available() {
+BleDevice& Ble::available() {
+	if (!_flags.flags.initialized) {
+		static BleDevice empty;
+		return empty;
+	}
 	// Set main (persistent) device as the latest scanned device
 	_device = _scanDevice;
 	// Devices called via available() are peripheral devices
@@ -295,7 +341,10 @@ bool Ble::matchesFilter(BleScan scan, MacAddress address) {
 			return true;
 		}
 		case BleFilterUuid: {
-			return scan.hasServiceDataUuid(_scanFilter.uuid.uuid());
+			if (_scanFilter.uuid.length() != UUID_16BIT_BYTE_LENGTH) {
+				return false;
+			}
+			return scan.hasServiceDataUuid(_scanFilter.uuid.uuid16());
 		}
 		case BleFilterNone: {
 			// If no filter is set, we pass the filter by default
@@ -311,8 +360,7 @@ bool Ble::matchesFilter(BleScan scan, MacAddress address) {
 
 MicroappSdkBleType Ble::getBleType(BleEventType eventType) {
 	switch (eventType) {
-		case BLEDeviceScanned:
-			return CS_MICROAPP_SDK_BLE_SCAN;
+		case BLEDeviceScanned: return CS_MICROAPP_SDK_BLE_SCAN;
 		case BLEConnected:
 			// todo: can also be peripheral?
 			return CS_MICROAPP_SDK_BLE_CENTRAL;

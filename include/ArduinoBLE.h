@@ -31,7 +31,7 @@ struct BleFilter {
 	MacAddress address;
 	char localName[MAX_BLE_ADV_DATA_LENGTH];  // max length of name equals max advertisement length
 	uint16_t localNameLen;                    // length of the name field
-	UUID16Bit uuid;                           // service data uuid
+	Uuid uuid;                                // service data uuid
 };
 
 typedef void (*BleEventHandler)(BleDevice);
@@ -55,6 +55,14 @@ private:
 
 	Ble(){};
 
+	union __attribute__((packed)) flags_t {
+		struct __attribute__((packed)) {
+			bool initialized : 1;   // begin has been called
+			bool isScanning : 1;    // scans are handled
+		} flags;
+		uint8_t asInt = 0;  // initialize to zero
+	} _flags;
+
 	MacAddress _address; // address of the crownstone
 
 	// Device only used for incoming scans
@@ -62,9 +70,6 @@ private:
 	BleDevice _scanDevice;
 	// Filter for device scans
 	BleFilter _scanFilter;
-	// Boolean determining if scanning at all
-	bool _isScanning = false;
-
 	// Main device acting as either central or peripheral
 	BleDevice _device;
 
@@ -94,7 +99,11 @@ private:
 	 *
 	 * @param[in] ble the SDK packet with the incoming message from bluenet
 	 */
-	microapp_sdk_result_t handleInterrupt(microapp_sdk_ble_t* ble);
+	microapp_sdk_result_t handleEvent(microapp_sdk_ble_t* ble);
+
+	microapp_sdk_result_t handleScanEvent(microapp_sdk_ble_scan_t* scan);
+	microapp_sdk_result_t handleCentralEvent(microapp_sdk_ble_central_t* central);
+	microapp_sdk_result_t handlePeripheralEvent(microapp_sdk_ble_peripheral_t* peripheral);
 
 	/**
 	 * Maps a (user-facing) event type to the corresponding MicroappSdkBleType
@@ -211,7 +220,7 @@ public:
 	 *
 	 * @return BleDevice representing the central
 	 */
-	BleDevice central();
+	BleDevice& central();
 
 	/**
 	 * Set if the device is connectable after advertising, defaults to true
@@ -272,7 +281,7 @@ public:
 	 *
 	 * @return                  BleDevice object representing the discovered device
 	 */
-	BleDevice available();
+	BleDevice& available();
 };
 
 #define BLE Ble::getInstance()
