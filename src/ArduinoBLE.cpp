@@ -39,7 +39,7 @@ microapp_sdk_result_t Ble::handleInterrupt(microapp_sdk_ble_t* bleInterrupt) {
 
 	// Based on the type of event we will take action
 	switch (context.type) {
-		case CS_MICROAPP_SDK_BLE_SCAN_SCANNED_DEVICE: {
+		case CS_MICROAPP_SDK_BLE_SCAN_EVENT_SCAN: {
 			// Save to the stack
 			// Create temporary object on the stack
 			BleDevice bleDevice = BleDevice(bleInterrupt);
@@ -48,14 +48,6 @@ microapp_sdk_result_t Ble::handleInterrupt(microapp_sdk_ble_t* bleInterrupt) {
 				context.eventHandler(bleDevice);
 			}
 			break;
-		}
-		case CS_MICROAPP_SDK_BLE_CONNECTION_CONNECTED: {
-			// TODO: implement
-			return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
-		}
-		case CS_MICROAPP_SDK_BLE_CONNECTION_DISCONNECTED: {
-			// TODO: implement
-			return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
 		}
 		default: {
 			return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
@@ -240,18 +232,12 @@ BleFilter* Ble::getFilter() {
 
 MicroappSdkBleType Ble::requestType(BleEventType type) {
 	switch (type) {
-		case BLEDeviceScanned: return CS_MICROAPP_SDK_BLE_SCAN_REGISTER_INTERRUPT;
-		case BLEConnected: return CS_MICROAPP_SDK_BLE_CONNECTION_REQUEST_CONNECT;
-		case BLEDisconnected: return CS_MICROAPP_SDK_BLE_CONNECTION_REQUEST_DISCONNECT;
 		default: return CS_MICROAPP_SDK_BLE_NONE;
 	}
 }
 
 MicroappSdkBleType Ble::interruptType(BleEventType type) {
 	switch (type) {
-		case BLEDeviceScanned: return CS_MICROAPP_SDK_BLE_SCAN_SCANNED_DEVICE;
-		case BLEConnected: return CS_MICROAPP_SDK_BLE_CONNECTION_CONNECTED;
-		case BLEDisconnected: return CS_MICROAPP_SDK_BLE_CONNECTION_DISCONNECTED;
 		default: return CS_MICROAPP_SDK_BLE_NONE;
 	}
 }

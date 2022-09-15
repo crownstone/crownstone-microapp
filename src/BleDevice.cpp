@@ -1,21 +1,29 @@
 #include <BleDevice.h>
 
 BleDevice::BleDevice(microapp_sdk_ble_t* dev) {
+#ifdef DOES_COMPILE_AGAIN
 	_device               = dev;
 	_address              = MacAddress(_device->address);
 	_flags.flags.nonEmpty = true;
+#endif
 }
 
 String BleDevice::address() {
 	if (_address.isInitialized()) {  // if already cached address
 		return _address.getString();
 	}
+#ifdef DOES_COMPILE_AGAIN
 	_address = MacAddress(_device->address);
+#endif
 	return _address.getString();
 }
 
 int8_t BleDevice::rssi() {
+#ifdef DOES_COMPILE_AGAIN
 	return _device->rssi;
+#else
+	return 0;
+#endif
 }
 
 bool BleDevice::hasLocalName() {
@@ -65,9 +73,10 @@ bool BleDevice::connected() {
 }
 
 bool BleDevice::findAdvertisementDataType(GapAdvType type, data_ptr_t* foundData) {
-	uint8_t i       = 0;
 	foundData->data = nullptr;
 	foundData->len  = 0;
+#ifdef DOES_COMPILE_AGAIN
+	uint8_t i       = 0;
 	while (i < _device->size - 1) {
 		uint8_t fieldLen  = _device->data[i];
 		uint8_t fieldType = _device->data[i + 1];
@@ -81,6 +90,7 @@ bool BleDevice::findAdvertisementDataType(GapAdvType type, data_ptr_t* foundData
 		}
 		i += fieldLen + 1;
 	}
+#endif
 	return false;
 }
 
