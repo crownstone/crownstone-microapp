@@ -54,6 +54,7 @@ Uuid::Uuid(const char* uuid) {
 		memcpy(_uuid, BASE_UUID_128BIT, UUID_128BIT_BYTE_LENGTH);
 		convertStringToUuid16Bit(uuid, _uuid + BASE_UUID_OFFSET_16BIT);
 		_length = UUID_16BIT_BYTE_LENGTH;
+		_type = CS_MICROAPP_SDK_BLE_UUID_STANDARD;
 	}
 	else {
 		return;
@@ -70,6 +71,7 @@ Uuid::Uuid(const uint8_t* uuid, uint8_t length) {
 		memcpy(_uuid, BASE_UUID_128BIT, UUID_128BIT_BYTE_LENGTH);
 		memcpy(_uuid + BASE_UUID_OFFSET_16BIT, uuid, length);
 		_length = UUID_16BIT_BYTE_LENGTH;
+		_type = CS_MICROAPP_SDK_BLE_UUID_STANDARD;
 	}
 	else {
 		return;
@@ -82,11 +84,16 @@ Uuid::Uuid(const uuid16_t uuid) {
 	_uuid[BASE_UUID_OFFSET_16BIT] = (uuid >> 8) & 0xFF;
 	_uuid[BASE_UUID_OFFSET_16BIT + 1] = uuid & 0xFF;
 	_length = UUID_16BIT_BYTE_LENGTH;
+	_type = CS_MICROAPP_SDK_BLE_UUID_STANDARD;
 	_initialized = true;
 }
 
 uint8_t Uuid::length() {
 	return _length;
+}
+
+bool Uuid::custom() {
+	return (_length == UUID_128BIT_BYTE_LENGTH);
 }
 
 const char* Uuid::string() {
@@ -148,6 +155,14 @@ void Uuid::convertStringToUuid16Bit(const char* uuidString, uint8_t* emptyUuid) 
 	for (uint8_t i = 0; i < UUID_16BIT_BYTE_LENGTH; i++) {
 		emptyUuid[i] = convertTwoHexCharsToByte(uuidString + 2 * i);
 	}
+}
+
+void Uuid::setCustomId(uint8_t customId) {
+	_type = customId;
+}
+
+uint8_t Uuid::getType() {
+	return _type;
 }
 
 void Uuid::convertStringToUuid128Bit(const char* uuidString, uint8_t* emptyUuid) {

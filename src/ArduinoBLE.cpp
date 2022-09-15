@@ -51,16 +51,16 @@ microapp_sdk_result_t Ble::handleScanEvent(microapp_sdk_ble_scan_t* scanInterrup
 			// Copy the scan data into the _scanDevice
 			rssi_t rssi = scanInterrupt->eventScan.rssi;
 			_scanDevice = BleDevice(scan, address, rssi);
-			// Get the interrupt context with the eventHandler
-			BleInterruptContext context;
-			microapp_sdk_result_t result = getInterruptContext(BLEDeviceScanned, context);
+			// Get the event handler registration
+			BleEventHandlerRegistration handlerRegistration;
+			microapp_sdk_result_t result = getEventHandlerRegistration(BLEDeviceScanned, handlerRegistration);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				// Most likely no event handler was registered
 				// We do not return an error but silently return
 				return CS_MICROAPP_SDK_ACK_SUCCESS;
 			}
-			// Call the event handler stored in the context
-			context.eventHandler(_scanDevice);
+			// Call the event handler
+			handlerRegistration.eventHandler(_scanDevice);
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		default: {
@@ -70,17 +70,17 @@ microapp_sdk_result_t Ble::handleScanEvent(microapp_sdk_ble_scan_t* scanInterrup
 }
 
 microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* central) {
-
+	// check for event handlers if connected or disconnected event
 	return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
 }
 
 microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* peripheral) {
+	// check for event handlers if connected or disconnected event
 	return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
 }
 
 bool Ble::begin() {
 	// todo: make roundtrip to bluenet to request own ble address
-	// todo: register for peripheral interrupts
 	_flags.flags.initialized = true;
 	return true;
 }
@@ -105,61 +105,48 @@ void Ble::poll(int timeout) {
  * We register a wrapper function that calls the passed handler
  */
 bool Ble::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice)) {
-
-	// Register the interrupt context locally
-	microapp_sdk_result_t result = setInterruptContext(eventType, eventHandler);
-	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-		return false;
-	}
-
-	// Also register interrupt on the microapp side,
-	// with an indirect handler
-	interrupt_registration_t interrupt;
-	interrupt.type    = CS_MICROAPP_SDK_TYPE_BLE;
-	interrupt.id      = getBleType(eventType);
-	interrupt.handler = handleBleInterrupt;
-	result            = registerInterrupt(&interrupt);
-	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-		// No empty interrupt slots available on microapp side
-		// Remove interrupt context
-		removeInterruptContext(eventType);
-		return false;
-	}
-
-	// Finally, send a message to bluenet registering the interrupt
-	uint8_t* payload               = getOutgoingMessagePayload();
-	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
-	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
-	bleRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
-	bleRequest->type               = getBleType(eventType);
-	switch (bleRequest->type) {
-		case CS_MICROAPP_SDK_BLE_SCAN:
-			bleRequest->scan.type = CS_MICROAPP_SDK_BLE_SCAN_REQUEST_REGISTER_INTERRUPT;
-			break;
-		case CS_MICROAPP_SDK_BLE_CENTRAL:
-			bleRequest->central.type = CS_MICROAPP_SDK_BLE_CENTRAL_REGISTER_INTERRUPT;
-			break;
-		case CS_MICROAPP_SDK_BLE_PERIPHERAL:
-			bleRequest->peripheral.type = CS_MICROAPP_SDK_BLE_PERIPHERAL_REQUEST_REGISTER_INTERRUPT;
-			break;
-		default:
-			// unsupported ble type for setting event handler
-			removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_BLE, getBleType(eventType));
-			removeInterruptContext(eventType);
+	microapp_sdk_result_t result;
+	switch (eventType) {
+		case BLEDeviceScanned: {
+			result = registerEventHandler(eventType, eventHandler);
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				return false;
+			}
+			result = registerBleInterrupt(CS_MICROAPP_SDK_BLE_SCAN);
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				removeEventHandlerRegistration(eventType);
+				return false;
+			}
+			return true;
+		}
+		case BLEConnected:
+		case BLEDisconnected: {
+			// Register the event handler for both central and peripheral role
+			result = registerEventHandler(eventType, eventHandler);
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				return false;
+			}
+			result = registerBleInterrupt(CS_MICROAPP_SDK_BLE_CENTRAL);
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				removeEventHandlerRegistration(eventType);
+				return false;
+			}
+			result = registerBleInterrupt(CS_MICROAPP_SDK_BLE_PERIPHERAL);
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				removeEventHandlerRegistration(eventType);
+				// Also remove interrupt registration for central
+				// if the interrupt registration for peripheral fails:
+				// It's both or none
+				removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_BLE, CS_MICROAPP_SDK_BLE_CENTRAL);
+				return false;
+			}
+			return true;
+		}
+		default: {
+			// Undefined
 			return false;
+		}
 	}
-
-	sendMessage();
-
-	// Bluenet will set ack to true upon success
-	if (bleRequest->header.ack != CS_MICROAPP_SDK_ACK_SUCCESS) {
-		// Undo local interrupt registration
-		removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_BLE, getBleType(eventType));
-		// Undo interrupt context
-		removeInterruptContext(eventType);
-		return false;
-	}
-	return true;
 }
 
 bool Ble::connected() {
@@ -199,9 +186,12 @@ void Ble::addService(BleService& service) {
 	if (_serviceCount >= MAX_SERVICES || !_flags.flags.initialized) {
 		return;
 	}
+	microapp_sdk_result_t result = service.add();
+	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+		return;
+	}
 	_services[_serviceCount] = &service;
 	_serviceCount++;
-	// todo: send request to bluenet
 }
 
 BleDevice& Ble::central() {
@@ -358,67 +348,101 @@ bool Ble::matchesFilter(BleScan scan, MacAddress address) {
 	return false;
 }
 
-MicroappSdkBleType Ble::getBleType(BleEventType eventType) {
-	switch (eventType) {
-		case BLEDeviceScanned: return CS_MICROAPP_SDK_BLE_SCAN;
-		case BLEConnected:
-			// todo: can also be peripheral?
-			return CS_MICROAPP_SDK_BLE_CENTRAL;
-		case BLEDisconnected:
-			// todo: can also be peripheral?
-			return CS_MICROAPP_SDK_BLE_CENTRAL;
-		default: return CS_MICROAPP_SDK_BLE_NONE;
+microapp_sdk_result_t Ble::registerBleInterrupt(MicroappSdkBleType bleType) {
+	// Register interrupt on the microapp side,
+	// with an indirect handler
+	interrupt_registration_t interrupt;
+	interrupt.type               = CS_MICROAPP_SDK_TYPE_BLE;
+	interrupt.id                 = bleType;
+	interrupt.handler            = handleBleInterrupt;
+	microapp_sdk_result_t result = registerInterrupt(&interrupt);
+	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+		// No empty interrupt slots available on microapp side
+		return result;
 	}
-}
 
-microapp_sdk_result_t Ble::setInterruptContext(BleEventType eventType, void (*eventHandler)(BleDevice)) {
-	int interruptContextId = -1;
-	for (int i = 0; i < MAX_BLE_INTERRUPT_REGISTRATIONS; ++i) {
-		if (_bleInterruptContext[i].filled == false) {
-			interruptContextId = i;
+	// Send a message to bluenet registering the interrupt
+	uint8_t* payload               = getOutgoingMessagePayload();
+	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
+	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
+	bleRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
+	bleRequest->type               = bleType;
+	switch (bleType) {
+		case CS_MICROAPP_SDK_BLE_SCAN:
+			bleRequest->scan.type = CS_MICROAPP_SDK_BLE_SCAN_REQUEST_REGISTER_INTERRUPT;
 			break;
-		}
-		if (_bleInterruptContext[i].eventType == eventType) {
-			return CS_MICROAPP_SDK_ACK_ERR_ALREADY_EXISTS;
-		}
+		case CS_MICROAPP_SDK_BLE_CENTRAL:
+			bleRequest->central.type = CS_MICROAPP_SDK_BLE_CENTRAL_REGISTER_INTERRUPT;
+			break;
+		case CS_MICROAPP_SDK_BLE_PERIPHERAL:
+			bleRequest->peripheral.type = CS_MICROAPP_SDK_BLE_PERIPHERAL_REQUEST_REGISTER_INTERRUPT;
+			break;
+		default:
+			// Unsupported ble type for setting event handler
+			// Undo local interrupt registration
+			removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_BLE, bleType);
+			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
-	if (interruptContextId < 0) {
-		// No empty slots for storing interruptContext
-		return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
+
+	sendMessage();
+
+	// Bluenet will set ack to success upon success
+	result = (microapp_sdk_result_t) bleRequest->header.ack;
+	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+		// Undo local interrupt registration
+		removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_BLE, bleType);
+		return result;
 	}
-	BleInterruptContext& context = _bleInterruptContext[interruptContextId];
-	context.eventHandler         = eventHandler;
-	context.filled               = true;
-	context.type                 = getBleType(eventType);
-	context.eventType            = eventType;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
-microapp_sdk_result_t Ble::getInterruptContext(BleEventType eventType, BleInterruptContext& context) {
-	for (int i = 0; i < MAX_BLE_INTERRUPT_REGISTRATIONS; ++i) {
-		if (_bleInterruptContext[i].filled == false) {
+microapp_sdk_result_t Ble::registerEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice)) {
+	int eventHandlerRegistrationIndex = -1;
+	for (int i = 0; i < MAX_BLE_EVENT_HANDLER_REGISTRATIONS; ++i) {
+		if (_bleEventHandlerRegistration[i].filled == false) {
+			eventHandlerRegistrationIndex = i;
+			break;
+		}
+		if (_bleEventHandlerRegistration[i].eventType == eventType) {
+			return CS_MICROAPP_SDK_ACK_ERR_ALREADY_EXISTS;
+		}
+	}
+	if (eventHandlerRegistrationIndex < 0) {
+		// No empty slots for storing event handler
+		return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
+	}
+	BleEventHandlerRegistration& registration = _bleEventHandlerRegistration[eventHandlerRegistrationIndex];
+	registration.eventHandler                 = eventHandler;
+	registration.filled                       = true;
+	registration.eventType                    = eventType;
+	return CS_MICROAPP_SDK_ACK_SUCCESS;
+}
+
+microapp_sdk_result_t Ble::getEventHandlerRegistration(
+		BleEventType eventType, BleEventHandlerRegistration& registration) {
+	for (int i = 0; i < MAX_BLE_EVENT_HANDLER_REGISTRATIONS; ++i) {
+		if (_bleEventHandlerRegistration[i].filled == false) {
 			continue;
 		}
-		if (_bleInterruptContext[i].eventType == eventType) {
-			if (_bleInterruptContext[i].eventHandler == nullptr) {
+		if (_bleEventHandlerRegistration[i].eventType == eventType) {
+			if (_bleEventHandlerRegistration[i].eventHandler == nullptr) {
 				return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 			}
-			context = _bleInterruptContext[i];
+			registration = _bleEventHandlerRegistration[i];
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 	}
 	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 }
 
-microapp_sdk_result_t Ble::removeInterruptContext(BleEventType eventType) {
-	for (int i = 0; i < MAX_BLE_INTERRUPT_REGISTRATIONS; ++i) {
-		if (_bleInterruptContext[i].filled == false) {
+microapp_sdk_result_t Ble::removeEventHandlerRegistration(BleEventType eventType) {
+	for (int i = 0; i < MAX_BLE_EVENT_HANDLER_REGISTRATIONS; ++i) {
+		if (_bleEventHandlerRegistration[i].filled == false) {
 			continue;
 		}
-		if (_bleInterruptContext[i].eventType == eventType) {
-			_bleInterruptContext[i].eventHandler = nullptr;
-			_bleInterruptContext[i].type         = CS_MICROAPP_SDK_BLE_NONE;
-			_bleInterruptContext[i].filled       = false;
+		if (_bleEventHandlerRegistration[i].eventType == eventType) {
+			_bleEventHandlerRegistration[i].eventHandler = nullptr;
+			_bleEventHandlerRegistration[i].filled       = false;
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 	}

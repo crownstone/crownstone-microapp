@@ -36,11 +36,10 @@ struct BleFilter {
 
 typedef void (*BleEventHandler)(BleDevice);
 
-// Context for the callback that can be kept local.
-struct BleInterruptContext {
+// Registration for the callback that can be kept local.
+struct BleEventHandlerRegistration {
 	BleEventHandler eventHandler = nullptr;
 	bool filled                  = false;
-	MicroappSdkBleType type      = CS_MICROAPP_SDK_BLE_NONE;
 	BleEventType eventType;
 };
 
@@ -77,12 +76,12 @@ private:
 	BleService* _services[MAX_SERVICES]; // array of pointers
 	uint8_t _serviceCount = 0;
 
-	static const uint8_t MAX_BLE_INTERRUPT_REGISTRATIONS = 3;
+	static const uint8_t MAX_BLE_EVENT_HANDLER_REGISTRATIONS = 3;
 
 	/*
-	 * Store callback contexts.
+	 * Store callbacks.
 	 */
-	BleInterruptContext _bleInterruptContext[MAX_BLE_INTERRUPT_REGISTRATIONS];
+	BleEventHandlerRegistration _bleEventHandlerRegistration[MAX_BLE_EVENT_HANDLER_REGISTRATIONS];
 
 	/**
 	 * Compares the scanned device device against the filter and returns true upon a match
@@ -105,39 +104,40 @@ private:
 	microapp_sdk_result_t handleCentralEvent(microapp_sdk_ble_central_t* central);
 	microapp_sdk_result_t handlePeripheralEvent(microapp_sdk_ble_peripheral_t* peripheral);
 
-	/**
-	 * Maps a (user-facing) event type to the corresponding MicroappSdkBleType
-	 *
-	 * @param eventType the BLE event type
-	 * @return the SDK BLE type corresponding to the event type
-	 */
-	MicroappSdkBleType getBleType(BleEventType eventType);
 
 	/**
-	 * Set interrupt context for a new callback set by the user
+	 * Register interrupts for event of a specific bleType
+	 *
+	 * @param bleType the bleType of the ble sdk message
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS if successful, otherwise error code
+	 */
+	microapp_sdk_result_t registerBleInterrupt(MicroappSdkBleType bleType);
+
+	/**
+	 * Locally register event handlers for a new callback set by the user
 	 *
 	 * @param eventType BleEventType indicating he type of event, e.g. BLEConnected
 	 * @param eventHandler callback to call upon the event specified by eventType
 	 * @return microapp_sdk_result_t
 	 */
-	microapp_sdk_result_t setInterruptContext(BleEventType eventType, void (*eventHandler)(BleDevice));
+	microapp_sdk_result_t registerEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice));
 
 	/**
-	 * Based on the event type, get the context with event handler
+	 * Based on the event type, get the event handler registration
 	 *
-	 * @param eventType the type of BLE event for which to get the context
-	 * @param context an empty instance of BleInterruptContext in which the result is placed
+	 * @param eventType the type of BLE event for which to get the registration
+	 * @param registration an empty instance of BleEventHandlerRegistration in which the result is placed
 	 * @return microapp_sdk_result_t
 	 */
-	microapp_sdk_result_t getInterruptContext(BleEventType eventType, BleInterruptContext& context);
+	microapp_sdk_result_t getEventHandlerRegistration(BleEventType eventType, BleEventHandlerRegistration& registration);
 
 	/**
-	 * Delete the interrupt context
+	 * Remove the event handler registration
 	 *
-	 * @param eventType the type of BLE event for which to remove the context
+	 * @param eventType the type of BLE event for which to remove the registration
 	 * @return microapp_sdk_result_t
 	 */
-	microapp_sdk_result_t removeInterruptContext(BleEventType eventType);
+	microapp_sdk_result_t removeEventHandlerRegistration(BleEventType eventType);
 
 public:
 	static Ble& getInstance() {

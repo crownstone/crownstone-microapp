@@ -112,7 +112,8 @@ private:
 
 	uint8_t _uuid[UUID_128BIT_BYTE_LENGTH];
 	uint8_t _length = 0;
-
+	// after registration, bluenet passes an id for custom uuids
+	uint8_t _type = 0;
 	bool _initialized = false;
 
 	/**
@@ -160,9 +161,10 @@ public:
 
 	// even though internally it's always 16 bytes, the length can be either 2 or 16
 	uint8_t length();
+	bool custom();
 
 	const char* string();
-	// Return full string, even for 16-bit uuids
+	// return full string, even for 16-bit uuids
 	const char* fullString();
 
 	const uint8_t* bytes();
@@ -170,6 +172,10 @@ public:
 
 	// makes sense only for 16-bit uuids! Returns a 16-bit int version of the uuid
 	uuid16_t uuid16();
+
+	void setCustomId(uint8_t customId);
+	uint8_t getType();
+
 };
 
 /**

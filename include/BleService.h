@@ -19,15 +19,35 @@ private:
 	// Same as public constructor except allows for setting remote flag
 	BleService(const char* uuid, bool remote);
 
-	bool _customUuid  = false;
-	bool _initialized = false;
-	bool _remote      = false;
+	union __attribute__((packed)) flags_t {
+		struct __attribute__((packed)) {
+			bool initialized    : 1;
+			bool remote         : 1;
+			bool added          : 1;
+		} flags;
+		uint8_t asInt = 0;  // initialize to zero
+	} _flags;
 
 	Uuid _uuid;
+	uint16_t _handle = 0;
 
 	static const uint8_t MAX_CHARACTERISTICS = 6;
 	BleCharacteristic* _characteristics[MAX_CHARACTERISTICS];
 	uint8_t _characteristicCount = 0;
+
+	/**
+	 * Add service and its characteristics via calls to bluenet
+	 *
+	 * @return microapp_sdk_result_t
+	 */
+	microapp_sdk_result_t add();
+
+	/**
+	 * Register a custom service uuid via a call to bluenet
+	 *
+	 * @return microapp_sdk_result_t
+	 */
+	microapp_sdk_result_t registerCustomUuid();
 
 public:
 	/**
