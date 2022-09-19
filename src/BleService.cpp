@@ -10,6 +10,15 @@ BleService::BleService(const char* uuid, bool remote) {
 	_flags.flags.initialized = true;
 }
 
+BleService::BleService(microapp_sdk_ble_uuid_t* uuid, bool remote) {
+	_uuid = Uuid(uuid->uuid);
+	if (uuid->type != CS_MICROAPP_SDK_BLE_UUID_STANDARD) {
+		_uuid.setCustomId(uuid->type);
+	}
+	_flags.flags.remote      = remote;
+	_flags.flags.initialized = true;
+}
+
 // Outside the Ble class, only this constructor (and the empty) can be called
 // remote = false means the service is local (crownstone = peripheral)
 BleService::BleService(const char* uuid) : BleService(uuid, false) {}
@@ -80,6 +89,16 @@ microapp_sdk_result_t BleService::registerCustomUuid() {
 	}
 	_uuid.setCustomId(bleRequest->requestUuidRegister.uuid.type);
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
+}
+
+microapp_sdk_result_t BleService::getCharacteristic(uint16_t handle, BleCharacteristic& characteristic) {
+	for (uint8_t i = 0; i < _characteristicCount; i++) {
+		if (_characteristics[i]->_handle == handle) {
+			characteristic = *_characteristics[i];
+			return CS_MICROAPP_SDK_ACK_SUCCESS;
+		}
+	}
+	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 }
 
 String BleService::uuid() {

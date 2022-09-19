@@ -72,14 +72,29 @@ private:
 	// Main device acting as either central or peripheral
 	BleDevice _device;
 
-	static const uint8_t MAX_SERVICES = 2;
-	BleService* _services[MAX_SERVICES]; // array of pointers
+	// References to local services are stored here.
+	// The actual services and their characteristics are stored on the user side
+	static const uint8_t MAX_LOCAL_SERVICES = 2;
+	BleService* _services[MAX_LOCAL_SERVICES]; // array of pointers
 	uint8_t _serviceCount = 0;
+
+	// Discovered remote services, characteristics and their values are stored here
+	static const uint8_t MAX_REMOTE_SERVICES = 2;
+	BleService _remoteServices[MAX_REMOTE_SERVICES];
+	uint8_t _remoteServiceCount = 0;
+	static const uint8_t MAX_REMOTE_CHARACTERISTICS = 10;
+	BleCharacteristic _remoteCharacteristics[MAX_REMOTE_CHARACTERISTICS];
+	uint8_t _remoteCharacteristicCount = 0;
+	static const uint8_t MAX_REMOTE_VALUE_SIZE = 20;
+	struct remote_value_t {
+		uint8_t buffer[MAX_REMOTE_VALUE_SIZE];
+	};
+	remote_value_t _remoteValues[MAX_REMOTE_CHARACTERISTICS];
 
 	static const uint8_t MAX_BLE_EVENT_HANDLER_REGISTRATIONS = 3;
 
 	/*
-	 * Store callbacks.
+	 * Store callbacks set by users
 	 */
 	BleEventHandlerRegistration _bleEventHandlerRegistration[MAX_BLE_EVENT_HANDLER_REGISTRATIONS];
 
@@ -104,6 +119,15 @@ private:
 	microapp_sdk_result_t handleCentralEvent(microapp_sdk_ble_central_t* central);
 	microapp_sdk_result_t handlePeripheralEvent(microapp_sdk_ble_peripheral_t* peripheral);
 
+	/**
+	 * Get a characteristic based on its handle
+	 *
+	 * @param[in] handle the handle of the characteristic
+	 * @param[out] characteristic if found, reference to characteristic will be placed here
+	 * @return true if characteristic found
+	 * @return false otherwise
+	 */
+	microapp_sdk_result_t getCharacteristic(uint16_t handle, BleCharacteristic& characteristic);
 
 	/**
 	 * Register interrupts for event of a specific bleType

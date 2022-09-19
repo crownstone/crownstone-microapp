@@ -8,16 +8,17 @@
 class BleService {
 
 private:
-	/*
-	 * Allow full access for Ble class
-	 */
+	// exceptions for Ble related classes
 	friend class Ble;
+	friend class BleDevice;
 
 	// Default constructor
 	BleService(){};
 
 	// Same as public constructor except allows for setting remote flag
 	BleService(const char* uuid, bool remote);
+	// (Used for remote services) From raw uuid
+	BleService(microapp_sdk_ble_uuid_t* uuid, bool remote);
 
 	union __attribute__((packed)) flags_t {
 		struct __attribute__((packed)) {
@@ -48,6 +49,23 @@ private:
 	 * @return microapp_sdk_result_t
 	 */
 	microapp_sdk_result_t registerCustomUuid();
+
+	/**
+	 * Get a characteristic based on its handle
+	 *
+	 * @param[in] handle the handle of the characteristic
+	 * @param[out] characteristic if found, reference to characteristic will be placed here
+	 * @return result code
+	 */
+	microapp_sdk_result_t getCharacteristic(uint16_t handle, BleCharacteristic& characteristic);
+
+	/**
+	 * Internally add a discovered characteristic
+	 *
+	 * @param characteristic pointer to a discovered characteristic
+	 * @return microapp_sdk_result_t
+	 */
+	microapp_sdk_result_t addDiscoveredCharacteristic(BleCharacteristic* characteristic);
 
 public:
 	/**

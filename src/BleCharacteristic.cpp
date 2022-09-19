@@ -18,6 +18,18 @@ BleCharacteristic::BleCharacteristic(
 	_flags.flags.initialized = true;
 }
 
+BleCharacteristic::BleCharacteristic(microapp_sdk_ble_uuid_t* uuid, uint8_t properties, uint8_t* value, uint16_t valueSize, bool remote) {
+	_uuid = Uuid(uuid->uuid);
+	if (uuid->type != CS_MICROAPP_SDK_BLE_UUID_STANDARD) {
+		_uuid.setCustomId(uuid->type);
+	}
+	_properties              = properties;
+	_value                   = value;
+	_valueSize               = valueSize;
+	_flags.flags.remote      = remote;
+	_flags.flags.initialized = true;
+}
+
 // Outside the Ble/BleService class, only this constructor (and the empty) can be called
 // remote = false means the characteristic is local (crownstone = peripheral)
 BleCharacteristic::BleCharacteristic(const char* uuid, uint8_t properties, uint8_t* value, uint16_t valueSize)
@@ -103,7 +115,7 @@ microapp_sdk_result_t BleCharacteristic::registerCustomUuid() {
 
 bool BleCharacteristic::writeValueLocal(uint8_t* buffer, uint16_t length) {
 	if (!_flags.flags.initialized) {
-		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
+		return false;
 	}
 	if (_flags.flags.remote) {
 		return false;
@@ -130,15 +142,17 @@ bool BleCharacteristic::writeValueLocal(uint8_t* buffer, uint16_t length) {
 	// todo: set connectionHandle?
 
 	sendMessage();
+
+	// todo: notify if subscribed
 	return (bleRequest->header.ack == CS_MICROAPP_SDK_ACK_SUCCESS);
 }
 
 bool BleCharacteristic::writeValueRemote(uint8_t* buffer, uint16_t length) {
 	if (!_flags.flags.initialized) {
-		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
+		return false;
 	}
 	if (!_flags.flags.remote) {
-		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
+		return false;
 	}
 	// todo: implement
 	return false;
@@ -202,7 +216,10 @@ bool BleCharacteristic::written() {
 	if (_flags.flags.remote) {
 		return false;
 	}
-	return _flags.flags.written;
+	bool result = _flags.flags.written;
+	// Clear the flag upon this call
+	_flags.flags.written = false;
+	return result;
 }
 
 bool BleCharacteristic::subscribed() {

@@ -2,20 +2,32 @@
 
 #include <BleUtils.h>
 #include <BleScan.h>
+#include <BleService.h>
 #include <String.h>
 #include <microapp.h>
 
 class BleDevice {
 
 private:
-	friend class Ble;  // exceptions for Ble class
+	// exceptions for Ble related classes
+	friend class Ble;
 
-	BleDevice(){};  // default constructor
+	// private empty constructor
+	BleDevice(){};
+
+	// constructor from scan (peripheral)
+	BleDevice(BleScan scan, MacAddress address, rssi_t rssi);
+	// constructor from connect (central)
+	BleDevice(MacAddress address);
 
 	uint8_t _scanData[MAX_BLE_ADV_DATA_LENGTH];  // raw scan data
 	BleScan _scan;                               // wrapper class pointing to _scanData
 	MacAddress _address;
 	rssi_t _rssi;
+
+	static const uint8_t MAX_SERVICES = 2;
+	BleService* _services[MAX_SERVICES]; // array of pointers
+	uint8_t _serviceCount = 0;
 
 	union __attribute__((packed)) flags_t {
 		struct __attribute__((packed)) {
@@ -27,8 +39,36 @@ private:
 		uint8_t asInt = 0;  // initialize to zero
 	} _flags;
 
+	void onConnect(const uint8_t* address = nullptr);
+	void onDisconnect();
+
+	/**
+	 * Internally add a discovered service
+	 *
+	 * @param service pointer to a discovered service
+	 * @return microapp_sdk_result_t
+	 */
+	microapp_sdk_result_t addDiscoveredService(BleService* service);
+
+	/**
+	 * Internally add a discovered characteristic
+	 *
+	 * @param characteristic pointer to a discovered characteristic
+	 * @return microapp_sdk_result_t
+	 */
+	microapp_sdk_result_t addDiscoveredCharacteristic(BleCharacteristic* characteristic, Uuid& serviceUuid);
+
+	/**
+	 * Get a characteristic based on its handle
+	 *
+	 * @param[in] handle the handle of the characteristic
+	 * @param[out] characteristic if found, reference to characteristic will be placed here
+	 * @return result code
+	 */
+	microapp_sdk_result_t getCharacteristic(uint16_t handle, BleCharacteristic& characteristic);
+
+
 public:
-	BleDevice(BleScan scan, MacAddress address, rssi_t rssi);
 
 	// return true if BleDevice is nontrivial, i.e. initialized from an actual advertisement
 	explicit operator bool() const { return _flags.flags.initialized; }

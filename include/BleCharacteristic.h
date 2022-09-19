@@ -29,6 +29,8 @@ private:
 
 	// Same as public constructor except allows for setting remote flag
 	BleCharacteristic(const char* uuid, uint8_t properties, uint8_t* value, uint16_t valueSize, bool remote);
+	// (Used for remote characteristics) From raw uuid
+	BleCharacteristic(microapp_sdk_ble_uuid_t* uuid, uint8_t properties, uint8_t* value, uint16_t valueSize, bool remote);
 
 	static constexpr uint16_t MAX_CHARACTERISTIC_VALUE_SIZE = 256;
 
@@ -52,7 +54,7 @@ private:
 	Uuid _uuid;
 
 	/**
-	 * Add characteristic via call to bluenet
+	 * Add characteristic via call to bluenet (only for local characteristics)
 	 *
 	 * @param[in] serviceHandle handle of the service
 	 * @return microapp_sdk_result_t
@@ -71,6 +73,9 @@ private:
 	bool writeValueRemote(uint8_t* buffer, uint16_t length);
 
 public:
+
+	explicit operator bool() const { return _flags.flags.initialized; }
+
 	/**
 	 * Create a new BLE service
 	 *

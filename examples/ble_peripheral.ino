@@ -16,7 +16,8 @@ uint8_t temperatureValue[NR_TEMPERATURE_BYTES] = {20, 25};
 // 0x181A: Environmental Sensing
 BleService temperatureService("181A");
 // 0x2A1C: Temperature measurement
-BleCharacteristic temperatureCharacteristic("2A1C", BleCharacteristicProperties::BLERead);
+BleCharacteristic temperatureCharacteristic("2A1C", BleCharacteristicProperties::BLERead,
+	temperatureValue, NR_TEMPERATURE_BYTES);
 
 
 void updateTemperature() {
