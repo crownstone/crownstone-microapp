@@ -122,7 +122,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 				if (central->eventDiscover.serviceUuid.type != CS_MICROAPP_SDK_BLE_UUID_STANDARD) {
 					serviceUuid.setCustomId(central->eventDiscover.serviceUuid.type);
 				}
-				_device.addDiscoveredCharacteristic(&_remoteCharacteristics, serviceUuid);
+				_device.addDiscoveredCharacteristic(&_remoteCharacteristics[_remoteCharacteristicCount], serviceUuid);
 				_remoteCharacteristicCount++;
 			}
 
@@ -255,7 +255,7 @@ void Ble::poll(int timeout) {
  * Set event handler provided by user, but not directly...
  * We register a wrapper function that calls the passed handler
  */
-bool Ble::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice)) {
+bool Ble::setEventHandler(BleEventType eventType, BleEventHandler eventHandler) {
 	microapp_sdk_result_t result;
 	switch (eventType) {
 		case BLEDeviceScanned: {
@@ -549,7 +549,7 @@ microapp_sdk_result_t Ble::registerBleInterrupt(MicroappSdkBleType bleType) {
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
-microapp_sdk_result_t Ble::registerEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice)) {
+microapp_sdk_result_t Ble::registerEventHandler(BleEventType eventType, BleEventHandler eventHandler) {
 	int eventHandlerRegistrationIndex = -1;
 	for (int i = 0; i < MAX_BLE_EVENT_HANDLER_REGISTRATIONS; ++i) {
 		if (_bleEventHandlerRegistration[i].filled == false) {

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <BleDevice.h>
 #include <BleUtils.h>
 #include <String.h>
 #include <microapp.h>
@@ -14,6 +13,12 @@ public:
 	static const uint8_t BLENotify               = 1 << 4;
 	static const uint8_t BLEIndicate             = 1 << 5;
 };
+
+// Forward declarations
+class BleCharacteristic;
+class BleDevice;
+
+typedef void (*CharacteristicEventHandler)(BleDevice, BleCharacteristic);
 
 class BleCharacteristic {
 
@@ -134,7 +139,7 @@ public:
 	 * @param eventType event type (BLESubscribed, BLEUnsubscribed, BLERead, BLEWritten)
 	 * @param eventHandler function to call when the event occurs
 	 */
-	void setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice, BleCharacteristic));
+	void setEventHandler(BleEventType eventType, CharacteristicEventHandler eventHandler);
 
 	/**
 	 * Query if the characteristic value has been written by another BLE device

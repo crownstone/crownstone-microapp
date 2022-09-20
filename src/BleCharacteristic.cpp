@@ -197,7 +197,7 @@ bool BleCharacteristic::writeValue(uint8_t* buffer, uint16_t length) {
 	}
 }
 
-void BleCharacteristic::setEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice, BleCharacteristic)) {
+void BleCharacteristic::setEventHandler(BleEventType eventType, CharacteristicEventHandler eventHandler) {
 	if (!_flags.flags.initialized) {
 		return;
 	}

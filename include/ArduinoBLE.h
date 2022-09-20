@@ -1,9 +1,9 @@
 #pragma once
 
 #include <BleUtils.h>
+#include <BleDevice.h>
 #include <BleService.h>
 #include <BleScan.h>
-#include <BleDevice.h>
 #include <Serial.h>
 #include <microapp.h>
 
@@ -144,7 +144,7 @@ private:
 	 * @param eventHandler callback to call upon the event specified by eventType
 	 * @return microapp_sdk_result_t
 	 */
-	microapp_sdk_result_t registerEventHandler(BleEventType eventType, void (*eventHandler)(BleDevice));
+	microapp_sdk_result_t registerEventHandler(BleEventType eventType, BleEventHandler eventHandler);
 
 	/**
 	 * Based on the event type, get the event handler registration
@@ -200,7 +200,7 @@ public:
 	 *
 	 * @return                True if successful
 	 */
-	bool setEventHandler(BleEventType eventType, void (*callback)(BleDevice));
+	bool setEventHandler(BleEventType eventType, BleEventHandler eventHandler);
 
 	/**
 	 * Query if another BLE device is connected

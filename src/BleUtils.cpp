@@ -81,8 +81,8 @@ Uuid::Uuid(const uint8_t* uuid, uint8_t length) {
 
 Uuid::Uuid(const uuid16_t uuid) {
 	memcpy(_uuid, BASE_UUID_128BIT, UUID_128BIT_BYTE_LENGTH);
-	_uuid[BASE_UUID_OFFSET_16BIT] = (uuid >> 8) & 0xFF;
-	_uuid[BASE_UUID_OFFSET_16BIT + 1] = uuid & 0xFF;
+	_uuid[BASE_UUID_OFFSET_16BIT] = uuid & 0xFF;
+	_uuid[BASE_UUID_OFFSET_16BIT + 1] = (uuid >> 8) & 0xFF;
 	_length = UUID_16BIT_BYTE_LENGTH;
 	_type = CS_MICROAPP_SDK_BLE_UUID_STANDARD;
 	_initialized = true;
@@ -145,16 +145,7 @@ const uint8_t* Uuid::fullBytes() {
 }
 
 uuid16_t Uuid::uuid16() {
-	return (_uuid[BASE_UUID_OFFSET_16BIT] << 8) | (_uuid[BASE_UUID_OFFSET_16BIT + 1] & 0xFF);
-}
-
-void Uuid::convertStringToUuid16Bit(const char* uuidString, uint8_t* emptyUuid) {
-	if (strlen(uuidString) != UUID_16BIT_STRING_LENGTH) {
-		return;
-	}
-	for (uint8_t i = 0; i < UUID_16BIT_BYTE_LENGTH; i++) {
-		emptyUuid[i] = convertTwoHexCharsToByte(uuidString + 2 * i);
-	}
+	return (_uuid[BASE_UUID_OFFSET_16BIT + 1] << 8) | (_uuid[BASE_UUID_OFFSET_16BIT] & 0xFF);
 }
 
 void Uuid::setCustomId(uint8_t customId) {
@@ -165,26 +156,35 @@ uint8_t Uuid::getType() {
 	return _type;
 }
 
+void Uuid::convertStringToUuid16Bit(const char* uuidString, uint8_t* emptyUuid) {
+	if (strlen(uuidString) != UUID_16BIT_STRING_LENGTH) {
+		return;
+	}
+	for (uint8_t i = 0; i < UUID_16BIT_BYTE_LENGTH; i++) {
+		emptyUuid[UUID_16BIT_BYTE_LENGTH - 1 - i] = convertTwoHexCharsToByte(uuidString + 2 * i);
+	}
+}
+
 void Uuid::convertStringToUuid128Bit(const char* uuidString, uint8_t* emptyUuid) {
 	if (strlen(uuidString) != UUID_128BIT_STRING_LENGTH) {
 		return;
 	}
 	uint8_t i = 0;
-	uint8_t j = 0;
+	uint8_t j = UUID_128BIT_BYTE_LENGTH - 1;
 	while (uuidString[i] != 0) {
 		if (uuidString[i] == '-') {
 			i++;
 			continue;
 		}
 		emptyUuid[j] = convertTwoHexCharsToByte(&uuidString[i]);
-		j++;
+		j--;
 		i += 2;
 	}
 }
 
 void Uuid::convertUuid16BitToString(const uint8_t* uuid, char* emptyUuidString) {
 	for (uint8_t i = 0; i < UUID_16BIT_BYTE_LENGTH; i++) {
-		convertByteToTwoHexChars(*(uuid + i), emptyUuidString + 2 * i);
+		convertByteToTwoHexChars(*(uuid + UUID_16BIT_BYTE_LENGTH - 1 - i), emptyUuidString + 2 * i);
 	}
 	emptyUuidString[UUID_16BIT_STRING_LENGTH] = 0;
 }
@@ -192,7 +192,7 @@ void Uuid::convertUuid16BitToString(const uint8_t* uuid, char* emptyUuidString) 
 void Uuid::convertUuid128BitToString(const uint8_t* uuid, char* emptyUuidString) {
 	uint8_t j = 0;
 	for (uint8_t i = 0; i < UUID_128BIT_BYTE_LENGTH; i++) {
-		convertByteToTwoHexChars(uuid[i], &emptyUuidString[j]);
+		convertByteToTwoHexChars(uuid[UUID_128BIT_BYTE_LENGTH - 1 - i], &emptyUuidString[j]);
 		j += 2;
 		if (j == 8 || j == 13 || j == 18 || j == 23) {
 			emptyUuidString[j] = '-';

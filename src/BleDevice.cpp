@@ -27,14 +27,17 @@ void BleDevice::onDisconnect() {
 microapp_sdk_result_t BleDevice::addDiscoveredService(BleService* service) {
 	_services[_serviceCount] = service;
 	_serviceCount++;
+	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
 microapp_sdk_result_t BleDevice::addDiscoveredCharacteristic(BleCharacteristic* characteristic, Uuid& serviceUuid) {
 	for (uint8_t i = 0; i < _serviceCount; i++) {
 		if (_services[i]->_uuid == serviceUuid) {
-			_services[i]->addDiscoveredCharacteristic(characteristic);
+			return _services[i]->addDiscoveredCharacteristic(characteristic);
 		}
 	}
+	// todo: add service first, then add characteristic
+	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 }
 
 microapp_sdk_result_t BleDevice::getCharacteristic(uint16_t handle, BleCharacteristic& characteristic) {
