@@ -22,9 +22,9 @@ private:
 
 	union __attribute__((packed)) flags_t {
 		struct __attribute__((packed)) {
-			bool initialized    : 1;
-			bool remote         : 1;
-			bool added          : 1;
+			bool initialized    : 1; // whether characteristic is empty or not
+			bool remote         : 1; // whether characteristic is local or remote
+			bool added          : 1; // (only for local service) whether service has been added to bluenet
 		} flags;
 		uint8_t asInt = 0;  // initialize to zero
 	} _flags;
@@ -94,7 +94,7 @@ public:
 	 *
 	 * @return The number of characteristics
 	 */
-	int characteristicCount();
+	uint8_t characteristicCount();
 
 	/**
 	 * Query if the BLE service has a particular characteristic
@@ -111,5 +111,5 @@ public:
 	 * @param uuid UUID of the characteristic as a string
 	 * @return BleCharacteristic belonging to the provided uuid
 	 */
-	BleCharacteristic characteristic(const char* uuid);
+	BleCharacteristic& characteristic(const char* uuid);
 };

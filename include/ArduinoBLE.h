@@ -1,9 +1,9 @@
 #pragma once
 
-#include <BleUtils.h>
 #include <BleDevice.h>
-#include <BleService.h>
 #include <BleScan.h>
+#include <BleService.h>
+#include <BleUtils.h>
 #include <Serial.h>
 #include <microapp.h>
 
@@ -51,46 +51,55 @@ struct BleEventHandlerRegistration {
 class Ble {
 private:
 	friend microapp_sdk_result_t handleBleInterrupt(void*);
+	friend bool registeredBleInterrupt(MicroappSdkBleType);
+	friend microapp_sdk_result_t registerBleInterrupt(MicroappSdkBleType);
 
 	Ble(){};
 
 	union __attribute__((packed)) flags_t {
 		struct __attribute__((packed)) {
-			bool initialized : 1;   // begin has been called
-			bool isScanning : 1;    // scans are handled
+			bool initialized : 1;  // begin has been called
+			bool isScanning : 1;   // scans are handled
+			bool registeredScanInterrupts : 1;
+			bool registeredCentralInterrupts : 1;
+			bool registeredPeripheralInterrupts : 1;
 		} flags;
 		uint8_t asInt = 0;  // initialize to zero
 	} _flags;
 
-	MacAddress _address; // address of the crownstone
+	MacAddress _address;  // address of the crownstone
 
 	// Device only used for incoming scans
 	// Is overwritten as new scans come in that pass the filter
 	BleDevice _scanDevice;
 	// Filter for device scans
 	BleFilter _scanFilter;
-	// Main device acting as either central or peripheral
+
+	// Remote device acting as either central or peripheral
 	BleDevice _device;
 
-	// References to local services are stored here.
+	// Pointers to local services are stored here (for peripheral role)
 	// The actual services and their characteristics are stored on the user side
 	static const uint8_t MAX_LOCAL_SERVICES = 2;
-	BleService* _services[MAX_LOCAL_SERVICES]; // array of pointers
-	uint8_t _serviceCount = 0;
+	BleService* _localServices[MAX_LOCAL_SERVICES];  // array of pointers
+	uint8_t _localServiceCount = 0;
 
 	// Discovered remote services, characteristics and their values are stored here
 	static const uint8_t MAX_REMOTE_SERVICES = 2;
 	BleService _remoteServices[MAX_REMOTE_SERVICES];
 	uint8_t _remoteServiceCount = 0;
+
 	static const uint8_t MAX_REMOTE_CHARACTERISTICS = 10;
 	BleCharacteristic _remoteCharacteristics[MAX_REMOTE_CHARACTERISTICS];
 	uint8_t _remoteCharacteristicCount = 0;
+
 	static const uint8_t MAX_REMOTE_VALUE_SIZE = 20;
 	struct remote_value_t {
 		uint8_t buffer[MAX_REMOTE_VALUE_SIZE];
 	};
 	remote_value_t _remoteValues[MAX_REMOTE_CHARACTERISTICS];
 
+	// Event handlers set by the user
 	static const uint8_t MAX_BLE_EVENT_HANDLER_REGISTRATIONS = 3;
 
 	/*
@@ -120,22 +129,13 @@ private:
 	microapp_sdk_result_t handlePeripheralEvent(microapp_sdk_ble_peripheral_t* peripheral);
 
 	/**
-	 * Get a characteristic based on its handle
+	 * Get a characteristic based on its handle (for peripheral role)
 	 *
 	 * @param[in] handle the handle of the characteristic
 	 * @param[out] characteristic if found, reference to characteristic will be placed here
-	 * @return true if characteristic found
-	 * @return false otherwise
+	 * @return result code
 	 */
-	microapp_sdk_result_t getCharacteristic(uint16_t handle, BleCharacteristic& characteristic);
-
-	/**
-	 * Register interrupts for event of a specific bleType
-	 *
-	 * @param bleType the bleType of the ble sdk message
-	 * @return CS_MICROAPP_SDK_ACK_SUCCESS if successful, otherwise error code
-	 */
-	microapp_sdk_result_t registerBleInterrupt(MicroappSdkBleType bleType);
+	microapp_sdk_result_t getLocalCharacteristic(uint16_t handle, BleCharacteristic& characteristic);
 
 	/**
 	 * Locally register event handlers for a new callback set by the user
@@ -153,7 +153,8 @@ private:
 	 * @param registration an empty instance of BleEventHandlerRegistration in which the result is placed
 	 * @return microapp_sdk_result_t
 	 */
-	microapp_sdk_result_t getEventHandlerRegistration(BleEventType eventType, BleEventHandlerRegistration& registration);
+	microapp_sdk_result_t getEventHandlerRegistration(
+			BleEventType eventType, BleEventHandlerRegistration& registration);
 
 	/**
 	 * Remove the event handler registration
@@ -309,3 +310,21 @@ public:
 };
 
 #define BLE Ble::getInstance()
+
+
+/**
+ * Check if interrupts are registered for given bleType
+ *
+ * @param bleType the bleType of the ble sdk message
+ * @return true if already registered
+ * @return false otherwise
+ */
+bool registeredBleInterrupt(MicroappSdkBleType bleType);
+
+/**
+ * Register interrupts for event of a specific bleType
+ *
+ * @param bleType the bleType of the ble sdk message
+ * @return CS_MICROAPP_SDK_ACK_SUCCESS if successful, otherwise error code
+ */
+microapp_sdk_result_t registerBleInterrupt(MicroappSdkBleType bleType);

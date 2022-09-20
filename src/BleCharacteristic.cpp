@@ -158,7 +158,6 @@ bool BleCharacteristic::writeValueRemote(uint8_t* buffer, uint16_t length) {
 	return false;
 }
 
-
 String BleCharacteristic::uuid() {
 	if (!_flags.flags.initialized) {
 		return String(nullptr);
@@ -201,7 +200,7 @@ void BleCharacteristic::setEventHandler(BleEventType eventType, CharacteristicEv
 	if (!_flags.flags.initialized) {
 		return;
 	}
-	// Only defined for peripheral role
+	// Only defined for local characteristics
 	if (_flags.flags.remote) {
 		return;
 	}
@@ -212,7 +211,7 @@ bool BleCharacteristic::written() {
 	if (!_flags.flags.initialized) {
 		return false;
 	}
-	// Only defined for peripheral role
+	// Only defined for local characteristics
 	if (_flags.flags.remote) {
 		return false;
 	}
@@ -226,7 +225,7 @@ bool BleCharacteristic::subscribed() {
 	if (!_flags.flags.initialized) {
 		return false;
 	}
-	// Only defined for peripheral role
+	// Only defined for local characteristics
 	if (_flags.flags.remote) {
 		return false;
 	}

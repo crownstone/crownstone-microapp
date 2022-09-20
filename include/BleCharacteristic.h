@@ -24,9 +24,10 @@ class BleCharacteristic {
 
 private:
 	/*
-	 * Allow full access for Ble class and BleService class
+	 * Allow full access for Ble classes
 	 */
 	friend class Ble;
+	friend class BleDevice;
 	friend class BleService;
 
 	// default constructor
@@ -41,11 +42,12 @@ private:
 
 	union __attribute__((packed)) flags_t {
 		struct __attribute__((packed)) {
-			bool initialized : 1;
-			bool remote      : 1;
-			bool added       : 1;
-			bool subscribed  : 1;
-			bool written     : 1;
+			bool initialized  : 1; // whether characteristic is empty or not
+			bool remote       : 1; // whether characteristic is local or remote
+			bool added        : 1; // (only for local characteristics) whether characteristic has been added to bluenet
+			bool subscribed   : 1; // (only for local characteristics) whether characteristic is subscribed to
+			bool written      : 1; // (only for local characteristics) whether characteristic is written to
+			bool valueUpdated : 1; // (only for remote characteristics) whether value has been updated (set via notify)
 		} flags;
 		uint8_t asInt = 0;  // initialize to zero
 	} _flags;
@@ -156,4 +158,44 @@ public:
 	 * @return false otherwise
 	 */
 	bool subscribed();
+
+	/**
+	 * Query if a BLE characteristic is readable
+	 *
+	 * @return true if characteristic is readable
+	 * @return false otherwise
+	 */
+	bool canRead();
+
+	/**
+	 * Query if a BLE characteristic is writable
+	 *
+	 * @return true if characteristic is writable
+	 * @return false otherwise
+	 */
+	bool canWrite();
+
+	/**
+	 * Query if a BLE characteristic is subscribable
+	 *
+	 * @return true if characteristic is subscribable
+	 * @return false otherwise
+	 */
+	bool canSubscribe();
+
+	/**
+	 * Query if a BLE characteristic is unsubscribable
+	 *
+	 * @return true if characteristic is unsubscribable
+	 * @return false otherwise
+	 */
+	bool canUnsubscribe();
+
+	/**
+	 * Has the characteristics value been updated via a notification or indication
+	 *
+	 * @return true if characteristic has been updated via a notification or indication
+	 * @return false otherwise
+	 */
+	bool valueUpdated();
 };

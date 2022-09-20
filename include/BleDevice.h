@@ -6,6 +6,10 @@
 #include <String.h>
 #include <microapp.h>
 
+// forward declarations
+bool registeredBleInterrupt(MicroappSdkBleType bleType);
+microapp_sdk_result_t registerBleInterrupt(MicroappSdkBleType bleType);
+
 class BleDevice {
 
 private:
@@ -25,6 +29,7 @@ private:
 	MacAddress _address;
 	rssi_t _rssi;
 
+	// Services with characteristics for peripheral devices
 	static const uint8_t MAX_SERVICES = 2;
 	BleService* _services[MAX_SERVICES]; // array of pointers
 	uint8_t _serviceCount = 0;
@@ -35,6 +40,7 @@ private:
 			bool connected : 1;     // whether device is connected
 			bool isCentral : 1;     // device has central role
 			bool isPeripheral : 1;  // device has peripheral role
+			bool discoveryDone : 1; // discovery has been completed (only for peripheral device)
 		} flags;
 		uint8_t asInt = 0;  // initialize to zero
 	} _flags;
@@ -43,7 +49,7 @@ private:
 	void onDisconnect();
 
 	/**
-	 * Internally add a discovered service
+	 * Internally add a discovered service (for peripheral devices)
 	 *
 	 * @param service pointer to a discovered service
 	 * @return microapp_sdk_result_t
@@ -51,15 +57,15 @@ private:
 	microapp_sdk_result_t addDiscoveredService(BleService* service);
 
 	/**
-	 * Internally add a discovered characteristic
+	 * Internally add a discovered characteristic (for peripheral devices)
 	 *
 	 * @param characteristic pointer to a discovered characteristic
 	 * @return microapp_sdk_result_t
 	 */
-	microapp_sdk_result_t addDiscoveredCharacteristic(BleCharacteristic* characteristic, Uuid& serviceUuid);
+	microapp_sdk_result_t addDiscoveredCharacteristic(BleCharacteristic* characteristic, Uuid serviceUuid);
 
 	/**
-	 * Get a characteristic based on its handle
+	 * Get a characteristic based on its handle (for peripheral devices)
 	 *
 	 * @param[in] handle the handle of the characteristic
 	 * @param[out] characteristic if found, reference to characteristic will be placed here
@@ -67,6 +73,13 @@ private:
 	 */
 	microapp_sdk_result_t getCharacteristic(uint16_t handle, BleCharacteristic& characteristic);
 
+	/**
+	 * Register a custom service uuid via a call to bluenet
+	 *
+	 * @param[in] uuid reference to uuid object
+	 * @return microapp_sdk_result_t
+	 */
+	microapp_sdk_result_t registerCustomUuid(Uuid& uuid);
 
 public:
 
@@ -109,6 +122,68 @@ public:
 	 * @return       RSSI value of the last scanned advertisement which matched the filter.
 	 */
 	int8_t rssi();
+
+	/**
+	 * (Not implemented!) Discover all the attributes of the BLE device
+	 *
+	 * @return true if successful
+	 * @return false on failure
+	 */
+	bool discoverAttributes();
+
+	/**
+	 * Discover the attributes of a particular service on the BLE device
+	 *
+	 * @return true if successful
+	 * @return false on failure
+	 */
+	bool discoverService(const char* serviceUuid);
+
+	/**
+	 * Query the numer of services discovered for the BLE device
+	 *
+	 * @return the number of services discovered for the BLE device
+	 */
+	uint8_t serviceCount();
+
+	/**
+	 * Query if the BLE device has a particular service
+	 *
+	 * @return true if the device provides the service
+	 * @return false otherwise
+	 */
+	bool hasService(const char* serviceUuid);
+
+	/**
+	 * Get a BleService representing a BLE service the device provides
+	 *
+	 * @param[in] uuid a string with the uuid of the characteristic to look for
+	 * @return a reference (!) to the BleService with the provided uuid, if found
+	 */
+	BleService& service(const char* uuid);
+
+	/**
+	 * Query the numer of characteristics discovered for the BLE device
+	 *
+	 * @return the number of characteristics discovered for the BLE device
+	 */
+	uint8_t characteristicCount();
+
+	/**
+	 * Query if the BLE device has a particular characteristic
+	 *
+	 * @return true if the device provides the characteristic
+	 * @return false otherwise
+	 */
+	bool hasCharacteristic(const char* uuid);
+
+	/**
+	 * Get a BleCharacteristic representing a BLE characteristic the device provides
+	 *
+	 * @param[in] uuid a string with the uuid of the characteristic to look for
+	 * @return a reference (!) to the BleCharacteristic with the provided uuid, if found
+	 */
+	BleCharacteristic& characteristic(const char* uuid);
 
 	/**
 	 * Returns whether the device has advertised a local name

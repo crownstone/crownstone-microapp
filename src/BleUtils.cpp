@@ -1,7 +1,8 @@
 #include <BleUtils.h>
 
-MacAddress::MacAddress(const uint8_t* address) {
+MacAddress::MacAddress(const uint8_t* address, uint8_t type) {
 	memcpy(_address, address, MAC_ADDRESS_LENGTH);
+	_type = type;
 	_initialized = true;
 }
 
@@ -41,6 +42,10 @@ const uint8_t* MacAddress::bytes() {
 		return nullptr;
 	}
 	return _address;
+}
+
+const uint8_t MacAddress::type() {
+	return _type;
 }
 
 ////////////////////////////////////////////////////////////////////////

@@ -101,6 +101,15 @@ microapp_sdk_result_t BleService::getCharacteristic(uint16_t handle, BleCharacte
 	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 }
 
+microapp_sdk_result_t BleService::addDiscoveredCharacteristic(BleCharacteristic* characteristic) {
+	if (_characteristicCount >= MAX_CHARACTERISTICS) {
+		return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
+	}
+	_characteristics[_characteristicCount] = characteristic;
+	_characteristicCount++;
+	return CS_MICROAPP_SDK_ACK_SUCCESS;
+}
+
 String BleService::uuid() {
 	if (!_flags.flags.initialized) {
 		return String(nullptr);
@@ -116,7 +125,7 @@ void BleService::addCharacteristic(BleCharacteristic& characteristic) {
 	_characteristicCount++;
 }
 
-int BleService::characteristicCount() {
+uint8_t BleService::characteristicCount() {
 	return _characteristicCount;
 }
 
@@ -130,13 +139,13 @@ bool BleService::hasCharacteristic(const char* uuidString) {
 	return false;
 }
 
-// Returns a copy of the characteristic
-BleCharacteristic BleService::characteristic(const char* uuidString) {
+BleCharacteristic& BleService::characteristic(const char* uuidString) {
 	Uuid uuid(uuidString);
 	for (int i = 0; i < _characteristicCount; i++) {
 		if (_characteristics[i]->_uuid == uuid) {
 			return *_characteristics[i];
 		}
 	}
-	return BleCharacteristic();
+	static BleCharacteristic empty;
+	return empty;
 }

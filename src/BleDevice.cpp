@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <BleDevice.h>
 
+// Construct as a peripheral device
 BleDevice::BleDevice(BleScan scan, MacAddress address, rssi_t rssi) {
 	memcpy(_scanData, scan._scanData, scan._scanSize);
 	_scan                     = BleScan(_scanData, scan._scanSize);
@@ -10,27 +11,32 @@ BleDevice::BleDevice(BleScan scan, MacAddress address, rssi_t rssi) {
 	_flags.flags.initialized  = true;
 }
 
+// Construct as a central device
 BleDevice::BleDevice(MacAddress address) {
 	_address                 = address;
 	_flags.flags.isCentral   = true;
 	_flags.flags.initialized = true;
 }
 
+// Defined for both central and peripheral devices
 void BleDevice::onConnect(const uint8_t* address) {
 	_flags.flags.connected = true;
 }
 
+// Defined for both central and peripheral devices
 void BleDevice::onDisconnect() {
 	_flags.flags.connected = false;
 }
 
+// Only defined for peripheral devices
 microapp_sdk_result_t BleDevice::addDiscoveredService(BleService* service) {
 	_services[_serviceCount] = service;
 	_serviceCount++;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
-microapp_sdk_result_t BleDevice::addDiscoveredCharacteristic(BleCharacteristic* characteristic, Uuid& serviceUuid) {
+// Only defined for peripheral devices
+microapp_sdk_result_t BleDevice::addDiscoveredCharacteristic(BleCharacteristic* characteristic, Uuid serviceUuid) {
 	for (uint8_t i = 0; i < _serviceCount; i++) {
 		if (_services[i]->_uuid == serviceUuid) {
 			return _services[i]->addDiscoveredCharacteristic(characteristic);
@@ -40,11 +46,12 @@ microapp_sdk_result_t BleDevice::addDiscoveredCharacteristic(BleCharacteristic* 
 	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 }
 
+// Only defined for peripheral devices
 microapp_sdk_result_t BleDevice::getCharacteristic(uint16_t handle, BleCharacteristic& characteristic) {
 	if (!_flags.flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}
-	if (!_flags.flags.isCentral) {
+	if (!_flags.flags.isPeripheral) {
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
 	for (uint8_t i = 0; i < _serviceCount; i++) {
@@ -56,6 +63,32 @@ microapp_sdk_result_t BleDevice::getCharacteristic(uint16_t handle, BleCharacter
 	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 }
 
+microapp_sdk_result_t BleDevice::registerCustomUuid(Uuid& uuid) {
+	if (!uuid.custom()) {
+		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
+	}
+	uint8_t* payload               = getOutgoingMessagePayload();
+	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
+	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
+	bleRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
+	bleRequest->type               = CS_MICROAPP_SDK_BLE_UUID_REGISTER;
+	memcpy(bleRequest->requestUuidRegister.customUuid, uuid.bytes(), UUID_128BIT_BYTE_LENGTH);
+
+	sendMessage();
+	microapp_sdk_result_t result = (microapp_sdk_result_t)bleRequest->header.ack;
+	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+		return result;
+	}
+	if (memcmp(&bleRequest->requestUuidRegister.uuid.uuid, uuid.bytes(), UUID_16BIT_BYTE_LENGTH) != 0) {
+		// The returned short uuid is not the same as the original
+		// (it should be the same)
+		return CS_MICROAPP_SDK_ACK_ERROR;
+	}
+	uuid.setCustomId(bleRequest->requestUuidRegister.uuid.type);
+	return CS_MICROAPP_SDK_ACK_SUCCESS;
+}
+
+// Defined for both central and peripheral devices
 void BleDevice::poll(int timeout) {
 	if (timeout == 0) {
 		return;
@@ -63,10 +96,12 @@ void BleDevice::poll(int timeout) {
 	delay(timeout);
 }
 
+// Defined for both central and peripheral devices
 bool BleDevice::connected() {
 	return _flags.flags.connected;
 }
 
+// Defined for both central and peripheral devices
 bool BleDevice::disconnect() {
 	// this is a blocking function
 	if (!_flags.flags.connected) {
@@ -92,7 +127,7 @@ bool BleDevice::disconnect() {
 	uint8_t tries = 5;
 	while (_flags.flags.connected) {
 		// yield. Upon a disconnect event flag will be cleared
-		delay(100);
+		delay(1000);
 		if (--tries < 0) {
 			return false;
 		}
@@ -100,19 +135,168 @@ bool BleDevice::disconnect() {
 	return true;
 }
 
+// Defined for both central and peripheral devices
 String BleDevice::address() {
 	return String(_address.string());
 }
 
+// Only defined for peripheral devices
 int8_t BleDevice::rssi() {
 	return _rssi;
 }
 
+// Only defined for peripheral devices
+bool BleDevice::discoverAttributes() {
+	// Not implemented!
+	// Bluenet requires a set of services to initiate discovery
+	// Hence, discovery is currently only possible via discoverService
+	return false;
+}
+
+// Only defined for peripheral devices
+bool BleDevice::discoverService(const char* serviceUuid) {
+	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
+		return false;
+	}
+	microapp_sdk_result_t result;
+	Uuid uuid(serviceUuid);
+	if (uuid.custom()) {
+		result = registerCustomUuid(uuid);
+		if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+			return false;
+		}
+	}
+	uint8_t* payload                                  = getOutgoingMessagePayload();
+	microapp_sdk_ble_t* bleRequest                    = (microapp_sdk_ble_t*)(payload);
+	bleRequest->header.messageType                    = CS_MICROAPP_SDK_TYPE_BLE;
+	bleRequest->header.ack                            = CS_MICROAPP_SDK_ACK_REQUEST;
+	bleRequest->type                                  = CS_MICROAPP_SDK_BLE_CENTRAL;
+	bleRequest->central.requestDiscover.uuidCount     = 1;
+	bleRequest->central.requestDiscover.uuids[0].type = uuid.getType();
+	bleRequest->central.requestDiscover.uuids[0].uuid = uuid.uuid16();
+
+	sendMessage();
+	result = (microapp_sdk_result_t)bleRequest->header.ack;
+	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+		return false;
+	}
+	// now block until discovery done
+	uint8_t tries = 5;
+	while (!_flags.flags.discoveryDone) {
+		// yield. Upon a discovery done event flag will be set
+		delay(1000);
+		if (--tries < 0) {
+			return false;
+		}
+	}
+	return true;
+}
+
+// Only defined for peripheral devices
+uint8_t BleDevice::serviceCount() {
+	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
+		return 0;
+	}
+	if (!_flags.flags.discoveryDone) {
+		return 0;
+	}
+	return _serviceCount;
+}
+
+// Only defined for peripheral devices
+bool BleDevice::hasService(const char* serviceUuid) {
+	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
+		return false;
+	}
+	if (!_flags.flags.discoveryDone) {
+		return false;
+	}
+	for (uint8_t i = 0; i < _serviceCount; i++) {
+		if (_services[i]->_uuid == Uuid(serviceUuid)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// Only defined for peripheral devices
+BleService& BleDevice::service(const char* uuid) {
+	static BleService empty;
+	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
+		return empty;
+	}
+	if (!_flags.flags.discoveryDone) {
+		return empty;
+	}
+	for (uint8_t i = 0; i < _serviceCount; i++) {
+		if (_services[i]->_uuid == Uuid(uuid)) {
+			return *_services[i];
+		}
+	}
+	return empty;
+}
+
+// Only defined for peripheral devices
+uint8_t BleDevice::characteristicCount() {
+	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
+		return 0;
+	}
+	if (!_flags.flags.discoveryDone) {
+		return 0;
+	}
+	uint8_t characteristicCount = 0;
+	for (uint8_t i = 0; i < _serviceCount; i++) {
+		characteristicCount += _services[i]->characteristicCount();
+	}
+	return characteristicCount;
+}
+
+// Only defined for peripheral devices
+bool BleDevice::hasCharacteristic(const char* uuid) {
+	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
+		return false;
+	}
+	if (!_flags.flags.discoveryDone) {
+		return false;
+	}
+	for (uint8_t i = 0; i < _serviceCount; i++) {
+		if (_services[i]->hasCharacteristic(uuid)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// Only defined for peripheral devices
+BleCharacteristic& BleDevice::characteristic(const char* uuid) {
+	static BleCharacteristic empty;
+	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
+		return empty;
+	}
+	if (!_flags.flags.discoveryDone) {
+		return empty;
+	}
+	for (uint8_t i = 0; i < _serviceCount; i++) {
+		if (_services[i]->hasCharacteristic(uuid)) {
+			return _services[i]->characteristic(uuid);
+		}
+	}
+	return empty;
+}
+
+// Only defined for peripheral devices
 bool BleDevice::hasLocalName() {
+	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
+		return false;
+	}
 	return (_scan.localName().len != 0);
 }
 
+// Only defined for peripheral devices
 String BleDevice::localName() {
+	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
+		return String(nullptr);
+	}
 	ble_ad_t localName = _scan.localName();
 	if (localName.len == 0) {
 		return String(nullptr);
@@ -123,13 +307,53 @@ String BleDevice::localName() {
 	return String(localNameString);
 }
 
+// Only defined for peripheral devices
 bool BleDevice::connect() {
-	// Only defined for peripheral role
-	// todo: implement
-	// this will be a blocking function
-	return false;
+	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
+		return false;
+	}
+	if (_flags.flags.connected) {
+		// already connected
+		return true;
+	}
+	microapp_sdk_result_t result;
+	// First register interrupts
+	if (!registeredBleInterrupt(CS_MICROAPP_SDK_BLE_CENTRAL)) {
+		result = registerBleInterrupt(CS_MICROAPP_SDK_BLE_CENTRAL);
+		if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+			return false;
+		}
+	}
+	// Next, request connect
+	uint8_t* payload                                = getOutgoingMessagePayload();
+	microapp_sdk_ble_t* bleRequest                  = (microapp_sdk_ble_t*)(payload);
+	bleRequest->header.messageType                  = CS_MICROAPP_SDK_TYPE_BLE;
+	bleRequest->header.ack                          = CS_MICROAPP_SDK_ACK_REQUEST;
+	bleRequest->type                                = CS_MICROAPP_SDK_BLE_CENTRAL;
+	bleRequest->central.type                        = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_CONNECT;
+	bleRequest->central.requestConnect.address.type = _address.type();
+	memcpy(bleRequest->central.requestConnect.address.address, _address.bytes(), MAC_ADDRESS_LENGTH);
+
+	sendMessage();
+	if (bleRequest->header.ack != CS_MICROAPP_SDK_ACK_SUCCESS) {
+		return false;
+	}
+	// todo: connectionhandle
+	uint8_t tries = 5;
+	while (!_flags.flags.connected) {
+		// yield. Upon a disconnect event flag will be cleared
+		delay(1000);
+		if (--tries < 0) {
+			return false;
+		}
+	}
+	return true;
 }
 
+// Only defined for peripheral devices
 bool BleDevice::findAdvertisementDataType(GapAdvType type, ble_ad_t* foundData) {
+	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
+		return false;
+	}
 	return _scan.findAdvertisementDataType(type, foundData);
 }

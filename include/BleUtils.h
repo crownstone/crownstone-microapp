@@ -77,15 +77,17 @@ private:
 
 protected:
 	uint8_t _address[MAC_ADDRESS_LENGTH];
+	uint8_t _type = MICROAPP_SDK_BLE_ADDRESS_RANDOM_STATIC;
 
 public:
 	// Constructors: either empty, from an external struct, or from a string
 	MacAddress(){};
-	MacAddress(const uint8_t* address);
+	MacAddress(const uint8_t* address, uint8_t type);
 	MacAddress(const char* addressString);
 
 	const char* string();
 	const uint8_t* bytes();
+	const uint8_t type();
 
 	explicit operator bool() const { return this->_initialized; }
 	bool operator==(const MacAddress& other) { return memcmp(this->_address, other._address, MAC_ADDRESS_LENGTH) == 0; }

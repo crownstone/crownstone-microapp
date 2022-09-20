@@ -44,7 +44,7 @@ microapp_sdk_result_t Ble::handleScanEvent(microapp_sdk_ble_scan_t* scanInterrup
 			}
 			// Apply a wrapper BleScan (no copy) to parse scan data
 			BleScan scan(scanInterrupt->eventScan.data, scanInterrupt->eventScan.size);
-			MacAddress address(scanInterrupt->eventScan.address.address);
+			MacAddress address(scanInterrupt->eventScan.address.address, scanInterrupt->eventScan.address.type);
 			if (!matchesFilter(scan, address)) {
 				return CS_MICROAPP_SDK_ACK_SUCCESS;
 			}
@@ -70,6 +70,13 @@ microapp_sdk_result_t Ble::handleScanEvent(microapp_sdk_ble_scan_t* scanInterrup
 }
 
 microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* central) {
+	if (!_device._flags.flags.isPeripheral) {
+		// Other device is not a peripheral
+		// Thus, we do nothing with central events
+		// First scan for a peripheral
+		return CS_MICROAPP_SDK_ACK_ERR_DISABLED;
+	}
+	microapp_sdk_result_t result;
 	switch (central->type){
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_CONNECT: {
 			if (central->eventConnect.result != CS_MICROAPP_SDK_ACK_SUCCESS) {
@@ -78,7 +85,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 			_device.onConnect();
 			// check for event handlers
 			BleEventHandlerRegistration registration;
-			microapp_sdk_result_t result = getEventHandlerRegistration(BLEConnected, registration);
+			result = getEventHandlerRegistration(BLEConnected, registration);
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 				// call callback
 				registration.eventHandler(_device);
@@ -89,7 +96,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 			_device.onDisconnect();
 			// check for event handlers
 			BleEventHandlerRegistration registration;
-			microapp_sdk_result_t result = getEventHandlerRegistration(BLEDisconnected, registration);
+			result = getEventHandlerRegistration(BLEDisconnected, registration);
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 				// call callback
 				registration.eventHandler(_device);
@@ -105,12 +112,15 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 				}
 				_remoteServices[_remoteServiceCount] = service;
 				// add to device
-				_device.addDiscoveredService(&_remoteServices[_remoteServiceCount]);
+				result = _device.addDiscoveredService(&_remoteServices[_remoteServiceCount]);
+				if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+					return result;
+				}
 				_remoteServiceCount++;
 			}
 			else {
 				// discovered a characteristic
-				uint8_t properties = 0;
+				uint8_t properties = 0; // todo: get this from the struct
 				BleCharacteristic characteristic(&central->eventDiscover.uuid, properties, _remoteValues[_remoteCharacteristicCount].buffer, 0, true);
 				characteristic._handle = central->eventDiscover.valueHandle;
 				if (_remoteCharacteristicCount >= MAX_REMOTE_CHARACTERISTICS) {
@@ -122,20 +132,40 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 				if (central->eventDiscover.serviceUuid.type != CS_MICROAPP_SDK_BLE_UUID_STANDARD) {
 					serviceUuid.setCustomId(central->eventDiscover.serviceUuid.type);
 				}
-				_device.addDiscoveredCharacteristic(&_remoteCharacteristics[_remoteCharacteristicCount], serviceUuid);
+				result = _device.addDiscoveredCharacteristic(&_remoteCharacteristics[_remoteCharacteristicCount], serviceUuid);
+				if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+					return result;
+				}
 				_remoteCharacteristicCount++;
 			}
-
-			return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
+			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_DISCOVER_DONE: {
-			return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
+			_device._flags.flags.discoveryDone = true;
+			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_WRITE: {
-
-			return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
+			// Can't do much with the result
+			return (microapp_sdk_result_t)central->eventWrite.result;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_READ: {
+			result = (microapp_sdk_result_t)central->eventRead.result;
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				return result;
+			}
+			BleCharacteristic characteristic;
+			result = _device.getCharacteristic(central->eventRead.valueHandle, characteristic);
+			// data size is limited by valueSize of characteristic
+			uint8_t size = central->eventRead.size;
+			if (size > characteristic._valueSize) {
+				size = characteristic._valueSize;
+			}
+			// copy data to value pointer
+			memcpy(characteristic._value, central->eventRead.data, size);
+			characteristic._valueLength = size;
+			return CS_MICROAPP_SDK_ACK_SUCCESS;
+		}
+		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_NOTIFICATION: {
 			return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
 		}
 		default: {
@@ -148,7 +178,7 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 	switch (peripheral->type){
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL_EVENT_CONNECT: {
 			// Build central device
-			_device = BleDevice(MacAddress(peripheral->eventConnect.address.address));
+			_device = BleDevice(MacAddress(peripheral->eventConnect.address.address, peripheral->eventConnect.address.type));
 			_device.onConnect();
 			// check for event handlers
 			BleEventHandlerRegistration registration;
@@ -173,7 +203,7 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL_EVENT_WRITE: {
 			// Set written flag
 			BleCharacteristic characteristic;
-			microapp_sdk_result_t result = getCharacteristic(peripheral->handle, characteristic);
+			microapp_sdk_result_t result = getLocalCharacteristic(peripheral->handle, characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
@@ -187,7 +217,7 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL_EVENT_SUBSCRIBE: {
 			// Set subscribed flag
 			BleCharacteristic characteristic;
-			microapp_sdk_result_t result = getCharacteristic(peripheral->handle, characteristic);
+			microapp_sdk_result_t result = getLocalCharacteristic(peripheral->handle, characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
@@ -197,7 +227,7 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL_EVENT_UNSUBSCRIBE: {
 			// Clear subscribed flag
 			BleCharacteristic characteristic;
-			microapp_sdk_result_t result = getCharacteristic(peripheral->handle, characteristic);
+			microapp_sdk_result_t result = getLocalCharacteristic(peripheral->handle, characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
@@ -217,12 +247,12 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 	}
 }
 
-microapp_sdk_result_t Ble::getCharacteristic(uint16_t handle, BleCharacteristic& characteristic) {
+microapp_sdk_result_t Ble::getLocalCharacteristic(uint16_t handle, BleCharacteristic& characteristic) {
 	if (!_flags.flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}
-	for (uint8_t i = 0; i < _serviceCount; i++) {
-		microapp_sdk_result_t result = _services[i]->getCharacteristic(handle, characteristic);
+	for (uint8_t i = 0; i < _localServiceCount; i++) {
+		microapp_sdk_result_t result = _localServices[i]->getCharacteristic(handle, characteristic);
 		if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 			return result;
 		}
@@ -263,10 +293,12 @@ bool Ble::setEventHandler(BleEventType eventType, BleEventHandler eventHandler) 
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return false;
 			}
-			result = registerBleInterrupt(CS_MICROAPP_SDK_BLE_SCAN);
-			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-				removeEventHandlerRegistration(eventType);
-				return false;
+			if (!registeredBleInterrupt(CS_MICROAPP_SDK_BLE_SCAN)) {
+				result = registerBleInterrupt(CS_MICROAPP_SDK_BLE_SCAN);
+				if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+					removeEventHandlerRegistration(eventType);
+					return false;
+				}
 			}
 			return true;
 		}
@@ -277,19 +309,19 @@ bool Ble::setEventHandler(BleEventType eventType, BleEventHandler eventHandler) 
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return false;
 			}
-			result = registerBleInterrupt(CS_MICROAPP_SDK_BLE_CENTRAL);
-			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-				removeEventHandlerRegistration(eventType);
-				return false;
+			if (!registeredBleInterrupt(CS_MICROAPP_SDK_BLE_CENTRAL)) {
+				result = registerBleInterrupt(CS_MICROAPP_SDK_BLE_CENTRAL);
+				if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+					removeEventHandlerRegistration(eventType);
+					return false;
+				}
 			}
-			result = registerBleInterrupt(CS_MICROAPP_SDK_BLE_PERIPHERAL);
-			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-				removeEventHandlerRegistration(eventType);
-				// Also remove interrupt registration for central
-				// if the interrupt registration for peripheral fails:
-				// It's both or none
-				removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_BLE, CS_MICROAPP_SDK_BLE_CENTRAL);
-				return false;
+			if (!registeredBleInterrupt(CS_MICROAPP_SDK_BLE_PERIPHERAL)) {
+				result = registerBleInterrupt(CS_MICROAPP_SDK_BLE_PERIPHERAL);
+				if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+					removeEventHandlerRegistration(eventType);
+					return false;
+				}
 			}
 			return true;
 		}
@@ -334,15 +366,15 @@ int8_t Ble::rssi() {
 }
 
 void Ble::addService(BleService& service) {
-	if (_serviceCount >= MAX_LOCAL_SERVICES || !_flags.flags.initialized) {
+	if (_localServiceCount >= MAX_LOCAL_SERVICES || !_flags.flags.initialized) {
 		return;
 	}
 	microapp_sdk_result_t result = service.add();
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		return;
 	}
-	_services[_serviceCount] = &service;
-	_serviceCount++;
+	_localServices[_localServiceCount] = &service;
+	_localServiceCount++;
 }
 
 BleDevice& Ble::central() {
@@ -501,54 +533,6 @@ bool Ble::matchesFilter(BleScan scan, MacAddress address) {
 	return false;
 }
 
-microapp_sdk_result_t Ble::registerBleInterrupt(MicroappSdkBleType bleType) {
-	// Register interrupt on the microapp side,
-	// with an indirect handler
-	interrupt_registration_t interrupt;
-	interrupt.type               = CS_MICROAPP_SDK_TYPE_BLE;
-	interrupt.id                 = bleType;
-	interrupt.handler            = handleBleInterrupt;
-	microapp_sdk_result_t result = registerInterrupt(&interrupt);
-	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-		// No empty interrupt slots available on microapp side
-		return result;
-	}
-
-	// Send a message to bluenet registering the interrupt
-	uint8_t* payload               = getOutgoingMessagePayload();
-	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
-	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
-	bleRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
-	bleRequest->type               = bleType;
-	switch (bleType) {
-		case CS_MICROAPP_SDK_BLE_SCAN:
-			bleRequest->scan.type = CS_MICROAPP_SDK_BLE_SCAN_REQUEST_REGISTER_INTERRUPT;
-			break;
-		case CS_MICROAPP_SDK_BLE_CENTRAL:
-			bleRequest->central.type = CS_MICROAPP_SDK_BLE_CENTRAL_REGISTER_INTERRUPT;
-			break;
-		case CS_MICROAPP_SDK_BLE_PERIPHERAL:
-			bleRequest->peripheral.type = CS_MICROAPP_SDK_BLE_PERIPHERAL_REQUEST_REGISTER_INTERRUPT;
-			break;
-		default:
-			// Unsupported ble type for setting event handler
-			// Undo local interrupt registration
-			removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_BLE, bleType);
-			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
-	}
-
-	sendMessage();
-
-	// Bluenet will set ack to success upon success
-	result = (microapp_sdk_result_t) bleRequest->header.ack;
-	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-		// Undo local interrupt registration
-		removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_BLE, bleType);
-		return result;
-	}
-	return CS_MICROAPP_SDK_ACK_SUCCESS;
-}
-
 microapp_sdk_result_t Ble::registerEventHandler(BleEventType eventType, BleEventHandler eventHandler) {
 	int eventHandlerRegistrationIndex = -1;
 	for (int i = 0; i < MAX_BLE_EVENT_HANDLER_REGISTRATIONS; ++i) {
@@ -600,4 +584,82 @@ microapp_sdk_result_t Ble::removeEventHandlerRegistration(BleEventType eventType
 		}
 	}
 	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
+}
+
+bool registeredBleInterrupt(MicroappSdkBleType bleType) {
+	switch (bleType) {
+		case CS_MICROAPP_SDK_BLE_SCAN:
+			return BLE._flags.flags.registeredScanInterrupts;
+		case CS_MICROAPP_SDK_BLE_CENTRAL:
+			return BLE._flags.flags.registeredCentralInterrupts;
+		case CS_MICROAPP_SDK_BLE_PERIPHERAL:
+			return BLE._flags.flags.registeredPeripheralInterrupts;
+		default:
+			return false;
+	}
+}
+
+microapp_sdk_result_t registerBleInterrupt(MicroappSdkBleType bleType) {
+	if (registeredBleInterrupt(bleType)) {
+		return CS_MICROAPP_SDK_ACK_ERR_ALREADY_EXISTS;
+	}
+	// Register interrupt on the microapp side,
+	// with an indirect handler
+	interrupt_registration_t interrupt;
+	interrupt.type               = CS_MICROAPP_SDK_TYPE_BLE;
+	interrupt.id                 = bleType;
+	interrupt.handler            = handleBleInterrupt;
+	microapp_sdk_result_t result = registerInterrupt(&interrupt);
+	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+		// No empty interrupt slots available on microapp side
+		return result;
+	}
+
+	// Send a message to bluenet registering the interrupt
+	uint8_t* payload               = getOutgoingMessagePayload();
+	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
+	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
+	bleRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
+	bleRequest->type               = bleType;
+	switch (bleType) {
+		case CS_MICROAPP_SDK_BLE_SCAN:
+			bleRequest->scan.type = CS_MICROAPP_SDK_BLE_SCAN_REQUEST_REGISTER_INTERRUPT;
+			break;
+		case CS_MICROAPP_SDK_BLE_CENTRAL:
+			bleRequest->central.type = CS_MICROAPP_SDK_BLE_CENTRAL_REGISTER_INTERRUPT;
+			break;
+		case CS_MICROAPP_SDK_BLE_PERIPHERAL:
+			bleRequest->peripheral.type = CS_MICROAPP_SDK_BLE_PERIPHERAL_REQUEST_REGISTER_INTERRUPT;
+			break;
+		default:
+			// Unsupported ble type for setting event handler
+			// Undo local interrupt registration
+			removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_BLE, bleType);
+			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
+	}
+
+	sendMessage();
+
+	// Bluenet will set ack to success upon success
+	result = (microapp_sdk_result_t) bleRequest->header.ack;
+	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+		// Undo local interrupt registration
+		removeInterruptRegistration(CS_MICROAPP_SDK_TYPE_BLE, bleType);
+		return result;
+	}
+	switch (bleType) {
+		case CS_MICROAPP_SDK_BLE_SCAN:
+			BLE._flags.flags.registeredScanInterrupts = true;
+			break;
+		case CS_MICROAPP_SDK_BLE_CENTRAL:
+			BLE._flags.flags.registeredCentralInterrupts = true;
+			break;
+		case CS_MICROAPP_SDK_BLE_PERIPHERAL:
+			BLE._flags.flags.registeredPeripheralInterrupts = true;
+			break;
+		default:
+			// would have returned early earlier this function
+			break;
+	}
+	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
