@@ -94,6 +94,9 @@ static stack_entry_t stack[MAX_INTERRUPT_DEPTH];
 
 static bool stack_initialized = false;
 
+// Cache whether the IPC ram data from bluenet is valid.
+static bool ipcValid = false;
+
 /*
  * Function checkRamData is used in sendMessage.
  */
@@ -107,15 +110,15 @@ microapp_sdk_result_t checkRamData(bool checkOnce) {
 
 	if (checkOnce) {
 		// If valid is set, we assume cached values are fine, otherwise load them.
-		if (ipc_data.bluenet2microappData.valid) {
+		if (ipcValid) {
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 	}
 
 	uint8_t dataSize;
-	uint8_t ret_code = getRamData(IPC_INDEX_CROWNSTONE_APP, ipc_data.raw, &dataSize, sizeof(ipc_data.raw));
+	uint8_t retCode = getRamData(IPC_INDEX_BLUENET_TO_MICROAPP, ipc_data.raw, &dataSize, sizeof(ipc_data.raw));
 
-	if (ret_code != 0) {
+	if (retCode != 0) {
 		return CS_MICROAPP_SDK_ACK_ERROR;
 	}
 
@@ -127,14 +130,13 @@ microapp_sdk_result_t checkRamData(bool checkOnce) {
 		return CS_MICROAPP_SDK_ACK_ERROR;
 	}
 
-	ipc_data.bluenet2microappData.valid = true;
-	microapp_sdk_result_t result = CS_MICROAPP_SDK_ACK_SUCCESS;
-
-	// Check protocol and write back the protocol that is understood
+	// Check protocol.
 	if (ipc_data.bluenet2microappData.dataProtocol != MICROAPP_IPC_DATA_PROTOCOL) {
-		ipc_data.bluenet2microappData.dataProtocol = MICROAPP_IPC_DATA_PROTOCOL;
 		return CS_MICROAPP_SDK_ACK_ERROR;
 	}
+
+	ipcValid = true;
+	microapp_sdk_result_t result = CS_MICROAPP_SDK_ACK_SUCCESS;
 
 	if (checkOnce) {
 		// Write the buffer only once
