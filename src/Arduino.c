@@ -86,13 +86,13 @@ int digitalRead(uint8_t pin) {
 	pinRequest->header.messageType = CS_MICROAPP_SDK_TYPE_PIN;
 	pinRequest->pin                = pin;
 	pinRequest->type               = CS_MICROAPP_SDK_PIN_ACTION;
-	pinRequest->action             = CS_MICROAPP_SDK_PIN_WRITE;
+	pinRequest->action             = CS_MICROAPP_SDK_PIN_READ;
 	pinRequest->value              = 0;
 
 	sendMessage();
 
 	if (pinRequest->header.ack != CS_MICROAPP_SDK_ACK_SUCCESS) {
-		return 0;
+		return -1;
 	}
 	// TODO, perhaps a larger type then uint8_t is required / desired
 	uint8_t value = pinRequest->value;
