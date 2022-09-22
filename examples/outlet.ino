@@ -8,21 +8,27 @@
 
 #include <Arduino.h>
 
-// Show how a counter is incremented
-static int counter = 100;
-
 volatile byte state = LOW;
 volatile byte state2 = LOW;
+volatile byte state3 = LOW;
 
-//
-// The blink function will be called on interrupt CHANGE. This means when you press and when you release a button.
-// Therefore two state variables are used to only toggle the state every two interrupts.
-void blink() {
-	Serial.println("Toggle");
-	state2 = !state2;
-	if (state2 == LOW) {
-		state = !state;
+// The button_pressed function will be called on interrupt CHANGE. This means when you press and when you release a
+// button.
+void button_pressed() {
+	state3 = digitalRead(BUTTON2_PIN);
+	if (state3 == HIGH) {
+		state = HIGH;
+		Serial.println("Button pressed");
 		digitalWrite(LED2_PIN, state);
+	} else {
+		Serial.println("Always low...");
+		if (state == HIGH) {
+			state = LOW;
+			Serial.println("Button released");
+			digitalWrite(LED2_PIN, state);
+		} else {
+			Serial.println("Heartbeat");
+		}
 	}
 }
 
@@ -37,14 +43,9 @@ void setup() {
 	// We can use if(Serial), although this will always return true now (might be different in release mode).
 	if (!Serial) return;
 
-	// We can also write integers.
-	Serial.println(counter);
-	// Set GPIO pin to OUTPUT, so we can write.
+	// Set GPIO pin to OUTPUT, this is pin P1.00
 	pinMode(GPIO0_PIN, OUTPUT);
-	digitalWrite(GPIO0_PIN, true);
-
-	//pinMode(GPIO1_PIN, OUTPUT);
-	//digitalWrite(GPIO1_PIN, false);
+	digitalWrite(GPIO0_PIN, false);
 
 	// Set LED pin to OUTPUT, so we can write.
 	pinMode(LED1_PIN, OUTPUT);
@@ -55,9 +56,9 @@ void setup() {
 	digitalWrite(LED2_PIN, true);
 
 	// Set interrupt handler
-	//pinMode(BUTTON2_PIN, INPUT_PULLUP);
-	pinMode(BUTTON2_PIN, INPUT);
-	if (!attachInterrupt(digitalPinToInterrupt(BUTTON2_PIN), blink, CHANGE)) {
+	pinMode(BUTTON2_PIN, INPUT_PULLUP);
+	//pinMode(BUTTON2_PIN, INPUT);
+	if (!attachInterrupt(digitalPinToInterrupt(BUTTON2_PIN), button_pressed, CHANGE)) {
 		Serial.println("Setting button interrupt failed");
 	}
 
@@ -67,28 +68,5 @@ void setup() {
 // A dummy loop function.
 //
 void loop() {
-	// We are able to use static variables.
-	counter++;
-
-	if (counter % 5 == 0) {
-		if (state == LOW) {
-			Serial.println("State down");
-		} else {
-			Serial.println("State up");
-		}
-
-	}
-
-	if (counter % 10 == 0) {
-		Serial.println("Delay");
-		// This is in ms
-		delay(10000);
-
-	}
-	// Show counter.
-	Serial.println(counter);
-
-	//Serial.write("button ");
-	//int btn = digitalRead(BUTTON2_PIN);
-	//Serial.println(btn);
+	// Do nothing, just return, everything is done in interrupt service routine
 }
