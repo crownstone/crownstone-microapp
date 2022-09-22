@@ -121,7 +121,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 			else {
 				// discovered a characteristic
 				uint8_t properties = 0; // todo: get this from the struct
-				BleCharacteristic characteristic(&central->eventDiscover.uuid, properties, _remoteValues[_remoteCharacteristicCount].buffer, 0, true);
+				BleCharacteristic characteristic(&central->eventDiscover.uuid, properties);
 				characteristic._handle = central->eventDiscover.valueHandle;
 				if (_remoteCharacteristicCount >= MAX_REMOTE_CHARACTERISTICS) {
 					return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
@@ -145,8 +145,18 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_WRITE: {
-			// Can't do much with the result
-			return (microapp_sdk_result_t)central->eventWrite.result;
+			result = (microapp_sdk_result_t)central->eventWrite.result;
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				return result;
+			}
+			BleCharacteristic characteristic;
+			result = _device.getCharacteristic(central->eventNotification.valueHandle, characteristic);
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				return result;
+			}
+			// set flag so that blocking writeValue function can return
+			characteristic._flags.flags.valueWritten = true;
+			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_READ: {
 			result = (microapp_sdk_result_t)central->eventRead.result;
@@ -163,10 +173,28 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 			// copy data to value pointer
 			memcpy(characteristic._value, central->eventRead.data, size);
 			characteristic._valueLength = size;
+			// set flag so that blocking readValue function can return
+			characteristic._flags.flags.valueRead = true;
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_NOTIFICATION: {
-			return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
+			BleCharacteristic characteristic;
+			result = _device.getCharacteristic(central->eventNotification.valueHandle, characteristic);
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				return result;
+			}
+			// data size is limited by valueSize of characteristic
+			uint8_t size = central->eventNotification.size;
+			if (size > characteristic._valueSize) {
+				size = characteristic._valueSize;
+			}
+			// do not copy data. That can be done using readValue,
+			// where the user provides a buffer to copy to
+			// only set new value length so user may request new length
+			characteristic._valueLength = size;
+			// set flag so user may poll whether notify happened
+			characteristic._flags.flags.valueUpdated = true;
+			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		default: {
 			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
@@ -235,12 +263,14 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL_EVENT_NOTIFICATION_DONE: {
-			// Do nothing for now
-			// After a notification done event, another notify may be given if
-			// the notification happens in batches
-			// This is not implemented at the moment
+			// Set notificationDone flag
+			BleCharacteristic characteristic;
+			microapp_sdk_result_t result = getLocalCharacteristic(peripheral->handle, characteristic);
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				return result;
+			}
+			characteristic._flags.flags.notificationDone = true;
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
-		}
 		default: {
 			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 		}

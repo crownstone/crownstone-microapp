@@ -6,7 +6,7 @@
 
 class BleCharacteristicProperties {
 public:
-	static const uint8_t BLEBroadcast            = 1 << 0;
+	// Bit 0 reserved for BLEBroadcast
 	static const uint8_t BLERead                 = 1 << 1;
 	static const uint8_t BLEWriteWithoutResponse = 1 << 2;
 	static const uint8_t BLEWrite                = 1 << 3;
@@ -33,10 +33,8 @@ private:
 	// default constructor
 	BleCharacteristic(){};
 
-	// Same as public constructor except allows for setting remote flag
-	BleCharacteristic(const char* uuid, uint8_t properties, uint8_t* value, uint16_t valueSize, bool remote);
-	// (Used for remote characteristics) From raw uuid
-	BleCharacteristic(microapp_sdk_ble_uuid_t* uuid, uint8_t properties, uint8_t* value, uint16_t valueSize, bool remote);
+	// Constructor for remote characteristics
+	BleCharacteristic(microapp_sdk_ble_uuid_t* uuid, uint8_t properties);
 
 	static constexpr uint16_t MAX_CHARACTERISTIC_VALUE_SIZE = 256;
 
@@ -47,9 +45,12 @@ private:
 			bool added        : 1; // (only for local characteristics) whether characteristic has been added to bluenet
 			bool subscribed   : 1; // (only for local characteristics) whether characteristic is subscribed to
 			bool written      : 1; // (only for local characteristics) whether characteristic is written to
-			bool valueUpdated : 1; // (only for remote characteristics) whether value has been updated (set via notify)
+			bool valueUpdated : 1; // (only for remote characteristics) whether EVENT_NOTIFICATION has happened
+			bool valueRead    : 1; // (only for remote characteristics) whether EVENT_READ has happened
+			bool valueWritten : 1; // (only for remote characteristics) whether EVENT_WRITE has happened
+			bool notificationDone : 1; // (only for local characteristics) whether notification is done
 		} flags;
-		uint8_t asInt = 0;  // initialize to zero
+		uint16_t asInt = 0;  // initialize to zero
 	} _flags;
 
 	uint8_t _properties   = 0;
@@ -75,18 +76,25 @@ private:
 	 */
 	microapp_sdk_result_t registerCustomUuid();
 
-	bool writeValueLocal(uint8_t* buffer, uint16_t length);
+	microapp_sdk_result_t writeValueLocal(uint8_t* buffer, uint16_t length);
 
-	bool writeValueRemote(uint8_t* buffer, uint16_t length);
+	microapp_sdk_result_t writeValueRemote(uint8_t* buffer, uint16_t length);
+
+	microapp_sdk_result_t notify();
+
+	microapp_sdk_result_t readValueRemote(uint8_t* buffer, uint16_t length);
 
 public:
 
 	explicit operator bool() const { return _flags.flags.initialized; }
 
 	/**
-	 * Create a new BLE service
+	 * Create a new BLE characteristic
 	 *
 	 * @param uuid 16-bit or 128-bit UUID in string format
+	 * @param properties mask of the properties in BleCharacteristicProperties
+	 * @param value byte array where value is stored
+	 * @param valueSize (maximum) size of characteristic value
 	 */
 	BleCharacteristic(const char* uuid, uint8_t properties, uint8_t* value, uint16_t valueSize);
 
@@ -109,7 +117,7 @@ public:
 	 *
 	 * @return the maximum value size of the characteristic in bytes
 	 */
-	int valueSize();
+	uint16_t valueSize();
 
 	/**
 	 * Query the current value of the specified BLECharacteristic
@@ -123,7 +131,17 @@ public:
 	 *
 	 * @return the current value size of the characteristic (in bytes)
 	 */
-	int valueLength();
+	uint16_t valueLength();
+
+	/**
+	 * Read the current value of the characteristic.
+	 * If the characteristic is on a remote device, a read request will be sent
+	 *
+	 * @param[in] buffer byte array to read value into
+	 * @param[in] length size of buffer argument in bytes
+	 * @return number of bytes read
+	 */
+	uint16_t readValue(uint8_t* buffer, uint16_t length);
 
 	/**
 	 * Write the value of the characteristic
@@ -184,12 +202,28 @@ public:
 	bool canSubscribe();
 
 	/**
+	 * Subscribe to a BLE characteristic notifications or indications
+	 *
+	 * @return true on success
+	 * @return false on failure
+	 */
+	bool subscribe();
+
+	/**
 	 * Query if a BLE characteristic is unsubscribable
 	 *
 	 * @return true if characteristic is unsubscribable
 	 * @return false otherwise
 	 */
 	bool canUnsubscribe();
+
+	/**
+	 * Unsubscribe to a BLE characteristic notifications or indications
+	 *
+	 * @return true on success
+	 * @return false on failure
+	 */
+	bool unsubscribe();
 
 	/**
 	 * Has the characteristics value been updated via a notification or indication

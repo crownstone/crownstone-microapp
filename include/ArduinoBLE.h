@@ -93,12 +93,6 @@ private:
 	BleCharacteristic _remoteCharacteristics[MAX_REMOTE_CHARACTERISTICS];
 	uint8_t _remoteCharacteristicCount = 0;
 
-	static const uint8_t MAX_REMOTE_VALUE_SIZE = 20;
-	struct remote_value_t {
-		uint8_t buffer[MAX_REMOTE_VALUE_SIZE];
-	};
-	remote_value_t _remoteValues[MAX_REMOTE_CHARACTERISTICS];
-
 	// Event handlers set by the user
 	static const uint8_t MAX_BLE_EVENT_HANDLER_REGISTRATIONS = 3;
 
