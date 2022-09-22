@@ -406,7 +406,7 @@ bool BleCharacteristic::subscribe() {
 	sendMessage();
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-		return result;
+		return false;
 	}
 	// Block until write event happens
 	uint8_t tries = 5;
@@ -414,12 +414,12 @@ bool BleCharacteristic::subscribe() {
 		// yield. Upon a write event flag will be set
 		delay(1000);
 		if (--tries < 0) {
-			return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT;
+			return false;
 		}
 	}
 	// Clear flag
 	_flags.flags.valueWritten = false;
-	return CS_MICROAPP_SDK_ACK_SUCCESS;
+	return true;
 }
 
 bool BleCharacteristic::canUnsubscribe() {
@@ -449,7 +449,7 @@ bool BleCharacteristic::unsubscribe() {
 	sendMessage();
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-		return result;
+		return false;
 	}
 	// Block until write event happens
 	uint8_t tries = 5;
@@ -457,12 +457,12 @@ bool BleCharacteristic::unsubscribe() {
 		// yield. Upon a write event flag will be set
 		delay(1000);
 		if (--tries < 0) {
-			return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT;
+			return false;
 		}
 	}
 	// Clear flag
 	_flags.flags.valueWritten = false;
-	return CS_MICROAPP_SDK_ACK_SUCCESS;
+	return true;
 }
 
 // Only defined for remote characteristics

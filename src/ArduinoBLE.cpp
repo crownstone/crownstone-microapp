@@ -271,6 +271,7 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			}
 			characteristic._flags.flags.notificationDone = true;
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
+		}
 		default: {
 			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 		}
