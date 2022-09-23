@@ -42,6 +42,22 @@ enum BleEventType {
 	BLEWritten       = 0x07,
 };
 
+// Forward declarations
+class BleDevice;
+class BleCharacteristic;
+typedef void (*DeviceEventHandler)(BleDevice);
+typedef void (*CharacteristicEventHandler)(BleDevice, BleCharacteristic);
+// Both of the above can be cast to a GenericBleEventHandler (and back)
+// so both can be stored in the BleEventHandlerRegistration
+typedef void (*BleEventHandler)(void);
+
+// Registration for user callbacks that can be kept local.
+struct BleEventHandlerRegistration {
+	BleEventHandler eventHandler = nullptr;
+	bool filled                  = false;
+	BleEventType eventType;
+};
+
 typedef int8_t rssi_t;
 
 // length of mac address is defined on bluenet side

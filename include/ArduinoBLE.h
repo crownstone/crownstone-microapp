@@ -34,15 +34,6 @@ struct BleFilter {
 	Uuid uuid;                                // service data uuid
 };
 
-typedef void (*BleEventHandler)(BleDevice);
-
-// Registration for the callback that can be kept local.
-struct BleEventHandlerRegistration {
-	BleEventHandler eventHandler = nullptr;
-	bool filled                  = false;
-	BleEventType eventType;
-};
-
 /**
  * Main class for scanning, connecting and handling Bluetooth Low Energy devices
  *
@@ -51,6 +42,9 @@ struct BleEventHandlerRegistration {
 class Ble {
 private:
 	friend microapp_sdk_result_t handleBleInterrupt(void*);
+	friend microapp_sdk_result_t registerBleEventHandler(BleEventType, BleEventHandler);
+	friend microapp_sdk_result_t getBleEventHandlerRegistration(BleEventType, BleEventHandlerRegistration&);
+	friend microapp_sdk_result_t removeBleEventHandlerRegistration(BleEventType);
 	friend bool registeredBleInterrupt(MicroappSdkBleType);
 	friend microapp_sdk_result_t registerBleInterrupt(MicroappSdkBleType);
 
@@ -131,33 +125,6 @@ private:
 	 */
 	microapp_sdk_result_t getLocalCharacteristic(uint16_t handle, BleCharacteristic& characteristic);
 
-	/**
-	 * Locally register event handlers for a new callback set by the user
-	 *
-	 * @param eventType BleEventType indicating he type of event, e.g. BLEConnected
-	 * @param eventHandler callback to call upon the event specified by eventType
-	 * @return microapp_sdk_result_t
-	 */
-	microapp_sdk_result_t registerEventHandler(BleEventType eventType, BleEventHandler eventHandler);
-
-	/**
-	 * Based on the event type, get the event handler registration
-	 *
-	 * @param eventType the type of BLE event for which to get the registration
-	 * @param registration an empty instance of BleEventHandlerRegistration in which the result is placed
-	 * @return microapp_sdk_result_t
-	 */
-	microapp_sdk_result_t getEventHandlerRegistration(
-			BleEventType eventType, BleEventHandlerRegistration& registration);
-
-	/**
-	 * Remove the event handler registration
-	 *
-	 * @param eventType the type of BLE event for which to remove the registration
-	 * @return microapp_sdk_result_t
-	 */
-	microapp_sdk_result_t removeEventHandlerRegistration(BleEventType eventType);
-
 public:
 	static Ble& getInstance() {
 		// Guaranteed to be destroyed.
@@ -195,7 +162,7 @@ public:
 	 *
 	 * @return                True if successful
 	 */
-	bool setEventHandler(BleEventType eventType, BleEventHandler eventHandler);
+	bool setEventHandler(BleEventType eventType, DeviceEventHandler eventHandler);
 
 	/**
 	 * Query if another BLE device is connected
@@ -304,6 +271,32 @@ public:
 };
 
 #define BLE Ble::getInstance()
+
+/**
+ * Locally register event handlers for a new callback set by the user
+ *
+ * @param eventType BleEventType indicating he type of event, e.g. BLEConnected
+ * @param eventHandler callback to call upon the event specified by eventType
+ * @return microapp_sdk_result_t
+ */
+microapp_sdk_result_t registerBleEventHandler(BleEventType eventType, BleEventHandler eventHandler);
+
+/**
+ * Based on the event type, get the event handler registration
+ *
+ * @param eventType the type of BLE event for which to get the registration
+ * @param registration an empty instance of BleEventHandlerRegistration in which the result is placed
+ * @return microapp_sdk_result_t
+ */
+microapp_sdk_result_t getBleEventHandlerRegistration(BleEventType eventType, BleEventHandlerRegistration& registration);
+
+/**
+ * Remove the event handler registration
+ *
+ * @param eventType the type of BLE event for which to remove the registration
+ * @return microapp_sdk_result_t
+ */
+microapp_sdk_result_t removeBleEventHandlerRegistration(BleEventType eventType);
 
 
 /**

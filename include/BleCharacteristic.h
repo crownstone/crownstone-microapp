@@ -15,10 +15,11 @@ public:
 };
 
 // Forward declarations
-class BleCharacteristic;
-class BleDevice;
-
-typedef void (*CharacteristicEventHandler)(BleDevice, BleCharacteristic);
+bool registeredBleInterrupt(MicroappSdkBleType bleType);
+microapp_sdk_result_t registerBleInterrupt(MicroappSdkBleType bleType);
+microapp_sdk_result_t registerBleEventHandler(BleEventType eventType, BleEventHandler eventHandler);
+microapp_sdk_result_t getBleEventHandlerRegistration(BleEventType eventType, BleEventHandlerRegistration& registration);
+microapp_sdk_result_t removeBleEventHandlerRegistration(BleEventType eventType);
 
 class BleCharacteristic {
 

@@ -343,7 +343,18 @@ void BleCharacteristic::setEventHandler(BleEventType eventType, CharacteristicEv
 	if (!_flags.flags.initialized || _flags.flags.remote) {
 		return;
 	}
-	// todo: implement
+	microapp_sdk_result_t result;
+	result = registerBleEventHandler(eventType, (BleEventHandler)eventHandler);
+	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+		return;
+	}
+	if (!registeredBleInterrupt(CS_MICROAPP_SDK_BLE_PERIPHERAL)) {
+		result = registerBleInterrupt(CS_MICROAPP_SDK_BLE_PERIPHERAL);
+		if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+			removeBleEventHandlerRegistration(eventType);
+			return;
+		}
+	}
 }
 
 // Only defined for local characteristics
