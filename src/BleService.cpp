@@ -1,29 +1,28 @@
 #include <BleService.h>
 
-BleService::BleService(const char* uuid, bool remote) {
+// Only used for local services
+BleService::BleService(const char* uuid) {
 	size_t len = strlen(uuid);
 	if (len != UUID_16BIT_STRING_LENGTH && len != UUID_128BIT_STRING_LENGTH) {
 		return;
 	}
 	_uuid                    = Uuid(uuid);
-	_flags.flags.remote      = remote;
+	_flags.flags.remote      = false;
 	_flags.flags.initialized = true;
 }
 
-BleService::BleService(microapp_sdk_ble_uuid_t* uuid, bool remote) {
+// Only used for remote (discovered) services
+BleService::BleService(microapp_sdk_ble_uuid_t* uuid) {
 	_uuid = Uuid(uuid->uuid);
 	if (uuid->type != CS_MICROAPP_SDK_BLE_UUID_STANDARD) {
 		_uuid.setCustomId(uuid->type);
 	}
-	_flags.flags.remote      = remote;
+	_flags.flags.remote      = true;
 	_flags.flags.initialized = true;
 }
 
-// Outside the Ble class, only this constructor (and the empty) can be called
-// remote = false means the service is local (crownstone = peripheral)
-BleService::BleService(const char* uuid) : BleService(uuid, false) {}
-
-microapp_sdk_result_t BleService::add() {
+// Only for local services
+microapp_sdk_result_t BleService::addLocalService() {
 	if (!_flags.flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}
@@ -45,6 +44,7 @@ microapp_sdk_result_t BleService::add() {
 	bleRequest->header.ack                             = CS_MICROAPP_SDK_ACK_REQUEST;
 	bleRequest->type                                   = CS_MICROAPP_SDK_BLE_PERIPHERAL;
 	bleRequest->peripheral.type                        = CS_MICROAPP_SDK_BLE_PERIPHERAL_REQUEST_ADD_SERVICE;
+	bleRequest->peripheral.connectionHandle            = 0;
 	bleRequest->peripheral.requestAddService.uuid.type = _uuid.getType();
 	bleRequest->peripheral.requestAddService.uuid.uuid = _uuid.uuid16();
 
@@ -57,7 +57,7 @@ microapp_sdk_result_t BleService::add() {
 
 	// add characteristics
 	for (uint8_t i = 0; i < _characteristicCount; i++) {
-		result = _characteristics[i]->add(_handle);
+		result = _characteristics[i]->addLocalCharacteristic(_handle);
 		if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 			return result;
 		}
@@ -92,6 +92,9 @@ microapp_sdk_result_t BleService::registerCustomUuid() {
 }
 
 microapp_sdk_result_t BleService::getCharacteristic(uint16_t handle, BleCharacteristic& characteristic) {
+	if (!_flags.flags.initialized) {
+		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
+	}
 	for (uint8_t i = 0; i < _characteristicCount; i++) {
 		if (_characteristics[i]->_handle == handle) {
 			characteristic = *_characteristics[i];
@@ -101,7 +104,14 @@ microapp_sdk_result_t BleService::getCharacteristic(uint16_t handle, BleCharacte
 	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 }
 
+// Only for remote services
 microapp_sdk_result_t BleService::addDiscoveredCharacteristic(BleCharacteristic* characteristic) {
+	if (!_flags.flags.initialized) {
+		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
+	}
+	if (!_flags.flags.remote) {
+		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
+	}
 	if (_characteristicCount >= MAX_CHARACTERISTICS) {
 		return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
 	}
@@ -117,8 +127,12 @@ String BleService::uuid() {
 	return String(_uuid.string());
 }
 
+// Only for local services
 void BleService::addCharacteristic(BleCharacteristic& characteristic) {
 	if (_characteristicCount >= MAX_CHARACTERISTICS) {
+		return;
+	}
+	if (_flags.flags.remote) {
 		return;
 	}
 	_characteristics[_characteristicCount] = &characteristic;

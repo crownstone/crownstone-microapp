@@ -31,7 +31,7 @@ private:
 	friend class BleDevice;
 	friend class BleService;
 
-	// default constructor
+	// Default constructor
 	BleCharacteristic(){};
 
 	// Constructor for remote characteristics
@@ -41,15 +41,15 @@ private:
 
 	union __attribute__((packed)) flags_t {
 		struct __attribute__((packed)) {
-			bool initialized  : 1; // whether characteristic is empty or not
-			bool remote       : 1; // whether characteristic is local or remote
-			bool added        : 1; // (only for local characteristics) whether characteristic has been added to bluenet
-			bool subscribed   : 1; // (only for local characteristics) whether characteristic is subscribed to
-			bool written      : 1; // (only for local characteristics) whether characteristic is written to
-			bool valueUpdated : 1; // (only for remote characteristics) whether EVENT_NOTIFICATION has happened
-			bool valueRead    : 1; // (only for remote characteristics) whether EVENT_READ has happened
-			bool valueWritten : 1; // (only for remote characteristics) whether EVENT_WRITE has happened
-			bool notificationDone : 1; // (only for local characteristics) whether notification is done
+			bool initialized : 1;   // whether characteristic is empty or not
+			bool remote : 1;        // whether characteristic is local or remote
+			bool added : 1;         // (only for local characteristics) whether characteristic has been added to bluenet
+			bool subscribed : 1;    // (only for local characteristics) whether characteristic is subscribed to
+			bool written : 1;       // (only for local characteristics) whether characteristic is written to
+			bool valueUpdated : 1;  // (only for remote characteristics) whether EVENT_NOTIFICATION has happened
+			bool valueRead : 1;     // (only for remote characteristics) whether EVENT_READ has happened
+			bool valueWritten : 1;  // (only for remote characteristics) whether EVENT_WRITE has happened
+			bool notificationDone : 1;  // (only for local characteristics) whether notification is done
 		} flags;
 		uint16_t asInt = 0;  // initialize to zero
 	} _flags;
@@ -63,30 +63,81 @@ private:
 	Uuid _uuid;
 
 	/**
-	 * Add characteristic via call to bluenet (only for local characteristics)
+	 * Add local characteristic via call to bluenet (only for local characteristics)
 	 *
 	 * @param[in] serviceHandle handle of the service
-	 * @return microapp_sdk_result_t
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
+	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if BleCharacteristic not initialized
+	 * @return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED if BleCharacteristic is not local but remote
+	 * @return microapp_sdk_result_t specifying other error
 	 */
-	microapp_sdk_result_t add(uint16_t serviceHandle);
+	microapp_sdk_result_t addLocalCharacteristic(uint16_t serviceHandle);
 
 	/**
-	 * Register a custom characteristic uuid via a call to bluenet
+	 * Register the local characteristics custom uuid via a call to bluenet
 	 *
-	 * @return microapp_sdk_result_t
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
+	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if BleCharacteristic not initialized
+	 * @return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED if BleCharacteristic is not local but remote or uuid is not custom
+	 * @return CS_MICROAPP_SDK_ACK_ERROR if bluenet returned different uuid than the original
+	 * @return microapp_sdk_result_t specifying other error
 	 */
 	microapp_sdk_result_t registerCustomUuid();
 
+	/**
+	 * Write value to a local characteristic and lets bluenet know
+	 * Sends a VALUE_SET request to bluenet and if subscribed, calls notify()
+	 *
+	 * @param buffer buffer to write from
+	 * @param length length of the buffer
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
+	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if BleCharacteristic not initialized
+	 * @return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED if BleCharacteristic is not local but remote
+	 * @return microapp_sdk_result_t specifying other error
+	 */
 	microapp_sdk_result_t writeValueLocal(uint8_t* buffer, uint16_t length);
 
+	/**
+	 * Write value to a remote characteristic
+	 * Sends a WRITE request to bluenet and waits for WRITE event back
+	 *
+	 * @param buffer buffer to write in
+	 * @param length length of the buffer
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
+	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if BleCharacteristic not initialized
+	 * @return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED if BleCharacteristic is not remote but local
+	 * @return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT if no (valid) WRITE event is received within timeout
+	 * @return microapp_sdk_result_t specifying other error
+	 */
 	microapp_sdk_result_t writeValueRemote(uint8_t* buffer, uint16_t length);
 
+	/**
+	 * Notifies bluenet that a local characteristic value is written
+	 * Sends a NOTIFY request to bluenet and waits for NOTIFICATION_DONE event back
+	 *
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
+	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if BleCharacteristic not initialized
+	 * @return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED if BleCharacteristic is not local but remote
+	 * @return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT if no (valid) NOTIFICATION_DONE event is received within timeout
+	 * @return microapp_sdk_result_t specifying other error
+	 */
 	microapp_sdk_result_t notify();
 
+	/**
+	 * Reads value from a remote characteristic
+	 * Sends a READ request to bluenet and waits for READ event back
+	 *
+	 * @param buffer
+	 * @param length
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
+	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if BleCharacteristic not initialized
+	 * @return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED if BleCharacteristic is not remote but local
+	 * @return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT if no (valid) READ event is received within timeout
+	 * @return microapp_sdk_result_t specifying other error
+	 */
 	microapp_sdk_result_t readValueRemote(uint8_t* buffer, uint16_t length);
 
 public:
-
 	explicit operator bool() const { return _flags.flags.initialized; }
 
 	/**

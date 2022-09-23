@@ -8,23 +8,23 @@
 class BleService {
 
 private:
-	// exceptions for Ble related classes
+	/*
+	 * Allow full access for Ble classes
+	 */
 	friend class Ble;
 	friend class BleDevice;
 
 	// Default constructor
 	BleService(){};
 
-	// Same as public constructor except allows for setting remote flag
-	BleService(const char* uuid, bool remote);
-	// (Used for remote services) From raw uuid
-	BleService(microapp_sdk_ble_uuid_t* uuid, bool remote);
+	// Constructor for remote (discovered) service
+	BleService(microapp_sdk_ble_uuid_t* uuid);
 
 	union __attribute__((packed)) flags_t {
 		struct __attribute__((packed)) {
-			bool initialized    : 1; // whether characteristic is empty or not
-			bool remote         : 1; // whether characteristic is local or remote
-			bool added          : 1; // (only for local service) whether service has been added to bluenet
+			bool initialized : 1;  // whether characteristic is empty or not
+			bool remote : 1;       // whether characteristic is local or remote
+			bool added : 1;        // (only for local service) whether service has been added to bluenet
 		} flags;
 		uint8_t asInt = 0;  // initialize to zero
 	} _flags;
@@ -37,16 +37,22 @@ private:
 	uint8_t _characteristicCount = 0;
 
 	/**
-	 * Add service and its characteristics via calls to bluenet
+	 * Add local service and its characteristics via calls to bluenet
 	 *
-	 * @return microapp_sdk_result_t
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
+	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if service not initialized
+	 * @return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED if service is not local but remote
+	 * @return microapp_sdk_result_t specifying other error
 	 */
-	microapp_sdk_result_t add();
+	microapp_sdk_result_t addLocalService();
 
 	/**
 	 * Register a custom service uuid via a call to bluenet
 	 *
-	 * @return microapp_sdk_result_t
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
+	 * @return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED if uuid is not custom
+	 * @return CS_MICROAPP_SDK_ACK_ERROR if bluenet returned different uuid than the original
+	 * @return microapp_sdk_result_t specifying other error
 	 */
 	microapp_sdk_result_t registerCustomUuid();
 
@@ -55,21 +61,27 @@ private:
 	 *
 	 * @param[in] handle the handle of the characteristic
 	 * @param[out] characteristic if found, reference to characteristic will be placed here
-	 * @return result code
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
+	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if service not initialized
+	 * @return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND if characteristic is not found
+	 * @return microapp_sdk_result_t specifying other error
 	 */
 	microapp_sdk_result_t getCharacteristic(uint16_t handle, BleCharacteristic& characteristic);
 
 	/**
-	 * Internally add a discovered characteristic
+	 * Internally add a remote discovered characteristic
 	 *
 	 * @param characteristic pointer to a discovered characteristic
-	 * @return microapp_sdk_result_t
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
+	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if service not initialized
+	 * @return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED if service is not remote but local
+	 * @return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE if there is no space for new characteristics
 	 */
 	microapp_sdk_result_t addDiscoveredCharacteristic(BleCharacteristic* characteristic);
 
 public:
 	/**
-	 * Create a new BLE service
+	 * Create a new (local) BLE service
 	 *
 	 * @param uuid 16-bit or 128-bit UUID in string format
 	 */

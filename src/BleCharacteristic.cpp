@@ -33,7 +33,7 @@ BleCharacteristic::BleCharacteristic(microapp_sdk_ble_uuid_t* uuid, uint8_t prop
 }
 
 // Only defined for local characteristics
-microapp_sdk_result_t BleCharacteristic::add(uint16_t serviceHandle) {
+microapp_sdk_result_t BleCharacteristic::addLocalCharacteristic(uint16_t serviceHandle) {
 	if (!_flags.flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}
@@ -69,6 +69,7 @@ microapp_sdk_result_t BleCharacteristic::add(uint16_t serviceHandle) {
 	bleRequest->peripheral.requestAddCharacteristic.bufferSize    = _valueSize;
 	bleRequest->peripheral.requestAddCharacteristic.buffer        = _value;
 	bleRequest->peripheral.requestAddCharacteristic.options       = options;
+	bleRequest->peripheral.connectionHandle                       = 0;
 
 	sendMessage();
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
@@ -140,7 +141,7 @@ microapp_sdk_result_t BleCharacteristic::writeValueLocal(uint8_t* buffer, uint16
 	bleRequest->peripheral.type                 = CS_MICROAPP_SDK_BLE_PERIPHERAL_REQUEST_VALUE_SET;
 	bleRequest->peripheral.handle               = _handle;
 	bleRequest->peripheral.requestValueSet.size = _valueLength;
-	// todo: connectionHandle
+	bleRequest->peripheral.connectionHandle     = 0;
 
 	sendMessage();
 
@@ -178,7 +179,8 @@ microapp_sdk_result_t BleCharacteristic::writeValueRemote(uint8_t* buffer, uint1
 	bleRequest->central.requestWrite.buffer      = buffer;
 	bleRequest->central.requestWrite.size        = length;
 	bleRequest->central.requestWrite.valueHandle = _handle;
-	// todo: connectionhandle
+	bleRequest->central.connectionHandle         = 0;
+
 	sendMessage();
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
@@ -219,7 +221,8 @@ microapp_sdk_result_t BleCharacteristic::notify() {
 	bleRequest->peripheral.handle               = _handle;
 	bleRequest->peripheral.requestNotify.size   = _valueLength;
 	bleRequest->peripheral.requestNotify.offset = 0;
-	// todo: connectionHandle
+	bleRequest->peripheral.connectionHandle     = 0;
+
 	sendMessage();
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
@@ -259,7 +262,8 @@ microapp_sdk_result_t BleCharacteristic::readValueRemote(uint8_t* buffer, uint16
 	bleRequest->type                            = CS_MICROAPP_SDK_BLE_CENTRAL;
 	bleRequest->central.type                    = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_READ;
 	bleRequest->central.requestRead.valueHandle = _handle;
-	// todo: connectionHandle
+	bleRequest->central.connectionHandle        = 0;
+
 	sendMessage();
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
@@ -407,13 +411,14 @@ bool BleCharacteristic::subscribe() {
 	_flags.flags.valueWritten = false;
 
 	microapp_sdk_result_t result;
-	uint8_t* payload                            = getOutgoingMessagePayload();
-	microapp_sdk_ble_t* bleRequest              = (microapp_sdk_ble_t*)(payload);
-	bleRequest->header.messageType              = CS_MICROAPP_SDK_TYPE_BLE;
-	bleRequest->header.ack                      = CS_MICROAPP_SDK_ACK_REQUEST;
-	bleRequest->type                            = CS_MICROAPP_SDK_BLE_CENTRAL;
-	bleRequest->central.type = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_SUBSCRIBE;
-	// todo: connectionHandle
+	uint8_t* payload                     = getOutgoingMessagePayload();
+	microapp_sdk_ble_t* bleRequest       = (microapp_sdk_ble_t*)(payload);
+	bleRequest->header.messageType       = CS_MICROAPP_SDK_TYPE_BLE;
+	bleRequest->header.ack               = CS_MICROAPP_SDK_ACK_REQUEST;
+	bleRequest->type                     = CS_MICROAPP_SDK_BLE_CENTRAL;
+	bleRequest->central.type             = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_SUBSCRIBE;
+	bleRequest->central.connectionHandle = 0;
+
 	sendMessage();
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
@@ -450,13 +455,14 @@ bool BleCharacteristic::unsubscribe() {
 	_flags.flags.valueWritten = false;
 
 	microapp_sdk_result_t result;
-	uint8_t* payload                            = getOutgoingMessagePayload();
-	microapp_sdk_ble_t* bleRequest              = (microapp_sdk_ble_t*)(payload);
-	bleRequest->header.messageType              = CS_MICROAPP_SDK_TYPE_BLE;
-	bleRequest->header.ack                      = CS_MICROAPP_SDK_ACK_REQUEST;
-	bleRequest->type                            = CS_MICROAPP_SDK_BLE_CENTRAL;
-	bleRequest->central.type = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_UNSUBSCRIBE;
-	// todo: connectionHandle
+	uint8_t* payload                     = getOutgoingMessagePayload();
+	microapp_sdk_ble_t* bleRequest       = (microapp_sdk_ble_t*)(payload);
+	bleRequest->header.messageType       = CS_MICROAPP_SDK_TYPE_BLE;
+	bleRequest->header.ack               = CS_MICROAPP_SDK_ACK_REQUEST;
+	bleRequest->type                     = CS_MICROAPP_SDK_BLE_CENTRAL;
+	bleRequest->central.type             = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_UNSUBSCRIBE;
+	bleRequest->central.connectionHandle = 0;
+
 	sendMessage();
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {

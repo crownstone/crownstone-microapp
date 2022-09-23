@@ -4,7 +4,7 @@
 #include <microapp.h>
 
 /* UTILITIES FOR THE MICROAPP BLE LIBRARY
- * - BLE enums
+ * - BLE enums, typedefs and structs
  * - MAC address class
  * - UUID class
  * - conversion between hex and chars
@@ -36,15 +36,16 @@ enum BleEventType {
 	BLEConnected     = 0x02,
 	BLEDisconnected  = 0x03,
 	// BleCharacteristic
-	BLESubscribed    = 0x04,
-	BLEUnsubscribed  = 0x05,
-	BLERead          = 0x06,
-	BLEWritten       = 0x07,
+	BLESubscribed   = 0x04,
+	BLEUnsubscribed = 0x05,
+	BLERead         = 0x06,
+	BLEWritten      = 0x07,
 };
 
 // Forward declarations
 class BleDevice;
 class BleCharacteristic;
+
 typedef void (*DeviceEventHandler)(BleDevice);
 typedef void (*CharacteristicEventHandler)(BleDevice, BleCharacteristic);
 // Both of the above can be cast to a GenericBleEventHandler (and back)
@@ -71,7 +72,7 @@ const size_t MAC_ADDRESS_STRING_LENGTH = 17;
  */
 class MacAddress {
 private:
-	bool _initialized         = false;
+	bool _initialized = false;
 
 	/**
 	 * Convert from address byte array to string.
@@ -123,15 +124,14 @@ const size_t UUID_128BIT_STRING_LENGTH = 36;
 
 class Uuid {
 private:
-
-	static constexpr uint8_t BASE_UUID_128BIT[UUID_128BIT_BYTE_LENGTH] = {0xFB, 0x34, 0x9B, 0x5F,
-		0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+	static constexpr uint8_t BASE_UUID_128BIT[UUID_128BIT_BYTE_LENGTH] = {
+			0xFB, 0x34, 0x9B, 0x5F, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	static constexpr uint8_t BASE_UUID_OFFSET_16BIT = 12;
 
 	uint8_t _uuid[UUID_128BIT_BYTE_LENGTH];
 	uint8_t _length = 0;
 	// after registration, bluenet passes an id for custom uuids
-	uint8_t _type = 0;
+	uint8_t _type     = 0;
 	bool _initialized = false;
 
 	/**
@@ -145,7 +145,8 @@ private:
 	/**
 	 * Convert from UUID string (either 16-bit or 128-bit) to 128-bit byte array
 	 *
-	 * @param[in] uuidString Null-terminated string of the format "12345678-ABCD-1234-5678-ABCDEF123456", with either uppercase or lowercase letters.
+	 * @param[in] uuidString Null-terminated string of the format "12345678-ABCD-1234-5678-ABCDEF123456", with either
+	 * uppercase or lowercase letters.
 	 * @param[out] emptyUuid A byte array where the resulting UUID will be placed
 	 */
 	void convertStringToUuid128Bit(const char* uuidString, uint8_t* emptyUuid);
@@ -193,7 +194,6 @@ public:
 
 	void setCustomId(uint8_t customId);
 	uint8_t getType();
-
 };
 
 /**
