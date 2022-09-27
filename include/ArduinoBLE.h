@@ -27,11 +27,16 @@ enum BleFilterType {
 
 // Stores the filter for filtering scanned BLE devices
 struct BleFilter {
-	BleFilterType type;  // defines which property is currently being filtered on
+	// defines which property is currently being filtered on
+	BleFilterType type;
+	// address to be filtered on
 	MacAddress address;
-	char localName[MAX_BLE_ADV_DATA_LENGTH + 1];  // max length of name equals max advertisement length + 1 for 0 termination
-	uint16_t localNameLen;                    // length of the name field
-	Uuid uuid;                                // service data uuid
+	// max length of name equals max advertisement length + 1 for 0 termination
+	char localName[MAX_BLE_ADV_DATA_LENGTH + 1];
+	// length of the name field
+	uint16_t localNameLen;
+	// service data uuid
+	Uuid uuid;
 };
 
 /**
@@ -52,16 +57,20 @@ private:
 
 	union __attribute__((packed)) flags_t {
 		struct __attribute__((packed)) {
-			bool initialized : 1;  // begin has been called
-			bool isScanning : 1;   // scans are handled
+			//! whether begin has been called
+			bool initialized : 1;
+			//! whether scans are handled
+			bool isScanning : 1;
 			bool registeredScanInterrupts : 1;
 			bool registeredCentralInterrupts : 1;
 			bool registeredPeripheralInterrupts : 1;
 		} flags;
-		uint8_t asInt = 0;  // initialize to zero
+		// initialize to zero
+		uint8_t asInt = 0;
 	} _flags;
 
-	MacAddress _address;  // address of the crownstone
+	// Address of the crownstone itself
+	MacAddress _address;
 
 	// Device only used for incoming scans
 	// Is overwritten as new scans come in that pass the filter

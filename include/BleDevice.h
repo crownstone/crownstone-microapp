@@ -106,7 +106,7 @@ private:
 
 public:
 	// return true if BleDevice is nontrivial, i.e. initialized from an actual advertisement
-	explicit operator bool() const { return _flags.flags.initialized; }
+	explicit operator bool() const;
 
 	/**
 	 * Poll for BLE events and handle them

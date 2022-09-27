@@ -18,6 +18,10 @@ BleDevice::BleDevice(MacAddress address) {
 	_flags.flags.initialized = true;
 }
 
+explicit BleDevice::operator bool() const {
+	return _flags.flags.initialized;
+}
+
 // Defined for both central and peripheral devices
 void BleDevice::onConnect(uint16_t connectionHandle) {
 	_flags.flags.connected = true;

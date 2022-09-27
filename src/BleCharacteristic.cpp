@@ -32,6 +32,10 @@ BleCharacteristic::BleCharacteristic(microapp_sdk_ble_uuid_t* uuid, uint8_t prop
 	_flags.flags.initialized = true;
 }
 
+explicit BleCharacteristic::operator bool() const {
+	return _flags.flags.initialized;
+}
+
 // Only defined for local characteristics
 microapp_sdk_result_t BleCharacteristic::addLocalCharacteristic(uint16_t serviceHandle) {
 	if (!_flags.flags.initialized) {

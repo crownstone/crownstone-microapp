@@ -21,6 +21,10 @@ BleService::BleService(microapp_sdk_ble_uuid_t* uuid) {
 	_flags.flags.initialized = true;
 }
 
+explicit BleService::operator bool() const {
+	return _flags.flags.initialized;
+}
+
 // Only for local services
 microapp_sdk_result_t BleService::addLocalService() {
 	if (!_flags.flags.initialized) {

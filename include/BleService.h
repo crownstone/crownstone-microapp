@@ -84,6 +84,8 @@ private:
 	microapp_sdk_result_t addDiscoveredCharacteristic(BleCharacteristic* characteristic);
 
 public:
+	explicit operator bool() const;
+
 	/**
 	 * Create a new (local) BLE service
 	 *

@@ -106,9 +106,9 @@ public:
 	const uint8_t* bytes();
 	const uint8_t type();
 
-	explicit operator bool() const { return this->_initialized; }
-	bool operator==(const MacAddress& other) { return memcmp(this->_address, other._address, MAC_ADDRESS_LENGTH) == 0; }
-	bool operator!=(const MacAddress& other) { return memcmp(this->_address, other._address, MAC_ADDRESS_LENGTH) != 0; }
+	explicit operator bool() const;
+	bool operator==(const MacAddress& other);
+	bool operator!=(const MacAddress& other);
 };
 
 // type for 16-bit uuid
@@ -174,9 +174,9 @@ public:
 	Uuid(const uuid16_t uuid);
 
 	// boolean and comparison operators
-	explicit operator bool() const { return this->_initialized; }
-	bool operator==(const Uuid& other) { return memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) == 0; }
-	bool operator!=(const Uuid& other) { return memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) != 0; }
+	explicit operator bool() const;
+	bool operator==(const Uuid& other);
+	bool operator!=(const Uuid& other);
 
 	// even though internally it's always 16 bytes, the length can be either 2 or 16
 	uint8_t length();

@@ -62,6 +62,18 @@ MacAddress::MacAddress(const char* addressString) {
 	_initialized = true;
 }
 
+explicit MacAddress::operator bool() const {
+	return this->_initialized;
+}
+
+bool MacAddress::operator==(const MacAddress& other) {
+	return (memcmp(this->_address, other._address, MAC_ADDRESS_LENGTH) == 0);
+}
+
+bool MacAddress::operator!=(const MacAddress& other) {
+	return (memcmp(this->_address, other._address, MAC_ADDRESS_LENGTH) != 0);
+}
+
 void MacAddress::convertMacToString(const uint8_t* address, char* emptyAddressString) {
 	for (uint8_t i = 0; i < MAC_ADDRESS_LENGTH; i++) {
 		convertByteToTwoHexChars(address[MAC_ADDRESS_LENGTH - i - 1], emptyAddressString + 3 * i);
@@ -139,6 +151,18 @@ Uuid::Uuid(const uuid16_t uuid) {
 	_length = UUID_16BIT_BYTE_LENGTH;
 	_type = CS_MICROAPP_SDK_BLE_UUID_STANDARD;
 	_initialized = true;
+}
+
+explicit Uuid::operator bool() const {
+	return this->_initialized;
+}
+
+bool Uuid::operator==(const Uuid& other) {
+	return memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) == 0;
+}
+
+bool Uuid::operator!=(const Uuid& other) {
+	return memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) != 0;
 }
 
 uint8_t Uuid::length() {

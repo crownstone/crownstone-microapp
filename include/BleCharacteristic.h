@@ -157,7 +157,7 @@ private:
 	microapp_sdk_result_t readValueRemote(uint8_t* buffer, uint16_t length, uint32_t timeout = 5000);
 
 public:
-	explicit operator bool() const { return _flags.flags.initialized; }
+	explicit operator bool() const;
 
 	/**
 	 * Create a new BLE characteristic
