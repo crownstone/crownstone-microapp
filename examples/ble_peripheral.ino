@@ -3,33 +3,29 @@
 
 /**
  * A microapp example for acting as a BLE peripheral
- *
- * The example can easily be adjusted based on your own BLE central device.
- * Simply change the beaconAddress or beaconName constants.
- * You can adapt the scan handler onScannedDevice to match your wishes.
  */
 
 // This is the value to be used in the temperature characteristic
-static const uint8_t NR_TEMPERATURE_BYTES = 2;
-uint8_t temperatureValue[NR_TEMPERATURE_BYTES] = {20, 25};
+float temperatureCelsius = 22.5;
+static const uint8_t NR_TEMPERATURE_BYTES = 1;
+uint8_t temperatureValue[NR_TEMPERATURE_BYTES] = {0x7F};
 // See Bluetooth SIG assigned numbers for the 16-bit UUIDs
 // 0x181A: Environmental Sensing
 BleService temperatureService("181A");
-// 0x2A1C: Temperature measurement
-BleCharacteristic temperatureCharacteristic("2A1C", BleCharacteristicProperties::BLERead,
+// 0x2B0D: Temperature 8
+BleCharacteristic temperatureCharacteristic("2B0D", BleCharacteristicProperties::BLERead,
 	temperatureValue, NR_TEMPERATURE_BYTES);
 
 
 void updateTemperature() {
 	// Simulate some temperature changes
-	for (int i = 0; i < NR_TEMPERATURE_BYTES; i++){
-		if (temperatureValue[i] < 30) {
-			temperatureValue[i]++;
-		}
-		else {
-			temperatureValue[i] = 15;
-		}
+	temperatureCelsius += 0.5;
+	if (temperatureCelsius > 38.5) {
+		temperatureCelsius = -7.5;
 	}
+	// See GATT Specification Supplement by Bluetooth SIG
+	int8_t temperature8 = (int8_t)temperatureCelsius * 2;
+	temperatureValue[0] = temperature8;
 	temperatureCharacteristic.writeValue(temperatureValue, NR_TEMPERATURE_BYTES);
 }
 

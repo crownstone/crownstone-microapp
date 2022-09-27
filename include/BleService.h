@@ -2,6 +2,7 @@
 
 #include <BleCharacteristic.h>
 #include <BleUtils.h>
+#include <BleUuid.h>
 #include <String.h>
 #include <microapp.h>
 

@@ -3,15 +3,15 @@
 
 // Only used for local characteristics
 BleCharacteristic::BleCharacteristic(const char* uuid, uint8_t properties, uint8_t* value, uint16_t valueSize) {
-	uint8_t len = strlen(uuid);
-	if (len != UUID_16BIT_STRING_LENGTH && len != UUID_128BIT_STRING_LENGTH) {
-		return;
-	}
 	if (valueSize > MAX_CHARACTERISTIC_VALUE_SIZE) {
 		// silently truncate
 		valueSize = MAX_CHARACTERISTIC_VALUE_SIZE;
 	}
 	_uuid                    = Uuid(uuid);
+	if (!_uuid) {
+		// If uuid not valid, return early
+		return;
+	}
 	_properties              = properties;
 	_value                   = value;
 	_valueSize               = valueSize;
@@ -21,10 +21,7 @@ BleCharacteristic::BleCharacteristic(const char* uuid, uint8_t properties, uint8
 
 // Only used for remote characteristics
 BleCharacteristic::BleCharacteristic(microapp_sdk_ble_uuid_t* uuid, uint8_t properties) {
-	_uuid = Uuid(uuid->uuid);
-	if (uuid->type != CS_MICROAPP_SDK_BLE_UUID_STANDARD) {
-		_uuid.setCustomId(uuid->type);
-	}
+	_uuid                    = Uuid(uuid->uuid, uuid->type);
 	_properties              = properties;
 	_value                   = nullptr;
 	_valueSize               = 0;
@@ -32,7 +29,7 @@ BleCharacteristic::BleCharacteristic(microapp_sdk_ble_uuid_t* uuid, uint8_t prop
 	_flags.flags.initialized = true;
 }
 
-explicit BleCharacteristic::operator bool() const {
+BleCharacteristic::operator bool() const {
 	return _flags.flags.initialized;
 }
 
@@ -45,8 +42,8 @@ microapp_sdk_result_t BleCharacteristic::addLocalCharacteristic(uint16_t service
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
 	microapp_sdk_result_t result;
-	// if custom uuid, register that first
-	if (_uuid.custom()) {
+	// if unregistered uuid, register it first
+	if (!_uuid.registered()) {
 		result = registerCustomUuid();
 		if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 			return result;
@@ -60,6 +57,7 @@ microapp_sdk_result_t BleCharacteristic::addLocalCharacteristic(uint16_t service
 	options.write           = _properties & BleCharacteristicProperties::BLEWrite;
 	options.notify          = _properties & BleCharacteristicProperties::BLENotify;
 	options.indicate        = _properties & BleCharacteristicProperties::BLEIndicate;
+	options.autoNotify      = true;
 
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
@@ -93,8 +91,9 @@ microapp_sdk_result_t BleCharacteristic::registerCustomUuid() {
 	if (_flags.flags.remote) {
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
-	if (!_uuid.custom()) {
-		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
+	if (_uuid.registered()) {
+		// apparently already registered so just return success
+		return CS_MICROAPP_SDK_ACK_SUCCESS;
 	}
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
@@ -113,7 +112,7 @@ microapp_sdk_result_t BleCharacteristic::registerCustomUuid() {
 		// (it should be the same)
 		return CS_MICROAPP_SDK_ACK_ERROR;
 	}
-	_uuid.setCustomId(bleRequest->requestUuidRegister.uuid.type);
+	_uuid.setType(bleRequest->requestUuidRegister.uuid.type);
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
@@ -153,9 +152,6 @@ microapp_sdk_result_t BleCharacteristic::writeValueLocal(uint8_t* buffer, uint16
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		return result;
 	}
-	if (_flags.flags.subscribed) {
-		result = notify();
-	}
 	return result;
 }
 
@@ -191,58 +187,16 @@ microapp_sdk_result_t BleCharacteristic::writeValueRemote(uint8_t* buffer, uint1
 		return result;
 	}
 	// Block until write event happens
-	uint8_t tries = timeout / 1000;
+	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
 	while (!_flags.flags.writtenToRemote) {
 		// yield. Upon a write event flag will be set
-		delay(1000);
+		delay(MICROAPP_LOOP_INTERVAL_MS);
 		if (--tries == 0) {
 			return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT;
 		}
 	}
 	// Clear flag
 	_flags.flags.writtenToRemote = false;
-	return CS_MICROAPP_SDK_ACK_SUCCESS;
-}
-
-// Only defined for local characteristics
-microapp_sdk_result_t BleCharacteristic::notify(uint32_t timeout) {
-	if (!_flags.flags.initialized) {
-		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
-	}
-	if (_flags.flags.remote) {
-		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
-	}
-	// Clear flag
-	_flags.flags.localNotificationDone = false;
-
-	microapp_sdk_result_t result;
-	uint8_t* payload                            = getOutgoingMessagePayload();
-	microapp_sdk_ble_t* bleRequest              = (microapp_sdk_ble_t*)(payload);
-	bleRequest->header.messageType              = CS_MICROAPP_SDK_TYPE_BLE;
-	bleRequest->header.ack                      = CS_MICROAPP_SDK_ACK_REQUEST;
-	bleRequest->type                            = CS_MICROAPP_SDK_BLE_PERIPHERAL;
-	bleRequest->peripheral.type                 = CS_MICROAPP_SDK_BLE_PERIPHERAL_REQUEST_NOTIFY;
-	bleRequest->peripheral.handle               = _handle;
-	bleRequest->peripheral.requestNotify.size   = _valueLength;
-	bleRequest->peripheral.requestNotify.offset = 0;
-	bleRequest->peripheral.connectionHandle     = 0;
-
-	sendMessage();
-	result = (microapp_sdk_result_t)bleRequest->header.ack;
-	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-		return result;
-	}
-	// Block until notification_done event happens
-	uint8_t tries = timeout / 1000;
-	while (!_flags.flags.localNotificationDone) {
-		// yield. Upon a notification_done event flag will be set
-		delay(1000);
-		if (--tries == 0) {
-			return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT;
-		}
-	}
-	// Clear flag
-	_flags.flags.localNotificationDone = false;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
@@ -274,10 +228,10 @@ microapp_sdk_result_t BleCharacteristic::readValueRemote(uint8_t* buffer, uint16
 		return result;
 	}
 	// Block until read event happens
-	uint8_t tries = timeout / 1000;
+	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
 	while (!_flags.flags.remoteValueRead) {
 		// yield. Upon a read event flag will be set
-		delay(1000);
+		delay(MICROAPP_LOOP_INTERVAL_MS);
 		if (--tries == 0) {
 			return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT;
 		}
@@ -476,7 +430,7 @@ bool BleCharacteristic::subscribe(uint32_t timeout) {
 	bleRequest->header.ack               = CS_MICROAPP_SDK_ACK_REQUEST;
 	bleRequest->type                     = CS_MICROAPP_SDK_BLE_CENTRAL;
 	bleRequest->central.type             = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_SUBSCRIBE;
-	bleRequest->central.connectionHandle = 0;
+	bleRequest->central.connectionHandle = BLE_CONNECTION_HANDLE_PLACEHOLDER;
 
 	sendMessage();
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
@@ -484,10 +438,10 @@ bool BleCharacteristic::subscribe(uint32_t timeout) {
 		return false;
 	}
 	// Block until write event happens
-	uint8_t tries = timeout / 1000;
+	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
 	while (!_flags.flags.writtenToRemote) {
 		// yield. Upon a write event flag will be set
-		delay(1000);
+		delay(MICROAPP_LOOP_INTERVAL_MS);
 		if (--tries == 0) {
 			return false;
 		}
@@ -520,7 +474,7 @@ bool BleCharacteristic::unsubscribe(uint32_t timeout) {
 	bleRequest->header.ack               = CS_MICROAPP_SDK_ACK_REQUEST;
 	bleRequest->type                     = CS_MICROAPP_SDK_BLE_CENTRAL;
 	bleRequest->central.type             = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_UNSUBSCRIBE;
-	bleRequest->central.connectionHandle = 0;
+	bleRequest->central.connectionHandle = BLE_CONNECTION_HANDLE_PLACEHOLDER;
 
 	sendMessage();
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
@@ -528,10 +482,10 @@ bool BleCharacteristic::unsubscribe(uint32_t timeout) {
 		return false;
 	}
 	// Block until write event happens
-	uint8_t tries = timeout / 1000;
+	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
 	while (!_flags.flags.writtenToRemote) {
 		// yield. Upon a write event flag will be set
-		delay(1000);
+		delay(MICROAPP_LOOP_INTERVAL_MS);
 		if (--tries == 0) {
 			return false;
 		}

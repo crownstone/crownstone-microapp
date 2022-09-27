@@ -2,26 +2,23 @@
 
 // Only used for local services
 BleService::BleService(const char* uuid) {
-	size_t len = strlen(uuid);
-	if (len != UUID_16BIT_STRING_LENGTH && len != UUID_128BIT_STRING_LENGTH) {
+	_uuid                    = Uuid(uuid);
+	if (!_uuid) {
+		// If uuid not valid, return early
 		return;
 	}
-	_uuid                    = Uuid(uuid);
 	_flags.flags.remote      = false;
 	_flags.flags.initialized = true;
 }
 
 // Only used for remote (discovered) services
 BleService::BleService(microapp_sdk_ble_uuid_t* uuid) {
-	_uuid = Uuid(uuid->uuid);
-	if (uuid->type != CS_MICROAPP_SDK_BLE_UUID_STANDARD) {
-		_uuid.setCustomId(uuid->type);
-	}
+	_uuid = Uuid(uuid->uuid, uuid->type);
 	_flags.flags.remote      = true;
 	_flags.flags.initialized = true;
 }
 
-explicit BleService::operator bool() const {
+BleService::operator bool() const {
 	return _flags.flags.initialized;
 }
 
@@ -34,8 +31,8 @@ microapp_sdk_result_t BleService::addLocalService() {
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
 	microapp_sdk_result_t result;
-	// if custom uuid, register that first
-	if (_uuid.custom()) {
+	// if uuid not registered, register it first
+	if (!_uuid.registered()) {
 		result = registerCustomUuid();
 		if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 			return result;
@@ -71,8 +68,9 @@ microapp_sdk_result_t BleService::addLocalService() {
 }
 
 microapp_sdk_result_t BleService::registerCustomUuid() {
-	if (!_uuid.custom()) {
-		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
+	if (_uuid.registered()) {
+		// apparently already registered so just return success
+		return CS_MICROAPP_SDK_ACK_SUCCESS;
 	}
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
@@ -91,7 +89,7 @@ microapp_sdk_result_t BleService::registerCustomUuid() {
 		// (it should be the same)
 		return CS_MICROAPP_SDK_ACK_ERROR;
 	}
-	_uuid.setCustomId(bleRequest->requestUuidRegister.uuid.type);
+	_uuid.setType(bleRequest->requestUuidRegister.uuid.type);
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 

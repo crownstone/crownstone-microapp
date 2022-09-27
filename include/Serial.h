@@ -21,16 +21,16 @@ private:
 		Short       = CS_MICROAPP_SDK_LOG_SHORT,
 	};
 
-	size_t _write(microapp_sdk_log_header_t* logRequest, Type type, MicroappSdkLogFlags flags);
-	size_t _write(String str, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
-	size_t _write(const char* str, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
-	size_t _write(const uint8_t* buf, int length, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
-	size_t _write(char value, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
-	size_t _write(float value, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
-	size_t _write(double value, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
-	size_t _write(short value, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
-	size_t _write(int value, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
-	size_t _write(unsigned int value, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
+	microapp_size_t _write(microapp_sdk_log_header_t* logRequest, Type type, MicroappSdkLogFlags flags);
+	microapp_size_t _write(String str, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
+	microapp_size_t _write(const char* str, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
+	microapp_size_t _write(const uint8_t* buf, int length, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
+	microapp_size_t _write(char value, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
+	microapp_size_t _write(float value, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
+	microapp_size_t _write(double value, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
+	microapp_size_t _write(short value, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
+	microapp_size_t _write(int value, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
+	microapp_size_t _write(unsigned int value, MicroappSdkLogFlags flags = CS_MICROAPP_SDK_LOG_FLAG_CLEAR);
 
 public:
 	static Serial_& getInstance() {
@@ -54,73 +54,73 @@ public:
 
 	// Write a single byte to serial.
 	// Returns number of bytes written.
-	size_t write(char value);
+	microapp_size_t write(char value);
 
-	size_t write(float value);
+	microapp_size_t write(float value);
 
-	size_t write(double value);
+	microapp_size_t write(double value);
 
-	size_t write(short value);
+	microapp_size_t write(short value);
 
-	size_t write(int value);
+	microapp_size_t write(int value);
 
-	size_t write(unsigned int value);
+	microapp_size_t write(unsigned int value);
 
 	// Write a string (as char array) to serial. The length will be obtained through searching for a null
 	// byte.
 	// Returns number of bytes written.
-	size_t write(const char* str);
+	microapp_size_t write(const char* str);
 
 	// Write to serial. For now this becomes logs in the Crownstone firmware. That is not so useful to the
 	// microapp person though. To send it through to UART for a USB dongle is quite limited, for normal
 	// Crownstones it is almost useless. It would be fun to write over Bluetooth RFCOMM.
 	//
 	// Returns number of bytes written.
-	size_t write(String str);
+	microapp_size_t write(String str);
 
 	// Write an array of bytes to serial.
 	// Returns number of bytes written.
-	size_t write(const uint8_t* buf, int length);
+	microapp_size_t write(const uint8_t* buf, int length);
 
 	// Copies of write
 
-	size_t print(char value);
+	microapp_size_t print(char value);
 
-	size_t print(float value);
+	microapp_size_t print(float value);
 
-	size_t print(double value);
+	microapp_size_t print(double value);
 
-	size_t print(short value);
+	microapp_size_t print(short value);
 
-	size_t print(int value);
+	microapp_size_t print(int value);
 
-	size_t print(unsigned int value);
+	microapp_size_t print(unsigned int value);
 
-	size_t print(const char* str);
+	microapp_size_t print(const char* str);
 
-	size_t print(String str);
+	microapp_size_t print(String str);
 
-	size_t print(const uint8_t* buf, int length);
+	microapp_size_t print(const uint8_t* buf, int length);
 
 	// Copies of print (but with newline)
 
-	size_t println(char value);
+	microapp_size_t println(char value);
 
-	size_t println(float value);
+	microapp_size_t println(float value);
 
-	size_t println(double value);
+	microapp_size_t println(double value);
 
-	size_t println(short value);
+	microapp_size_t println(short value);
 
-	size_t println(int value);
+	microapp_size_t println(int value);
 
-	size_t println(unsigned int value);
+	microapp_size_t println(unsigned int value);
 
-	size_t println(const char* str);
+	microapp_size_t println(const char* str);
 
-	size_t println(String str);
+	microapp_size_t println(String str);
 
-	size_t println(const uint8_t* buf, int length);
+	microapp_size_t println(const uint8_t* buf, int length);
 };
 
 #define Serial Serial_::getInstance()

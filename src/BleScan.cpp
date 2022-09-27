@@ -48,7 +48,7 @@ bool BleScan::hasServiceDataUuid(uuid16_t uuid) {
 			GapAdvType::IncompleteList16BitServiceUuids,
 			GapAdvType::CompleteList16BitServiceUuids};
 	ble_ad_t ad;
-	for (int i = 0; i < sizeof(serviceUuidListTypes)/sizeof(serviceUuidListTypes[0]); i++) {
+	for (uint8_t i = 0; i < sizeof(serviceUuidListTypes)/sizeof(serviceUuidListTypes[0]); i++) {
 		if (findAdvertisementDataType(serviceUuidListTypes[i], &ad)) {
 			// check ad for uuid
 			for (uint8_t j = 0; j < ad.len; j += sizeof(uuid)) {

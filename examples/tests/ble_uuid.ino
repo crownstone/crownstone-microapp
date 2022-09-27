@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <BleUtils.h>
+#include <BleUuid.h>
 
 const uint8_t uuid_bytes_16bit[UUID_16BIT_BYTE_LENGTH] = {0xCD, 0xAB};
 const uint8_t uuid_bytes_128bit[UUID_128BIT_BYTE_LENGTH] = {0x56, 0x34, 0x12, 0xEF, 0xCD, 0xAB,
@@ -47,7 +47,7 @@ void setup() {
 
 	delay(2000);
 
-	Uuid uuid_5(0x1234);
+	Uuid uuid_5(0x1234, 1);
 	Serial.println(uuid_5.length());
 	Serial.println(uuid_5.fullString());
 	Serial.println(uuid_5.uuid16());

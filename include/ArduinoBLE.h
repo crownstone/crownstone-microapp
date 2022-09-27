@@ -4,6 +4,8 @@
 #include <BleScan.h>
 #include <BleService.h>
 #include <BleUtils.h>
+#include <BleMacAddress.h>
+#include <BleUuid.h>
 #include <Serial.h>
 #include <microapp.h>
 
@@ -83,8 +85,9 @@ private:
 
 	// Pointers to local services are stored here (for peripheral role)
 	// The actual services and their characteristics are stored on the user side
+	// The pointers are not initialized to nullptrs. Validity should be checked via _localServiceCount
 	static const uint8_t MAX_LOCAL_SERVICES = 2;
-	BleService* _localServices[MAX_LOCAL_SERVICES];  // array of pointers
+	BleService* _localServices[MAX_LOCAL_SERVICES];
 	uint8_t _localServiceCount = 0;
 
 	// Discovered remote services, characteristics and their values are stored here
@@ -314,6 +317,12 @@ public:
 };
 
 #define BLE Ble::getInstance()
+
+/**
+ * The following functions are outside the Ble class so they can be accessed
+ * from member functions of e.g. the BleDevice class.
+ * If this somehow can be done, these functions can be moved back within the Ble class
+ */
 
 /**
  * Locally register event handlers for a new callback set by the user

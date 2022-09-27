@@ -18,7 +18,7 @@ BleDevice::BleDevice(MacAddress address) {
 	_flags.flags.initialized = true;
 }
 
-explicit BleDevice::operator bool() const {
+BleDevice::operator bool() const {
 	return _flags.flags.initialized;
 }
 
@@ -78,8 +78,9 @@ microapp_sdk_result_t BleDevice::getCharacteristic(uint16_t handle, BleCharacter
 
 // Defined for both central and peripheral devices
 microapp_sdk_result_t BleDevice::registerCustomUuid(Uuid& uuid) {
-	if (!uuid.custom()) {
-		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
+	if (uuid.registered()) {
+		// apparently already registered so just return success
+		return CS_MICROAPP_SDK_ACK_SUCCESS;
 	}
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
@@ -98,7 +99,7 @@ microapp_sdk_result_t BleDevice::registerCustomUuid(Uuid& uuid) {
 		// (it should be the same)
 		return CS_MICROAPP_SDK_ACK_ERROR;
 	}
-	uuid.setCustomId(bleRequest->requestUuidRegister.uuid.type);
+	uuid.setType(bleRequest->requestUuidRegister.uuid.type);
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
@@ -139,10 +140,10 @@ bool BleDevice::disconnect(uint32_t timeout) {
 	if (bleRequest->header.ack != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		return false;
 	}
-	uint8_t tries = timeout / 1000;
+	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
 	while (_flags.flags.connected) {
 		// yield. Upon a disconnect event flag will be cleared
-		delay(1000);
+		delay(MICROAPP_LOOP_INTERVAL_MS);
 		if (--tries == 0) {
 			return false;
 		}
@@ -175,7 +176,7 @@ bool BleDevice::discoverService(const char* serviceUuid, uint32_t timeout) {
 	}
 	microapp_sdk_result_t result;
 	Uuid uuid(serviceUuid);
-	if (uuid.custom()) {
+	if (!uuid.registered()) {
 		result = registerCustomUuid(uuid);
 		if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 			return false;
@@ -197,10 +198,10 @@ bool BleDevice::discoverService(const char* serviceUuid, uint32_t timeout) {
 		return false;
 	}
 	// now block until discovery done
-	uint8_t tries = timeout / 1000;
+	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
 	while (!_flags.flags.discoveryDone) {
 		// yield. Upon a discovery done event flag will be set
-		delay(1000);
+		delay(MICROAPP_LOOP_INTERVAL_MS);
 		if (--tries == 0) {
 			return false;
 		}
@@ -355,10 +356,10 @@ bool BleDevice::connect(uint32_t timeout) {
 	if (bleRequest->header.ack != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		return false;
 	}
-	uint8_t tries = timeout / 1000;
+	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
 	while (!_flags.flags.connected) {
 		// yield. Upon a disconnect event flag will be cleared
-		delay(1000);
+		delay(MICROAPP_LOOP_INTERVAL_MS);
 		if (--tries == 0) {
 			return false;
 		}

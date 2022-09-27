@@ -2,6 +2,8 @@
 
 #include <BleScan.h>
 #include <BleService.h>
+#include <BleMacAddress.h>
+#include <BleUuid.h>
 #include <BleUtils.h>
 #include <String.h>
 #include <microapp.h>

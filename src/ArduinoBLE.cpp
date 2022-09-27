@@ -147,10 +147,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 				characteristic._handle = central->eventDiscover.valueHandle;
 				_remoteCharacteristics[_remoteCharacteristicCount] = characteristic;
 				// add to device
-				Uuid serviceUuid(central->eventDiscover.serviceUuid.uuid);
-				if (central->eventDiscover.serviceUuid.type != CS_MICROAPP_SDK_BLE_UUID_STANDARD) {
-					serviceUuid.setCustomId(central->eventDiscover.serviceUuid.type);
-				}
+				Uuid serviceUuid(central->eventDiscover.serviceUuid.uuid, central->eventDiscover.serviceUuid.type);
 				result = _device.addDiscoveredCharacteristic(
 						&_remoteCharacteristics[_remoteCharacteristicCount], serviceUuid);
 				if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
@@ -650,6 +647,7 @@ microapp_sdk_result_t getBleEventHandlerRegistration(
 		}
 		if (BLE._bleEventHandlerRegistration[i].eventType == eventType) {
 			if (BLE._bleEventHandlerRegistration[i].eventHandler == nullptr) {
+				// Should not happen, if filled is true the eventHandler should be valid
 				return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 			}
 			registration = BLE._bleEventHandlerRegistration[i];

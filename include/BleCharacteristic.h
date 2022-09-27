@@ -1,8 +1,13 @@
 #pragma once
 
+#include <BleUuid.h>
 #include <BleUtils.h>
 #include <String.h>
 #include <microapp.h>
+
+// This should be replaced when multiple connections are possible in bluenet
+// For now, it is okay to have it be 0 always
+#define BLE_CONNECTION_HANDLE_PLACEHOLDER 0
 
 class BleCharacteristicProperties {
 public:
@@ -127,19 +132,6 @@ private:
 	 * @return microapp_sdk_result_t specifying other error
 	 */
 	microapp_sdk_result_t writeValueRemote(uint8_t* buffer, uint16_t length, uint32_t timeout = 5000);
-
-	/**
-	 * Notifies bluenet that a local characteristic value is written
-	 * Sends a NOTIFY request to bluenet and waits for NOTIFICATION_DONE event back
-	 *
-	 * @param timeout in milliseconds
-	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
-	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if BleCharacteristic not initialized
-	 * @return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED if BleCharacteristic is not local but remote
-	 * @return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT if no (valid) NOTIFICATION_DONE event is received within timeout
-	 * @return microapp_sdk_result_t specifying other error
-	 */
-	microapp_sdk_result_t notify(uint32_t timeout = 5000);
 
 	/**
 	 * Reads value from a remote characteristic

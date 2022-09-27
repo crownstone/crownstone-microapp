@@ -1,5 +1,6 @@
 #pragma once
 
+#include <BleUuid.h>
 #include <BleUtils.h>
 #include <String.h>
 #include <microapp.h>
