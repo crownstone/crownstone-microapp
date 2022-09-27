@@ -1,6 +1,54 @@
 #include <BleUtils.h>
 
-MacAddress::MacAddress(const uint8_t* address, uint8_t type) {
+/**
+ * Convert a pair of chars to a byte, e.g. convert "A3" to 0xA3.
+ *
+ * @param[in] chars   Pointer to a pair of chars to convert to a byte.
+ *
+ * @return            The byte as a uint8_t.
+ */
+uint8_t convertTwoHexCharsToByte(const char* chars) {
+	uint8_t val[2] = {0, 0};  // actually two 4-bit values
+	for (uint8_t i = 0; i < 2; i++) {
+		if (chars[i] >= '0' && chars[i] <= '9') {
+			val[i] = chars[i] - '0';
+		}
+		else if (chars[i] >= 'a' && chars[i] <= 'f') {
+			val[i] = chars[i] - 'a' + 10;
+		}
+		else if (chars[i] >= 'A' && chars[i] <= 'F') {
+			val[i] = chars[i] - 'A' + 10;
+		}
+	}
+	// shift most significant 4-bit value 4 bits to the left and add least significant 4-bit value
+	return ((val[0] & 0x0F) << 4) | (val[1] & 0x0F);
+}
+
+/**
+ * Convert a byte (uint8_t) to its hex string representation, e.g. convert 0xA3 to "A3".
+ *
+ * @param[in] byte   Byte to be converted to a pair of chars.
+ * @param[out] res   Pointer to a pair of chars.
+ */
+void convertByteToTwoHexChars(uint8_t byte, char* res) {
+	uint8_t c[2];  // divide into two 4-bit numbers
+	c[0] = (byte >> 4) & 0x0F;
+	c[1] = byte & 0x0F;
+	for (uint8_t i = 0; i < 2; i++) {
+		if (c[i] >= 0 && c[i] <= 9) {
+			*res = c[i] + '0';
+		}
+		else if (c[i] >= 0xA && c[i] <= 0xF) {
+			*res = c[i] + 'A' - 10;
+		}
+		res++;
+	}
+}
+
+MacAddress::MacAddress(const uint8_t* address, uint8_t size, uint8_t type) {
+	if (size != MAC_ADDRESS_LENGTH) {
+		return;
+	}
 	memcpy(_address, address, MAC_ADDRESS_LENGTH);
 	_type = type;
 	_initialized = true;
@@ -175,11 +223,14 @@ void Uuid::convertStringToUuid128Bit(const char* uuidString, uint8_t* emptyUuid)
 		return;
 	}
 	uint8_t i = 0;
-	uint8_t j = UUID_128BIT_BYTE_LENGTH - 1;
-	while (uuidString[i] != 0) {
+	int8_t j = UUID_128BIT_BYTE_LENGTH - 1;
+	while (j >= 0) {
 		if (uuidString[i] == '-') {
 			i++;
 			continue;
+		}
+		if (i + 1 > UUID_128BIT_STRING_LENGTH) {
+			return;
 		}
 		emptyUuid[j] = convertTwoHexCharsToByte(&uuidString[i]);
 		j--;
@@ -205,39 +256,4 @@ void Uuid::convertUuid128BitToString(const uint8_t* uuid, char* emptyUuidString)
 		}
 	}
 	emptyUuidString[UUID_128BIT_STRING_LENGTH] = 0;
-}
-
-/////////////////////////////////////////////////////////////////////////
-
-// Convert a pair of chars to a byte, e.g. convert "A3" to 0xA3
-uint8_t convertTwoHexCharsToByte(const char* chars) {
-	uint8_t val[2] = {0, 0};  // actually two 4-bit values
-	for (uint8_t i = 0; i < 2; i++) {
-		if (chars[i] >= '0' && chars[i] <= '9') {
-			val[i] = chars[i] - '0';
-		}
-		else if (chars[i] >= 'a' && chars[i] <= 'f') {
-			val[i] = chars[i] - 'a' + 10;
-		}
-		else if (chars[i] >= 'A' && chars[i] <= 'F') {
-			val[i] = chars[i] - 'A' + 10;
-		}
-	}
-	// shift most significant 4-bit value 4 bits to the left and add least significant 4-bit value
-	return ((val[0] & 0x0F) << 4) | (val[1] & 0x0F);
-}
-
-void convertByteToTwoHexChars(uint8_t byte, char* res) {
-	uint8_t c[2];  // divide into two 4-bit numbers
-	c[0] = (byte >> 4) & 0x0F;
-	c[1] = byte & 0x0F;
-	for (uint8_t i = 0; i < 2; i++) {
-		if (c[i] >= 0 && c[i] <= 9) {
-			*res = c[i] + '0';
-		}
-		else if (c[i] >= 0xA && c[i] <= 0xF) {
-			*res = c[i] + 'A' - 10;
-		}
-		res++;
-	}
 }

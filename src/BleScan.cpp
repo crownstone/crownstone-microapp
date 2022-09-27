@@ -9,15 +9,15 @@ BleScan::BleScan(uint8_t* scanData, uint8_t scanSize) {
 }
 
 ble_ad_t BleScan::localName() {
-	ble_ad_t ln;
-	if (findAdvertisementDataType(GapAdvType::CompleteLocalName, &ln)) {
-		return ln; // filled
+	ble_ad_t localName;
+	if (findAdvertisementDataType(GapAdvType::CompleteLocalName, &localName)) {
+		return localName; // filled
 	}
-	else if (findAdvertisementDataType(GapAdvType::ShortenedLocalName, &ln)) {
-		return ln; // filled
+	else if (findAdvertisementDataType(GapAdvType::ShortenedLocalName, &localName)) {
+		return localName; // filled
 	}
 	else {
-		return ln; // empty
+		return localName; // empty
 	}
 }
 
@@ -48,15 +48,13 @@ bool BleScan::hasServiceDataUuid(uuid16_t uuid) {
 			GapAdvType::IncompleteList16BitServiceUuids,
 			GapAdvType::CompleteList16BitServiceUuids};
 	ble_ad_t ad;
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < sizeof(serviceUuidListTypes)/sizeof(serviceUuidListTypes[0]); i++) {
 		if (findAdvertisementDataType(serviceUuidListTypes[i], &ad)) {
 			// check ad for uuid
-			int j = 0;
-			while (j < ad.len) {
+			for (uint8_t j = 0; j < ad.len; j += sizeof(uuid)) {
 				if (uuid == ((ad.data[j + 1] << 8) | ad.data[j])) {
 					return true;
 				}
-				j += 2;  // for 16 bit uuids, shift 2 bytes
 			}
 		}
 	}

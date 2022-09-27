@@ -99,7 +99,7 @@ protected:
 public:
 	// Constructors: either empty, from an external struct, or from a string
 	MacAddress(){};
-	MacAddress(const uint8_t* address, uint8_t type);
+	MacAddress(const uint8_t* address, uint8_t size, uint8_t type);
 	MacAddress(const char* addressString);
 
 	const char* string();
@@ -196,19 +196,3 @@ public:
 	uint8_t getType();
 };
 
-/**
- * Convert a pair of chars to a byte, e.g. convert "A3" to 0xA3.
- *
- * @param[in] chars   Pointer to a pair of chars to convert to a byte.
- *
- * @return            The byte as a uint8_t.
- */
-uint8_t convertTwoHexCharsToByte(const char* chars);
-
-/**
- * Convert a byte (uint8_t) to its hex string representation, e.g. convert 0xA3 to "A3".
- *
- * @param[in] byte   Byte to be converted to a pair of chars.
- * @param[out] res   Pointer to a pair of chars.
- */
-void convertByteToTwoHexChars(uint8_t byte, char* res);

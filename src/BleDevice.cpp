@@ -19,8 +19,9 @@ BleDevice::BleDevice(MacAddress address) {
 }
 
 // Defined for both central and peripheral devices
-void BleDevice::onConnect() {
+void BleDevice::onConnect(uint16_t connectionHandle) {
 	_flags.flags.connected = true;
+	_connectionHandle = connectionHandle;
 }
 
 // Defined for both central and peripheral devices
@@ -92,7 +93,7 @@ microapp_sdk_result_t BleDevice::registerCustomUuid(Uuid& uuid) {
 }
 
 // Defined for both central and peripheral devices
-void BleDevice::poll(int timeout) {
+void BleDevice::poll(uint32_t timeout) {
 	if (timeout == 0) {
 		return;
 	}
@@ -117,12 +118,12 @@ bool BleDevice::disconnect() {
 	if (_flags.flags.isCentral) {
 		bleRequest->type                     = CS_MICROAPP_SDK_BLE_CENTRAL;
 		bleRequest->central.type             = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_DISCONNECT;
-		bleRequest->central.connectionHandle = 0;
+		bleRequest->central.connectionHandle = _connectionHandle;
 	}
 	else if (_flags.flags.isPeripheral) {
 		bleRequest->type                        = CS_MICROAPP_SDK_BLE_PERIPHERAL;
 		bleRequest->peripheral.type             = CS_MICROAPP_SDK_BLE_PERIPHERAL_REQUEST_DISCONNECT;
-		bleRequest->peripheral.connectionHandle = 0;
+		bleRequest->peripheral.connectionHandle = _connectionHandle;
 	}
 	sendMessage();
 	if (bleRequest->header.ack != CS_MICROAPP_SDK_ACK_SUCCESS) {
@@ -132,7 +133,7 @@ bool BleDevice::disconnect() {
 	while (_flags.flags.connected) {
 		// yield. Upon a disconnect event flag will be cleared
 		delay(1000);
-		if (--tries < 0) {
+		if (--tries == 0) {
 			return false;
 		}
 	}
@@ -178,7 +179,7 @@ bool BleDevice::discoverService(const char* serviceUuid) {
 	bleRequest->central.requestDiscover.uuidCount     = 1;
 	bleRequest->central.requestDiscover.uuids[0].type = uuid.getType();
 	bleRequest->central.requestDiscover.uuids[0].uuid = uuid.uuid16();
-	bleRequest->central.connectionHandle              = 0;
+	bleRequest->central.connectionHandle              = _connectionHandle;
 
 	sendMessage();
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
@@ -190,7 +191,7 @@ bool BleDevice::discoverService(const char* serviceUuid) {
 	while (!_flags.flags.discoveryDone) {
 		// yield. Upon a discovery done event flag will be set
 		delay(1000);
-		if (--tries < 0) {
+		if (--tries == 0) {
 			return false;
 		}
 	}
@@ -336,7 +337,7 @@ bool BleDevice::connect() {
 	bleRequest->header.ack                          = CS_MICROAPP_SDK_ACK_REQUEST;
 	bleRequest->type                                = CS_MICROAPP_SDK_BLE_CENTRAL;
 	bleRequest->central.type                        = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_CONNECT;
-	bleRequest->central.connectionHandle            = 0;
+	bleRequest->central.connectionHandle            = _connectionHandle;
 	bleRequest->central.requestConnect.address.type = _address.type();
 	memcpy(bleRequest->central.requestConnect.address.address, _address.bytes(), MAC_ADDRESS_LENGTH);
 
@@ -348,7 +349,7 @@ bool BleDevice::connect() {
 	while (!_flags.flags.connected) {
 		// yield. Upon a disconnect event flag will be cleared
 		delay(1000);
-		if (--tries < 0) {
+		if (--tries == 0) {
 			return false;
 		}
 	}

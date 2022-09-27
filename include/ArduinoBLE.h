@@ -29,7 +29,7 @@ enum BleFilterType {
 struct BleFilter {
 	BleFilterType type;  // defines which property is currently being filtered on
 	MacAddress address;
-	char localName[MAX_BLE_ADV_DATA_LENGTH];  // max length of name equals max advertisement length
+	char localName[MAX_BLE_ADV_DATA_LENGTH + 1];  // max length of name equals max advertisement length + 1 for 0 termination
 	uint16_t localNameLen;                    // length of the name field
 	Uuid uuid;                                // service data uuid
 };
@@ -160,6 +160,7 @@ private:
 	microapp_sdk_result_t getLocalCharacteristic(uint16_t handle, BleCharacteristic& characteristic);
 
 public:
+	// Should be called via BLE macro (e.g. BLE.begin())
 	static Ble& getInstance() {
 		// Guaranteed to be destroyed.
 		static Ble instance;

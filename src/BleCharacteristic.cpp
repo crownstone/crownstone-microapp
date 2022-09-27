@@ -167,7 +167,7 @@ microapp_sdk_result_t BleCharacteristic::writeValueRemote(uint8_t* buffer, uint1
 		length = MAX_CHARACTERISTIC_VALUE_SIZE;
 	}
 	// Clear flag
-	_flags.flags.valueWritten = false;
+	_flags.flags.writtenToRemote = false;
 
 	microapp_sdk_result_t result;
 	uint8_t* payload                             = getOutgoingMessagePayload();
@@ -188,15 +188,15 @@ microapp_sdk_result_t BleCharacteristic::writeValueRemote(uint8_t* buffer, uint1
 	}
 	// Block until write event happens
 	uint8_t tries = 5;
-	while (!_flags.flags.valueWritten) {
+	while (!_flags.flags.writtenToRemote) {
 		// yield. Upon a write event flag will be set
 		delay(1000);
-		if (--tries < 0) {
+		if (--tries == 0) {
 			return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT;
 		}
 	}
 	// Clear flag
-	_flags.flags.valueWritten = false;
+	_flags.flags.writtenToRemote = false;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
@@ -209,7 +209,7 @@ microapp_sdk_result_t BleCharacteristic::notify() {
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
 	// Clear flag
-	_flags.flags.notificationDone = false;
+	_flags.flags.localNotificationDone = false;
 
 	microapp_sdk_result_t result;
 	uint8_t* payload                            = getOutgoingMessagePayload();
@@ -230,15 +230,15 @@ microapp_sdk_result_t BleCharacteristic::notify() {
 	}
 	// Block until notification_done event happens
 	uint8_t tries = 5;
-	while (!_flags.flags.notificationDone) {
+	while (!_flags.flags.localNotificationDone) {
 		// yield. Upon a notification_done event flag will be set
 		delay(1000);
-		if (--tries < 0) {
+		if (--tries == 0) {
 			return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT;
 		}
 	}
 	// Clear flag
-	_flags.flags.notificationDone = false;
+	_flags.flags.localNotificationDone = false;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
@@ -252,7 +252,7 @@ microapp_sdk_result_t BleCharacteristic::readValueRemote(uint8_t* buffer, uint16
 	_valueSize = length;
 
 	// Clear flag
-	_flags.flags.valueRead = false;
+	_flags.flags.remoteValueRead = false;
 
 	microapp_sdk_result_t result;
 	uint8_t* payload                            = getOutgoingMessagePayload();
@@ -271,15 +271,15 @@ microapp_sdk_result_t BleCharacteristic::readValueRemote(uint8_t* buffer, uint16
 	}
 	// Block until read event happens
 	uint8_t tries = 5;
-	while (!_flags.flags.valueRead) {
+	while (!_flags.flags.remoteValueRead) {
 		// yield. Upon a read event flag will be set
 		delay(1000);
-		if (--tries < 0) {
+		if (--tries == 0) {
 			return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT;
 		}
 	}
 	// Clear flag
-	_flags.flags.valueRead = false;
+	_flags.flags.remoteValueRead = false;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
@@ -325,7 +325,8 @@ uint16_t BleCharacteristic::readValue(uint8_t* buffer, uint16_t length) {
 		if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 			return 0;
 		}
-		_flags.flags.valueUpdated = false;
+		// Clear valueUpdated flag after set on notify
+		_flags.flags.remoteValueUpdated = false;
 		return _valueLength;
 	}
 }
@@ -366,9 +367,9 @@ bool BleCharacteristic::written() {
 	if (!_flags.flags.initialized || _flags.flags.remote) {
 		return false;
 	}
-	bool result = _flags.flags.written;
+	bool result = _flags.flags.writtenAsLocal;
 	// Clear the flag upon this call
-	_flags.flags.written = false;
+	_flags.flags.writtenAsLocal = false;
 	return result;
 }
 
@@ -408,7 +409,7 @@ bool BleCharacteristic::subscribe() {
 		return false;
 	}
 	// Clear flag
-	_flags.flags.valueWritten = false;
+	_flags.flags.writtenToRemote = false;
 
 	microapp_sdk_result_t result;
 	uint8_t* payload                     = getOutgoingMessagePayload();
@@ -426,15 +427,15 @@ bool BleCharacteristic::subscribe() {
 	}
 	// Block until write event happens
 	uint8_t tries = 5;
-	while (!_flags.flags.valueWritten) {
+	while (!_flags.flags.writtenToRemote) {
 		// yield. Upon a write event flag will be set
 		delay(1000);
-		if (--tries < 0) {
+		if (--tries == 0) {
 			return false;
 		}
 	}
 	// Clear flag
-	_flags.flags.valueWritten = false;
+	_flags.flags.writtenToRemote = false;
 	return true;
 }
 
@@ -452,7 +453,7 @@ bool BleCharacteristic::unsubscribe() {
 		return false;
 	}
 	// Clear flag
-	_flags.flags.valueWritten = false;
+	_flags.flags.writtenToRemote = false;
 
 	microapp_sdk_result_t result;
 	uint8_t* payload                     = getOutgoingMessagePayload();
@@ -470,15 +471,15 @@ bool BleCharacteristic::unsubscribe() {
 	}
 	// Block until write event happens
 	uint8_t tries = 5;
-	while (!_flags.flags.valueWritten) {
+	while (!_flags.flags.writtenToRemote) {
 		// yield. Upon a write event flag will be set
 		delay(1000);
-		if (--tries < 0) {
+		if (--tries == 0) {
 			return false;
 		}
 	}
 	// Clear flag
-	_flags.flags.valueWritten = false;
+	_flags.flags.writtenToRemote = false;
 	return true;
 }
 
@@ -487,5 +488,5 @@ bool BleCharacteristic::valueUpdated() {
 	if (!_flags.flags.initialized || !_flags.flags.remote) {
 		return false;
 	}
-	return _flags.flags.valueUpdated;
+	return _flags.flags.remoteValueUpdated;
 }

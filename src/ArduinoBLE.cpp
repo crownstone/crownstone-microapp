@@ -8,6 +8,7 @@ microapp_sdk_result_t handleBleInterrupt(void* interrupt) {
 	if (interrupt == nullptr) {
 		return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 	}
+	// Size is not checked because it is variable
 	microapp_sdk_ble_t* bleInterrupt = reinterpret_cast<microapp_sdk_ble_t*>(interrupt);
 	return BLE.handleEvent(bleInterrupt);
 }
@@ -44,7 +45,7 @@ microapp_sdk_result_t Ble::handleScanEvent(microapp_sdk_ble_scan_t* scanInterrup
 			}
 			// Apply a wrapper BleScan (no copy) to parse scan data
 			BleScan scan(scanInterrupt->eventScan.data, scanInterrupt->eventScan.size);
-			MacAddress address(scanInterrupt->eventScan.address.address, scanInterrupt->eventScan.address.type);
+			MacAddress address(scanInterrupt->eventScan.address.address, MAC_ADDRESS_LENGTH, scanInterrupt->eventScan.address.type);
 			if (!matchesFilter(scan, address)) {
 				return CS_MICROAPP_SDK_ACK_SUCCESS;
 			}
@@ -83,7 +84,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 			if (central->eventConnect.result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return (microapp_sdk_result_t)central->eventConnect.result;
 			}
-			_device.onConnect();
+			_device.onConnect(central->connectionHandle);
 			// check for event handlers
 			BleEventHandlerRegistration registration;
 			result = getBleEventHandlerRegistration(BLEConnected, registration);
@@ -109,7 +110,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_DISCOVER: {
 			if (central->eventDiscover.valueHandle == 0) {
 				// discovered a service
-				BleService service(&central->eventDiscover.uuid, true);
+				BleService service(&central->eventDiscover.uuid);
 				if (_remoteServiceCount >= MAX_REMOTE_SERVICES) {
 					return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
 				}
@@ -123,6 +124,9 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 			}
 			else {
 				// discovered a characteristic
+				if (_remoteCharacteristicCount >= MAX_REMOTE_CHARACTERISTICS) {
+					return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
+				}
 				uint8_t properties = 0;
 				if (central->eventDiscover.options.read) {
 					properties |= BleCharacteristicProperties::BLERead;
@@ -140,13 +144,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 					properties |= BleCharacteristicProperties::BLEIndicate;
 				}
 				BleCharacteristic characteristic(&central->eventDiscover.uuid, properties);
-				if (central->eventDiscover.options.autoNotify) {
-					characteristic._flags.flags.subscribed = true;
-				}
 				characteristic._handle = central->eventDiscover.valueHandle;
-				if (_remoteCharacteristicCount >= MAX_REMOTE_CHARACTERISTICS) {
-					return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
-				}
 				_remoteCharacteristics[_remoteCharacteristicCount] = characteristic;
 				// add to device
 				Uuid serviceUuid(central->eventDiscover.serviceUuid.uuid);
@@ -177,7 +175,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 				return result;
 			}
 			// set flag so that blocking writeValue function can return
-			characteristic._flags.flags.valueWritten = true;
+			characteristic._flags.flags.writtenToRemote = true;
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_READ: {
@@ -196,7 +194,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 			memcpy(characteristic._value, central->eventRead.data, size);
 			characteristic._valueLength = size;
 			// set flag so that blocking readValue function can return
-			characteristic._flags.flags.valueRead = true;
+			characteristic._flags.flags.remoteValueRead = true;
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_NOTIFICATION: {
@@ -215,7 +213,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 			// only set new value length so user may request new length
 			characteristic._valueLength = size;
 			// set flag so user may poll whether notify happened
-			characteristic._flags.flags.valueUpdated = true;
+			characteristic._flags.flags.remoteValueUpdated = true;
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		default: {
@@ -230,8 +228,8 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL_EVENT_CONNECT: {
 			// Build central device
 			_device = BleDevice(
-					MacAddress(peripheral->eventConnect.address.address, peripheral->eventConnect.address.type));
-			_device.onConnect();
+					MacAddress(peripheral->eventConnect.address.address, MAC_ADDRESS_LENGTH, peripheral->eventConnect.address.type));
+			_device.onConnect(peripheral->connectionHandle);
 			// check for event handlers
 			BleEventHandlerRegistration registration;
 			result = getBleEventHandlerRegistration(BLEConnected, registration);
@@ -261,7 +259,7 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			characteristic._flags.flags.written = true;
+			characteristic._flags.flags.writtenAsLocal = true;
 			BleEventHandlerRegistration registration;
 			result = getBleEventHandlerRegistration(BLEWritten, registration);
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
@@ -316,7 +314,7 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			characteristic._flags.flags.notificationDone = true;
+			characteristic._flags.flags.localNotificationDone = true;
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		default: {
@@ -596,6 +594,7 @@ bool Ble::matchesFilter(BleScan scan, MacAddress address) {
 				return false;
 			}
 			// compare local name to name in filter
+			// in the ad, name is not zero terminated, so use length of name provided by user
 			if (memcmp(localName.data, _scanFilter.localName, _scanFilter.localNameLen) != 0) {
 				return false;
 			}

@@ -16,10 +16,10 @@ void loop() {
 	controlCommand->type = 20; // switch
 	controlCommand->size = 1;
 	if (state) {
-		*controlCommand->payload = 100;
+		controlCommand->payload[0] = 100;
 	}
 	else {
-		*controlCommand->payload = 0;
+		controlCommand->payload[0] = 0;
 	}
 	sendMessage();
 }

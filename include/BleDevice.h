@@ -29,6 +29,8 @@ private:
 	MacAddress _address;
 	rssi_t _rssi;
 
+	uint16_t _connectionHandle = 0;
+
 	// Services with characteristics for peripheral devices
 	static const uint8_t MAX_SERVICES = 2;
 	BleService* _services[MAX_SERVICES];  // array of pointers
@@ -36,11 +38,16 @@ private:
 
 	union __attribute__((packed)) flags_t {
 		struct __attribute__((packed)) {
-			bool initialized : 1;    // device is initialized with nondefault constructor
-			bool connected : 1;      // whether device is connected
-			bool isCentral : 1;      // device has central role
-			bool isPeripheral : 1;   // device has peripheral role
-			bool discoveryDone : 1;  // discovery has been completed (only for peripheral device)
+			// device is initialized with nondefault constructor
+			bool initialized : 1;
+			// whether device is connected
+			bool connected : 1;
+			// device has central role
+			bool isCentral : 1;
+			// device has peripheral role
+			bool isPeripheral : 1;
+			// discovery has been completed (only for peripheral device)
+			bool discoveryDone : 1;
 		} flags;
 		uint8_t asInt = 0;  // initialize to zero
 	} _flags;
@@ -48,7 +55,7 @@ private:
 	/**
 	 * Sets internal connected flag
 	 */
-	void onConnect();
+	void onConnect(uint16_t connectionHandle);
 
 	/**
 	 * Clear internal connected flag
@@ -104,9 +111,9 @@ public:
 	/**
 	 * Poll for BLE events and handle them
 	 *
-	 * @param timeout
+	 * @param timeout in milliseconds
 	 */
-	void poll(int timeout = 0);
+	void poll(uint32_t timeout = 0);
 
 	/**
 	 * Query if a BLE device is connected

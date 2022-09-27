@@ -22,11 +22,15 @@ private:
 
 	union __attribute__((packed)) flags_t {
 		struct __attribute__((packed)) {
-			bool initialized : 1;  // whether characteristic is empty or not
-			bool remote : 1;       // whether characteristic is local or remote
-			bool added : 1;        // (only for local service) whether service has been added to bluenet
+			//! whether characteristic is empty or not
+			bool initialized : 1;
+			//! whether characteristic is local or remote
+			bool remote : 1;
+			//! (only for local service) whether service has been added to bluenet
+			bool added : 1;
 		} flags;
-		uint8_t asInt = 0;  // initialize to zero
+		// initialize to zero
+		uint8_t asInt = 0;
 	} _flags;
 
 	Uuid _uuid;

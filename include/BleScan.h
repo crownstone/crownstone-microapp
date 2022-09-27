@@ -4,6 +4,12 @@
 #include <String.h>
 #include <microapp.h>
 
+/**
+ * Struct representing BLE ad. Note that it contains a pointer to data, not the data itself
+ * @param type indicates the GAP ad type, see GAPAdvType enum
+ * @param len length of the ad, including this len field but excluding type field
+ * @param data pointer to ad data which has valid data of size (len-1)
+ */
 struct ble_ad_t {
 	uint8_t type  = 0;
 	uint8_t len   = 0;
@@ -25,7 +31,8 @@ private:
 	uint8_t _scanSize = 0;
 
 	/**
-	 * Tries to find an ad of specified GAP ad data type. and if found returns true and a pointer to its location.
+	 * Tries to find an ad of specified GAP ad data type in the raw scan data
+	 * If found returns true and a ble_ad_t with ad type, length and pointer to its data
 	 *
 	 * @param[in] type          GAP advertisement type
 	 * @param[out] foundData    ad containing a pointer to data and its length

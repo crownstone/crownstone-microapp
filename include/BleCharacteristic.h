@@ -21,6 +21,12 @@ microapp_sdk_result_t registerBleEventHandler(BleEventType eventType, BleEventHa
 microapp_sdk_result_t getBleEventHandlerRegistration(BleEventType eventType, BleEventHandlerRegistration& registration);
 microapp_sdk_result_t removeBleEventHandlerRegistration(BleEventType eventType);
 
+
+/**
+ * Class for storing a characteristic. A characteristic is a container for data.
+ * The class can be used for both remote characteristics (i.e. data exists on a remote peripheral device)
+ * and for local characteristic (i.e. the crownstone is the peripheral)
+ */
 class BleCharacteristic {
 
 private:
@@ -41,17 +47,27 @@ private:
 
 	union __attribute__((packed)) flags_t {
 		struct __attribute__((packed)) {
-			bool initialized : 1;   // whether characteristic is empty or not
-			bool remote : 1;        // whether characteristic is local or remote
-			bool added : 1;         // (only for local characteristics) whether characteristic has been added to bluenet
-			bool subscribed : 1;    // (only for local characteristics) whether characteristic is subscribed to
-			bool written : 1;       // (only for local characteristics) whether characteristic is written to
-			bool valueUpdated : 1;  // (only for remote characteristics) whether EVENT_NOTIFICATION has happened
-			bool valueRead : 1;     // (only for remote characteristics) whether EVENT_READ has happened
-			bool valueWritten : 1;  // (only for remote characteristics) whether EVENT_WRITE has happened
-			bool notificationDone : 1;  // (only for local characteristics) whether notification is done
+			//! whether characteristic is empty or not
+			bool initialized : 1;
+			//! whether characteristic is local or remote
+			bool remote : 1;
+			//! (only for local characteristics) whether characteristic has been added to bluenet
+			bool added : 1;
+			//! (only for local characteristics) whether characteristic is subscribed to
+			bool subscribed : 1;
+			//! (only for local characteristics) whether characteristic is written to
+			bool writtenAsLocal : 1;
+			//! (only for local characteristics) whether notification is done
+			bool localNotificationDone : 1;
+			//! (only for remote characteristics) whether EVENT_NOTIFICATION has happened
+			bool remoteValueUpdated : 1;
+			//! (only for remote characteristics) whether EVENT_READ has happened
+			bool remoteValueRead : 1;
+			//! (only for remote characteristics) whether EVENT_WRITE has happened
+			bool writtenToRemote : 1;
 		} flags;
-		uint16_t asInt = 0;  // initialize to zero
+		// initialize to zero
+		uint16_t asInt = 0;
 	} _flags;
 
 	uint8_t _properties   = 0;
