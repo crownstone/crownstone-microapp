@@ -156,6 +156,16 @@ private:
 	 */
 	microapp_sdk_result_t readValueRemote(uint8_t* buffer, uint16_t length, uint32_t timeout = 5000);
 
+
+	microapp_sdk_result_t onRemoteWritten();
+	microapp_sdk_result_t onRemoteRead(microapp_sdk_ble_central_event_read_t* eventRead);
+	microapp_sdk_result_t onRemoteNotification(microapp_sdk_ble_central_event_notification_t* eventNotification);
+
+	microapp_sdk_result_t onLocalWritten();
+	microapp_sdk_result_t onLocalSubscribed();
+	microapp_sdk_result_t onLocalUnsubscribed();
+	microapp_sdk_result_t onLocalNotificationDone();
+
 public:
 	explicit operator bool() const;
 

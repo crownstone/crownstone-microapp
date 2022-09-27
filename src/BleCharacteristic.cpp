@@ -287,6 +287,60 @@ microapp_sdk_result_t BleCharacteristic::readValueRemote(uint8_t* buffer, uint16
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
+microapp_sdk_result_t BleCharacteristic::onRemoteWritten() {
+	_flags.flags.writtenToRemote = true;
+	return CS_MICROAPP_SDK_ACK_SUCCESS;
+}
+
+microapp_sdk_result_t BleCharacteristic::onRemoteRead(microapp_sdk_ble_central_event_read_t* eventRead) {
+	// Data size is limited by valueSize of characteristic
+	uint8_t size = eventRead->size;
+	if (size > _valueSize) {
+		size = _valueSize;
+	}
+	// Copy data to value pointer
+	memcpy(_value, eventRead->data, size);
+	_valueLength = size;
+	// Set flag so that blocking readValue function can return
+	_flags.flags.remoteValueRead = true;
+	return CS_MICROAPP_SDK_ACK_SUCCESS;
+}
+
+microapp_sdk_result_t BleCharacteristic::onRemoteNotification(microapp_sdk_ble_central_event_notification_t* eventNotification) {
+	// Data size is limited by valueSize of characteristic
+	uint8_t size = eventNotification->size;
+	if (size > _valueSize) {
+		size = _valueSize;
+	}
+	// Do not copy data. That can be done using readValue,
+	// where the user provides a buffer to copy the data to.
+	// Only set new value length so user may request new length
+	_valueLength = size;
+	// Set flag so user may poll whether notify happened
+	_flags.flags.remoteValueUpdated = true;
+	return CS_MICROAPP_SDK_ACK_SUCCESS;
+}
+
+microapp_sdk_result_t BleCharacteristic::onLocalWritten() {
+	_flags.flags.writtenAsLocal = true;
+	return CS_MICROAPP_SDK_ACK_SUCCESS;
+}
+
+microapp_sdk_result_t BleCharacteristic::onLocalSubscribed() {
+	_flags.flags.subscribed = true;
+	return CS_MICROAPP_SDK_ACK_SUCCESS;
+}
+
+microapp_sdk_result_t BleCharacteristic::onLocalUnsubscribed() {
+	_flags.flags.subscribed = false;
+	return CS_MICROAPP_SDK_ACK_SUCCESS;
+}
+
+microapp_sdk_result_t BleCharacteristic::onLocalNotificationDone() {
+	_flags.flags.localNotificationDone = true;
+	return CS_MICROAPP_SDK_ACK_SUCCESS;
+}
+
 String BleCharacteristic::uuid() {
 	if (!_flags.flags.initialized) {
 		return String(nullptr);

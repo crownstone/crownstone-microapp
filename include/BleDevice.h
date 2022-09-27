@@ -24,11 +24,15 @@ private:
 	// constructor from connect (central)
 	BleDevice(MacAddress address);
 
-	uint8_t _scanData[MAX_BLE_ADV_DATA_LENGTH];  // raw scan data
-	BleScan _scan;                               // wrapper class pointing to _scanData
-	MacAddress _address;
-	rssi_t _rssi;
+	// raw scan data
+	uint8_t _scanData[MAX_BLE_ADV_DATA_LENGTH];
+	// wrapper class pointing to _scanData
+	BleScan _scan;
 
+	MacAddress _address;
+	rssi_t _rssi = 127;
+
+	// connectionHandle used internally for communication with bluenet
 	uint16_t _connectionHandle = 0;
 
 	// Services with characteristics for peripheral devices

@@ -30,7 +30,13 @@ void BleDevice::onConnect(uint16_t connectionHandle) {
 
 // Defined for both central and peripheral devices
 void BleDevice::onDisconnect() {
-	_flags.flags.connected = false;
+	// clean up
+	_address = MacAddress();
+	_scan = BleScan();
+	_rssi = 127;
+	_serviceCount = 0;
+	_connectionHandle = 0;
+	_flags.asInt = 0;
 }
 
 // Only defined for peripheral devices

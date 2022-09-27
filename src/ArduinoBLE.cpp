@@ -175,8 +175,8 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 				return result;
 			}
 			// set flag so that blocking writeValue function can return
-			characteristic._flags.flags.writtenToRemote = true;
-			return CS_MICROAPP_SDK_ACK_SUCCESS;
+			result = characteristic.onRemoteWritten();
+			return result;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_READ: {
 			result = (microapp_sdk_result_t)central->eventRead.result;
@@ -185,17 +185,11 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 			}
 			BleCharacteristic characteristic;
 			result = _device.getCharacteristic(central->eventRead.valueHandle, characteristic);
-			// data size is limited by valueSize of characteristic
-			uint8_t size = central->eventRead.size;
-			if (size > characteristic._valueSize) {
-				size = characteristic._valueSize;
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				return result;
 			}
-			// copy data to value pointer
-			memcpy(characteristic._value, central->eventRead.data, size);
-			characteristic._valueLength = size;
-			// set flag so that blocking readValue function can return
-			characteristic._flags.flags.remoteValueRead = true;
-			return CS_MICROAPP_SDK_ACK_SUCCESS;
+			result = characteristic.onRemoteRead(&central->eventRead);
+			return result;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_NOTIFICATION: {
 			BleCharacteristic characteristic;
@@ -203,18 +197,8 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			// data size is limited by valueSize of characteristic
-			uint8_t size = central->eventNotification.size;
-			if (size > characteristic._valueSize) {
-				size = characteristic._valueSize;
-			}
-			// do not copy data. That can be done using readValue,
-			// where the user provides a buffer to copy to
-			// only set new value length so user may request new length
-			characteristic._valueLength = size;
-			// set flag so user may poll whether notify happened
-			characteristic._flags.flags.remoteValueUpdated = true;
-			return CS_MICROAPP_SDK_ACK_SUCCESS;
+			result = characteristic.onRemoteNotification(&central->eventNotification);
+			return result;
 		}
 		default: {
 			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
@@ -253,13 +237,15 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL_EVENT_WRITE: {
-			// Set written flag
 			BleCharacteristic characteristic;
 			result = getLocalCharacteristic(peripheral->handle, characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			characteristic._flags.flags.writtenAsLocal = true;
+			result = characteristic.onLocalWritten();
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				return result;
+			}
 			BleEventHandlerRegistration registration;
 			result = getBleEventHandlerRegistration(BLEWritten, registration);
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
@@ -274,13 +260,15 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
 		}
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL_EVENT_SUBSCRIBE: {
-			// Set subscribed flag
 			BleCharacteristic characteristic;
 			result = getLocalCharacteristic(peripheral->handle, characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			characteristic._flags.flags.subscribed = true;
+			result = characteristic.onLocalSubscribed();
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				return result;
+			}
 			BleEventHandlerRegistration registration;
 			result = getBleEventHandlerRegistration(BLESubscribed, registration);
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
@@ -291,13 +279,15 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL_EVENT_UNSUBSCRIBE: {
-			// Clear subscribed flag
 			BleCharacteristic characteristic;
 			result = getLocalCharacteristic(peripheral->handle, characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			characteristic._flags.flags.subscribed = false;
+			result = characteristic.onLocalUnsubscribed();
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				return result;
+			}
 			BleEventHandlerRegistration registration;
 			result = getBleEventHandlerRegistration(BLEUnsubscribed, registration);
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
@@ -308,14 +298,13 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL_EVENT_NOTIFICATION_DONE: {
-			// Set notificationDone flag
 			BleCharacteristic characteristic;
 			result = getLocalCharacteristic(peripheral->handle, characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			characteristic._flags.flags.localNotificationDone = true;
-			return CS_MICROAPP_SDK_ACK_SUCCESS;
+			result = characteristic.onLocalNotificationDone();
+			return result;
 		}
 		default: {
 			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
