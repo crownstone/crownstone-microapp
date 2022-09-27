@@ -416,12 +416,12 @@ bool Ble::connected() {
 	return _device.connected();
 }
 
-bool Ble::disconnect() {
+bool Ble::disconnect(uint32_t timeout) {
 	if (!_device.connected() || !_flags.flags.initialized) {
 		return false;
 	}
 	else {
-		return _device.disconnect();
+		return _device.disconnect(timeout);
 	}
 }
 

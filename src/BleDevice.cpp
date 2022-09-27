@@ -106,7 +106,7 @@ bool BleDevice::connected() {
 }
 
 // Defined for both central and peripheral devices
-bool BleDevice::disconnect() {
+bool BleDevice::disconnect(uint32_t timeout) {
 	// this is a blocking function
 	if (!_flags.flags.connected) {
 		return false;
@@ -129,7 +129,7 @@ bool BleDevice::disconnect() {
 	if (bleRequest->header.ack != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		return false;
 	}
-	uint8_t tries = 5;
+	uint8_t tries = timeout / 1000;
 	while (_flags.flags.connected) {
 		// yield. Upon a disconnect event flag will be cleared
 		delay(1000);
@@ -159,7 +159,7 @@ bool BleDevice::discoverAttributes() {
 }
 
 // Only defined for peripheral devices
-bool BleDevice::discoverService(const char* serviceUuid) {
+bool BleDevice::discoverService(const char* serviceUuid, uint32_t timeout) {
 	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
 		return false;
 	}
@@ -187,7 +187,7 @@ bool BleDevice::discoverService(const char* serviceUuid) {
 		return false;
 	}
 	// now block until discovery done
-	uint8_t tries = 5;
+	uint8_t tries = timeout / 1000;
 	while (!_flags.flags.discoveryDone) {
 		// yield. Upon a discovery done event flag will be set
 		delay(1000);
@@ -314,7 +314,7 @@ String BleDevice::localName() {
 }
 
 // Only defined for peripheral devices
-bool BleDevice::connect() {
+bool BleDevice::connect(uint32_t timeout) {
 	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
 		return false;
 	}
@@ -345,7 +345,7 @@ bool BleDevice::connect() {
 	if (bleRequest->header.ack != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		return false;
 	}
-	uint8_t tries = 5;
+	uint8_t tries = timeout / 1000;
 	while (!_flags.flags.connected) {
 		// yield. Upon a disconnect event flag will be cleared
 		delay(1000);

@@ -126,10 +126,11 @@ public:
 	/**
 	 * Disconnect the BLE device, if connected
 	 *
+	 * @param timeout in milliseconds
 	 * @return true if the BLE device was disconnected
 	 * @return false otherwise
 	 */
-	bool disconnect();
+	bool disconnect(uint32_t timeout = 5000);
 
 	/**
 	 * Get device address of the last scanned advertisement which matched the filter.
@@ -156,10 +157,12 @@ public:
 	/**
 	 * Discover the attributes of a particular service on the BLE device
 	 *
+	 * @param serviceUuid string containing uuid of the service to be discovered
+	 * @param timeout in milliseconds
 	 * @return true if successful
 	 * @return false on failure
 	 */
-	bool discoverService(const char* serviceUuid);
+	bool discoverService(const char* serviceUuid, uint32_t timeout = 5000);
 
 	/**
 	 * Query the numer of services discovered for the BLE device
@@ -226,10 +229,11 @@ public:
 	/**
 	 * Connect to a BLE device
 	 *
+	 * @param timeout in milliseconds
 	 * @return true if the connection was successful
 	 * @return false otherwise
 	 */
-	bool connect();
+	bool connect(uint32_t timeout = 5000);
 
 	/**
 	 * Find an advertisement of type type in the scanned advertisement data

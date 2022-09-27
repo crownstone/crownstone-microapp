@@ -211,10 +211,11 @@ public:
 	/**
 	 * Disconnect any BLE devices that are connected
 	 *
+	 * @param timeout timeout in milliseconds
 	 * @return true if any BLE device that was previously connected was disconnected
 	 * @return false otherwise
 	 */
-	bool disconnect();
+	bool disconnect(uint32_t timeout = 5000);
 
 	/**
 	 * Query the Bluetooth address of the BLE device
@@ -243,13 +244,6 @@ public:
 	 * @return BleDevice representing the central
 	 */
 	BleDevice& central();
-
-	/**
-	 * Set if the device is connectable after advertising, defaults to true
-	 *
-	 * @param connectable if true the device will be connectable, if false not connectable
-	 */
-	void setConnectable(bool connectable);
 
 	/**
 	 * Sends command to bluenet to call registered microapp callback function upon receiving advertisements

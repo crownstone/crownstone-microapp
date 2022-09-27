@@ -156,7 +156,7 @@ microapp_sdk_result_t BleCharacteristic::writeValueLocal(uint8_t* buffer, uint16
 }
 
 // Only defined for remote characteristics
-microapp_sdk_result_t BleCharacteristic::writeValueRemote(uint8_t* buffer, uint16_t length) {
+microapp_sdk_result_t BleCharacteristic::writeValueRemote(uint8_t* buffer, uint16_t length, uint32_t timeout) {
 	if (!_flags.flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}
@@ -187,7 +187,7 @@ microapp_sdk_result_t BleCharacteristic::writeValueRemote(uint8_t* buffer, uint1
 		return result;
 	}
 	// Block until write event happens
-	uint8_t tries = 5;
+	uint8_t tries = timeout / 1000;
 	while (!_flags.flags.writtenToRemote) {
 		// yield. Upon a write event flag will be set
 		delay(1000);
@@ -201,7 +201,7 @@ microapp_sdk_result_t BleCharacteristic::writeValueRemote(uint8_t* buffer, uint1
 }
 
 // Only defined for local characteristics
-microapp_sdk_result_t BleCharacteristic::notify() {
+microapp_sdk_result_t BleCharacteristic::notify(uint32_t timeout) {
 	if (!_flags.flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}
@@ -229,7 +229,7 @@ microapp_sdk_result_t BleCharacteristic::notify() {
 		return result;
 	}
 	// Block until notification_done event happens
-	uint8_t tries = 5;
+	uint8_t tries = timeout / 1000;
 	while (!_flags.flags.localNotificationDone) {
 		// yield. Upon a notification_done event flag will be set
 		delay(1000);
@@ -243,7 +243,7 @@ microapp_sdk_result_t BleCharacteristic::notify() {
 }
 
 // Only defined for remote characteristics
-microapp_sdk_result_t BleCharacteristic::readValueRemote(uint8_t* buffer, uint16_t length) {
+microapp_sdk_result_t BleCharacteristic::readValueRemote(uint8_t* buffer, uint16_t length, uint32_t timeout) {
 	if (length > MAX_CHARACTERISTIC_VALUE_SIZE) {
 		length = MAX_CHARACTERISTIC_VALUE_SIZE;
 	}
@@ -270,7 +270,7 @@ microapp_sdk_result_t BleCharacteristic::readValueRemote(uint8_t* buffer, uint16
 		return result;
 	}
 	// Block until read event happens
-	uint8_t tries = 5;
+	uint8_t tries = timeout / 1000;
 	while (!_flags.flags.remoteValueRead) {
 		// yield. Upon a read event flag will be set
 		delay(1000);
@@ -404,7 +404,7 @@ bool BleCharacteristic::canSubscribe() {
 }
 
 // Only defined for remote characteristics
-bool BleCharacteristic::subscribe() {
+bool BleCharacteristic::subscribe(uint32_t timeout) {
 	if (!_flags.flags.initialized || !_flags.flags.remote) {
 		return false;
 	}
@@ -426,7 +426,7 @@ bool BleCharacteristic::subscribe() {
 		return false;
 	}
 	// Block until write event happens
-	uint8_t tries = 5;
+	uint8_t tries = timeout / 1000;
 	while (!_flags.flags.writtenToRemote) {
 		// yield. Upon a write event flag will be set
 		delay(1000);
@@ -448,7 +448,7 @@ bool BleCharacteristic::canUnsubscribe() {
 }
 
 // Only defined for remote characteristics
-bool BleCharacteristic::unsubscribe() {
+bool BleCharacteristic::unsubscribe(uint32_t timeout) {
 	if (!_flags.flags.initialized || !_flags.flags.remote) {
 		return false;
 	}
@@ -470,7 +470,7 @@ bool BleCharacteristic::unsubscribe() {
 		return false;
 	}
 	// Block until write event happens
-	uint8_t tries = 5;
+	uint8_t tries = timeout / 1000;
 	while (!_flags.flags.writtenToRemote) {
 		// yield. Upon a write event flag will be set
 		delay(1000);
