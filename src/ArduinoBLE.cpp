@@ -338,7 +338,20 @@ microapp_sdk_result_t Ble::getLocalCharacteristic(uint16_t handle, BleCharacteri
 }
 
 bool Ble::begin() {
-	// todo: make roundtrip to bluenet to request own ble address
+	// send a message to bluenet requesting own address
+	uint8_t* payload               = getOutgoingMessagePayload();
+	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
+	bleRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
+	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
+	bleRequest->type               = CS_MICROAPP_SDK_BLE_MAC;
+
+	sendMessage();
+
+	bool success = (bleRequest->header.ack == CS_MICROAPP_SDK_ACK_SUCCESS);
+	if (!success) {
+		return false;
+	}
+	_address = MacAddress(bleRequest->requestMac.address.address, MAC_ADDRESS_LENGTH, bleRequest->requestMac.address.type);
 	_flags.flags.initialized = true;
 	return true;
 }
