@@ -42,7 +42,7 @@ void setup() {
 	Serial.begin();
 
 	// Write something to the log (will be shown in the bluenet code as print statement).
-	Serial.println("BLE scanner example");
+	Serial.println("BLE peripheral example");
 
 	if (!BLE.begin()) {
 		Serial.println("BLE.begin failed");

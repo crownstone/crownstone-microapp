@@ -56,18 +56,33 @@ void setup() {
 	delay(2000);
 
 	if (uuid_1 == uuid_2) {
-		Serial.println("Equal");
+		Serial.println("1 and 2 are equal");
 	}
 	else {
-		Serial.println("Not equal");
+		Serial.println("1 and 2 are not equal");
+	}
+	if (uuid_2 != uuid_3) {
+		Serial.println("2 and 3 are not equal");
+	}
+	else {
+		Serial.println("2 and 3 are equal");
 	}
 
-	Uuid uuid_6("INVALID1-ABCD-1234-5678-ABCDEF123456");
+	// Contains invalid characters
+	Uuid uuid_6("INVALID8-ABCD-1234-5678-ABCDEF123456");
 	if (uuid_6) {
-		Serial.println("Valid");
+		Serial.println("6 is valid");
 	}
 	else {
-		Serial.println("Invalid");
+		Serial.println("6 is invalid");
+	}
+	// Wrong length
+	Uuid uuid_7("1234567-ABCD-1234-5678-ABCDEF123456");
+	if (uuid_7) {
+		Serial.println("7 is valid");
+	}
+	else {
+		Serial.println("7 is invalid");
 	}
 	Serial.println("-----");
 

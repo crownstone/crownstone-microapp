@@ -52,11 +52,11 @@ Uuid::operator bool() const {
 }
 
 bool Uuid::operator==(const Uuid& other) {
-	return memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) == 0;
+	return (memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) == 0);
 }
 
 bool Uuid::operator!=(const Uuid& other) {
-	return memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) != 0;
+	return (memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) != 0);
 }
 
 bool Uuid::registered() {
