@@ -92,13 +92,13 @@ private:
 	 * Get a characteristic based on its handle (for peripheral devices)
 	 *
 	 * @param[in] handle the handle of the characteristic
-	 * @param[out] characteristic if found, reference to characteristic will be placed here
+	 * @param[out] characteristic if found, pointer to characteristic pointer will be placed here
 	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
 	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if device is not initialized
 	 * @return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED if device does not perform peripheral role
 	 * @return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND if characteristic was not found in services
 	 */
-	microapp_sdk_result_t getCharacteristic(uint16_t handle, BleCharacteristic& characteristic);
+	microapp_sdk_result_t getCharacteristic(uint16_t handle, BleCharacteristic** characteristic);
 
 public:
 	// return true if BleDevice is nontrivial, i.e. initialized from an actual advertisement

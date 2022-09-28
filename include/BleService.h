@@ -52,13 +52,13 @@ private:
 	 * Get a characteristic based on its handle
 	 *
 	 * @param[in] handle the handle of the characteristic
-	 * @param[out] characteristic if found, reference to characteristic will be placed here
+	 * @param[out] characteristic if found, pointer to characteristic pointer will be placed here
 	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
 	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if service not initialized
 	 * @return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND if characteristic is not found
 	 * @return microapp_sdk_result_t specifying other error
 	 */
-	microapp_sdk_result_t getCharacteristic(uint16_t handle, BleCharacteristic& characteristic);
+	microapp_sdk_result_t getCharacteristic(uint16_t handle, BleCharacteristic** characteristic);
 
 	/**
 	 * Internally add a remote discovered characteristic

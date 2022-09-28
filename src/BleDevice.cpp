@@ -60,7 +60,7 @@ microapp_sdk_result_t BleDevice::addDiscoveredCharacteristic(BleCharacteristic* 
 }
 
 // Only defined for peripheral devices
-microapp_sdk_result_t BleDevice::getCharacteristic(uint16_t handle, BleCharacteristic& characteristic) {
+microapp_sdk_result_t BleDevice::getCharacteristic(uint16_t handle, BleCharacteristic** characteristic) {
 	if (!_flags.flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}

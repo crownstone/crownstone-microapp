@@ -5,17 +5,14 @@
  * A microapp example for acting as a BLE peripheral
  */
 
+uint16_t loopCounter = 0;
+
 // This is the value to be used in the temperature characteristic
 float temperatureCelsius = 22.5;
 static const uint8_t NR_TEMPERATURE_BYTES = 1;
 uint8_t temperatureValue[NR_TEMPERATURE_BYTES] = {0x7F};
-// See Bluetooth SIG assigned numbers for the 16-bit UUIDs
-// 0x181A: Environmental Sensing
-BleService temperatureService("181A");
-// 0x2B0D: Temperature 8
-BleCharacteristic temperatureCharacteristic("2B0D", BleCharacteristicProperties::BLERead,
-	temperatureValue, NR_TEMPERATURE_BYTES);
-
+BleService temperatureService;
+BleCharacteristic temperatureCharacteristic;
 
 void updateTemperature() {
 	// Simulate some temperature changes
@@ -48,6 +45,13 @@ void setup() {
 		Serial.println("BLE.begin failed");
 		return;
 	}
+	// See Bluetooth SIG assigned numbers for the 16-bit UUIDs
+	// 0x181A: Environmental Sensing
+	temperatureService = BleService("181A");
+	// 0x2B0D: Temperature 8
+	temperatureCharacteristic = BleCharacteristic("2B0D",
+		BleCharacteristicProperties::BLERead | BleCharacteristicProperties::BLENotify,
+		temperatureValue, NR_TEMPERATURE_BYTES);
 
 	// Register scan handler
 	if (!BLE.setEventHandler(BLEConnected, onCentralConnected)) {
@@ -58,6 +62,7 @@ void setup() {
 		Serial.println("Setting event handler failed");
 		return;
 	}
+	Serial.println(BLE.address());
 	temperatureService.addCharacteristic(temperatureCharacteristic);
 	BLE.addService(temperatureService);
 	temperatureCharacteristic.writeValue(temperatureValue, NR_TEMPERATURE_BYTES);
@@ -65,13 +70,18 @@ void setup() {
 
 // The Arduino loop function.
 void loop() {
-	updateTemperature();
+	if (loopCounter++ % 10 == 0) {
+		updateTemperature();
+		// New temperature advertised in characteristic
+		Serial.println("New temperature: ");
+		Serial.println(temperatureCelsius);
+	}
 
-	// central returns a reference. Making copies can break stuff
+	// Central returns a reference. Making copies can break stuff
 	BleDevice& central = BLE.central();
 
 	if (central) {
-		Serial.println("Central device connected");
+		Serial.println("Connected to central device with address:");
 		Serial.println(central.address());
 	}
 }

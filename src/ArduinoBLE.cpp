@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <ArduinoBLE.h>
 
+#include <Serial.h>
+
 /*
  * An ordinary C function. Calls internal handler
  */
@@ -166,13 +168,13 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			BleCharacteristic characteristic;
-			result = _device.getCharacteristic(central->eventNotification.valueHandle, characteristic);
+			BleCharacteristic* characteristic;
+			result = _device.getCharacteristic(central->eventNotification.valueHandle, &characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
 			// set flag so that blocking writeValue function can return
-			result = characteristic.onRemoteWritten();
+			result = characteristic->onRemoteWritten();
 			return result;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_READ: {
@@ -180,21 +182,21 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			BleCharacteristic characteristic;
-			result = _device.getCharacteristic(central->eventRead.valueHandle, characteristic);
+			BleCharacteristic* characteristic;
+			result = _device.getCharacteristic(central->eventRead.valueHandle, &characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			result = characteristic.onRemoteRead(&central->eventRead);
+			result = characteristic->onRemoteRead(&central->eventRead);
 			return result;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_NOTIFICATION: {
-			BleCharacteristic characteristic;
-			result = _device.getCharacteristic(central->eventNotification.valueHandle, characteristic);
+			BleCharacteristic* characteristic;
+			result = _device.getCharacteristic(central->eventNotification.valueHandle, &characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			result = characteristic.onRemoteNotification(&central->eventNotification);
+			result = characteristic->onRemoteNotification(&central->eventNotification);
 			return result;
 		}
 		default: {
@@ -225,7 +227,7 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			_device.onDisconnect();
 			// check for event handlers
 			BleEventHandlerRegistration registration;
-			result = getBleEventHandlerRegistration(BLEConnected, registration);
+			result = getBleEventHandlerRegistration(BLEDisconnected, registration);
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 				// call callback
 				DeviceEventHandler handler = (DeviceEventHandler)registration.eventHandler;
@@ -234,12 +236,12 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL_EVENT_WRITE: {
-			BleCharacteristic characteristic;
-			result = getLocalCharacteristic(peripheral->handle, characteristic);
+			BleCharacteristic* characteristic;
+			result = getLocalCharacteristic(peripheral->handle, &characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			result = characteristic.onLocalWritten();
+			result = characteristic->onLocalWritten();
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
@@ -248,7 +250,7 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 				// call callback
 				CharacteristicEventHandler handler = (CharacteristicEventHandler)registration.eventHandler;
-				handler(_device, characteristic);
+				handler(_device, *characteristic);
 			}
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
@@ -257,12 +259,12 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			return CS_MICROAPP_SDK_ACK_ERR_NOT_IMPLEMENTED;
 		}
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL_EVENT_SUBSCRIBE: {
-			BleCharacteristic characteristic;
-			result = getLocalCharacteristic(peripheral->handle, characteristic);
+			BleCharacteristic* characteristic;
+			result = getLocalCharacteristic(peripheral->handle, &characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			result = characteristic.onLocalSubscribed();
+			result = characteristic->onLocalSubscribed();
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
@@ -271,17 +273,17 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 				// call callback
 				CharacteristicEventHandler handler = (CharacteristicEventHandler)registration.eventHandler;
-				handler(_device, characteristic);
+				handler(_device, *characteristic);
 			}
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL_EVENT_UNSUBSCRIBE: {
-			BleCharacteristic characteristic;
-			result = getLocalCharacteristic(peripheral->handle, characteristic);
+			BleCharacteristic* characteristic;
+			result = getLocalCharacteristic(peripheral->handle, &characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			result = characteristic.onLocalUnsubscribed();
+			result = characteristic->onLocalUnsubscribed();
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
@@ -290,17 +292,17 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 				// call callback
 				CharacteristicEventHandler handler = (CharacteristicEventHandler)registration.eventHandler;
-				handler(_device, characteristic);
+				handler(_device, *characteristic);
 			}
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL_EVENT_NOTIFICATION_DONE: {
-			BleCharacteristic characteristic;
-			result = getLocalCharacteristic(peripheral->handle, characteristic);
+			BleCharacteristic* characteristic;
+			result = getLocalCharacteristic(peripheral->handle, &characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			result = characteristic.onLocalNotificationDone();
+			result = characteristic->onLocalNotificationDone();
 			return result;
 		}
 		default: {
@@ -310,7 +312,7 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 }
 
 // Only defined for peripheral
-microapp_sdk_result_t Ble::getLocalCharacteristic(uint16_t handle, BleCharacteristic& characteristic) {
+microapp_sdk_result_t Ble::getLocalCharacteristic(uint16_t handle, BleCharacteristic** characteristic) {
 	if (!_flags.flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}

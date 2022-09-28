@@ -163,13 +163,13 @@ private:
 	 * Get a characteristic based on its handle (for peripheral role)
 	 *
 	 * @param[in] handle the handle of the characteristic
-	 * @param[out] characteristic if found, reference to characteristic will be placed here
+	 * @param[out] characteristic if found, pointer to characteristic pointer will be placed here
 	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if BLE not initialized (BLE.begin() not called)
 	 * @return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND if characteristic not found (BLE.addService() or
 	 * service.addCharacteristic() not called)
 	 * @return CS_MICROAPP_SDK_ACK_SUCCESS if found
 	 */
-	microapp_sdk_result_t getLocalCharacteristic(uint16_t handle, BleCharacteristic& characteristic);
+	microapp_sdk_result_t getLocalCharacteristic(uint16_t handle, BleCharacteristic** characteristic);
 
 public:
 	// Should be called via BLE macro (e.g. BLE.begin())

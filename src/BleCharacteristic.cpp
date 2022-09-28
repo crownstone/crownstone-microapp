@@ -42,7 +42,10 @@ microapp_sdk_result_t BleCharacteristic::addLocalCharacteristic(uint16_t service
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
 	microapp_sdk_result_t result;
-	// if unregistered uuid, register it first
+	// If uuid not registered, register it first
+	// The registered check is not strictly necessary
+	// since it's checked internally in registerCustom as well
+	// but it's intuitive so I left it
 	if (!_uuid.registered()) {
 		result = _uuid.registerCustom();
 		if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {

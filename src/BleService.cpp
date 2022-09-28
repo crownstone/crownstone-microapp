@@ -31,14 +31,17 @@ microapp_sdk_result_t BleService::addLocalService() {
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
 	microapp_sdk_result_t result;
-	// if uuid not registered, register it first
+	// If uuid not registered, register it first
+	// The registered check is not strictly necessary
+	// since it's checked internally in registerCustom as well
+	// but it's intuitive so I left it
 	if (!_uuid.registered()) {
 		result = _uuid.registerCustom();
 		if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 			return result;
 		}
 	}
-	// add self
+	// Add self via call to bluenet
 	uint8_t* payload                                   = getOutgoingMessagePayload();
 	microapp_sdk_ble_t* bleRequest                     = (microapp_sdk_ble_t*)(payload);
 	bleRequest->header.messageType                     = CS_MICROAPP_SDK_TYPE_BLE;
@@ -67,13 +70,13 @@ microapp_sdk_result_t BleService::addLocalService() {
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
-microapp_sdk_result_t BleService::getCharacteristic(uint16_t handle, BleCharacteristic& characteristic) {
+microapp_sdk_result_t BleService::getCharacteristic(uint16_t handle, BleCharacteristic** characteristic) {
 	if (!_flags.flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}
 	for (uint8_t i = 0; i < _characteristicCount; i++) {
 		if (_characteristics[i]->_handle == handle) {
-			characteristic = *_characteristics[i];
+			*characteristic = _characteristics[i];
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 	}
