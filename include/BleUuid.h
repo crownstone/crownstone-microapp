@@ -61,8 +61,10 @@ private:
 	 *
 	 * @param[in] uuidString Null-terminated string of the format "ABCD", with either uppercase or lowercase letters.
 	 * @param[out] emptyUuid A byte array where the resulting UUID will be placed
+	 * @return true on success
+	 * @return false if no valid string conversion could be made
 	 */
-	void convertStringToUuid16Bit(const char* uuidString, uint8_t* emptyUuid);
+	bool convertStringToUuid16Bit(const char* uuidString, uint8_t* emptyUuid);
 
 	/**
 	 * Convert from UUID string (either 16-bit or 128-bit) to 128-bit byte array
@@ -70,8 +72,10 @@ private:
 	 * @param[in] uuidString Null-terminated string of the format "12345678-ABCD-1234-5678-ABCDEF123456", with either
 	 * uppercase or lowercase letters.
 	 * @param[out] emptyUuid A byte array where the resulting UUID will be placed
+	 * @return true on success
+	 * @return false if no valid string conversion could be made
 	 */
-	void convertStringToUuid128Bit(const char* uuidString, uint8_t* emptyUuid);
+	bool convertStringToUuid128Bit(const char* uuidString, uint8_t* emptyUuid);
 
 	/**
 	 * Convert from 16-bit UUID to string representation in format "ABCD"

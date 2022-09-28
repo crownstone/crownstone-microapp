@@ -61,6 +61,16 @@ void setup() {
 	else {
 		Serial.println("Not equal");
 	}
+
+	Uuid uuid_6("INVALID1-ABCD-1234-5678-ABCDEF123456");
+	if (uuid_6) {
+		Serial.println("Valid");
+	}
+	else {
+		Serial.println("Invalid");
+	}
+	Serial.println("-----");
+
 }
 
 void loop() {

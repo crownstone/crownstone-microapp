@@ -31,8 +31,10 @@ private:
 	 * @param[in] addressString Null-terminated string of the format "AA:BB:CC:DD:EE:FF", with either uppercase or
 	 * lowercase letters.
 	 * @param[out] emptyAddress Pointer to a block of data containing the 6 bytes of the MAC address.
+	 * @return true on success
+	 * @return false if no valid string conversion could be made
 	 */
-	void convertStringToMac(const char* addressString, uint8_t* emptyAddress);
+	bool convertStringToMac(const char* addressString, uint8_t* emptyAddress);
 
 protected:
 	uint8_t _address[MAC_ADDRESS_LENGTH];

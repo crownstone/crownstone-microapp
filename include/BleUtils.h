@@ -56,11 +56,13 @@ typedef int8_t rssi_t;
 /**
  * Convert a pair of chars to a byte, e.g. convert "A3" to 0xA3.
  *
- * @param[in] chars   Pointer to a pair of chars to convert to a byte.
+ * @param[in] chars pointer to a pair of chars to convert to a byte.
+ * @param[out] byte pointer to a byte
  *
- * @return            The byte as a uint8_t.
+ * @return true if a valid conversion has been made
+ * @return false if conversion failed
  */
-uint8_t convertTwoHexCharsToByte(const char* chars);
+bool convertTwoHexCharsToByte(const char* chars, uint8_t* byte);
 
 /**
  * Convert a byte (uint8_t) to its hex string representation, e.g. convert 0xA3 to "A3".

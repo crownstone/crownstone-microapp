@@ -2,12 +2,16 @@
 
 Uuid::Uuid(const char* uuid) {
 	if (strlen(uuid) == UUID_128BIT_STRING_LENGTH) {
-		convertStringToUuid128Bit(uuid, _uuid);
+		if (!convertStringToUuid128Bit(uuid, _uuid)) {
+			return;
+		}
 		_length = UUID_128BIT_BYTE_LENGTH;
 	}
 	else if (strlen(uuid) == UUID_16BIT_STRING_LENGTH) {
 		memcpy(_uuid, BASE_UUID_128BIT, UUID_128BIT_BYTE_LENGTH);
-		convertStringToUuid16Bit(uuid, _uuid + BASE_UUID_OFFSET_16BIT);
+		if (!convertStringToUuid16Bit(uuid, _uuid + BASE_UUID_OFFSET_16BIT)) {
+			return;
+		}
 		_length = UUID_16BIT_BYTE_LENGTH;
 		_type = CS_MICROAPP_SDK_BLE_UUID_STANDARD;
 	}
@@ -127,18 +131,21 @@ uint8_t Uuid::getType() {
 	return _type;
 }
 
-void Uuid::convertStringToUuid16Bit(const char* uuidString, uint8_t* emptyUuid) {
+bool Uuid::convertStringToUuid16Bit(const char* uuidString, uint8_t* emptyUuid) {
 	if (strlen(uuidString) != UUID_16BIT_STRING_LENGTH) {
-		return;
+		return false;
 	}
 	for (uint8_t i = 0; i < UUID_16BIT_BYTE_LENGTH; i++) {
-		emptyUuid[UUID_16BIT_BYTE_LENGTH - 1 - i] = convertTwoHexCharsToByte(uuidString + 2 * i);
+		if (!convertTwoHexCharsToByte(uuidString + 2 * i, &emptyUuid[UUID_16BIT_BYTE_LENGTH - 1 - i])) {
+			return false;
+		}
 	}
+	return true;
 }
 
-void Uuid::convertStringToUuid128Bit(const char* uuidString, uint8_t* emptyUuid) {
+bool Uuid::convertStringToUuid128Bit(const char* uuidString, uint8_t* emptyUuid) {
 	if (strlen(uuidString) != UUID_128BIT_STRING_LENGTH) {
-		return;
+		return false;
 	}
 	uint8_t i = 0;
 	int8_t j = UUID_128BIT_BYTE_LENGTH - 1;
@@ -148,12 +155,15 @@ void Uuid::convertStringToUuid128Bit(const char* uuidString, uint8_t* emptyUuid)
 			continue;
 		}
 		if (i + 1 > UUID_128BIT_STRING_LENGTH) {
-			return;
+			return false;
 		}
-		emptyUuid[j] = convertTwoHexCharsToByte(&uuidString[i]);
+		if (!convertTwoHexCharsToByte(&uuidString[i], &emptyUuid[j])) {
+			return false;
+		}
 		j--;
 		i += 2;
 	}
+	return true;
 }
 
 void Uuid::convertUuid16BitToString(const uint8_t* uuid, char* emptyUuidString) {

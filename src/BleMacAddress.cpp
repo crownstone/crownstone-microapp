@@ -10,10 +10,9 @@ MacAddress::MacAddress(const uint8_t* address, uint8_t size, uint8_t type) {
 }
 
 MacAddress::MacAddress(const char* addressString) {
-	if (strlen(addressString) != MAC_ADDRESS_STRING_LENGTH) {
+	if (!convertStringToMac(addressString, _address)) {
 		return;
 	}
-	convertStringToMac(addressString, _address);
 	_initialized = true;
 }
 
@@ -37,10 +36,16 @@ void MacAddress::convertMacToString(const uint8_t* address, char* emptyAddressSt
 	emptyAddressString[MAC_ADDRESS_STRING_LENGTH] = 0;
 }
 
-void MacAddress::convertStringToMac(const char* addressString, uint8_t* emptyAddress) {
-	for (uint8_t i = 0; i < MAC_ADDRESS_LENGTH; i++) {
-		emptyAddress[MAC_ADDRESS_LENGTH - i - 1] = convertTwoHexCharsToByte(addressString + 3 * i);
+bool MacAddress::convertStringToMac(const char* addressString, uint8_t* emptyAddress) {
+	if (strlen(addressString) != MAC_ADDRESS_STRING_LENGTH) {
+		return false;
 	}
+	for (uint8_t i = 0; i < MAC_ADDRESS_LENGTH; i++) {
+		if (!convertTwoHexCharsToByte(addressString + 3 * i, &emptyAddress[MAC_ADDRESS_LENGTH - i - 1])) {
+			return false;
+		}
+	}
+	return true;
 }
 
 const char* MacAddress::string() {

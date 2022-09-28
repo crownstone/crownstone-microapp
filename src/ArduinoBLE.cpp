@@ -707,7 +707,7 @@ microapp_sdk_result_t registerBleInterrupt(MicroappSdkBleType bleType) {
 			bleRequest->scan.type = CS_MICROAPP_SDK_BLE_SCAN_REQUEST_REGISTER_INTERRUPT;
 			break;
 		case CS_MICROAPP_SDK_BLE_CENTRAL:
-			bleRequest->central.type = CS_MICROAPP_SDK_BLE_CENTRAL_REGISTER_INTERRUPT;
+			bleRequest->central.type = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_REGISTER_INTERRUPT;
 			break;
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL:
 			bleRequest->peripheral.type = CS_MICROAPP_SDK_BLE_PERIPHERAL_REQUEST_REGISTER_INTERRUPT;
