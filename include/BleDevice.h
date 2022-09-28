@@ -100,16 +100,6 @@ private:
 	 */
 	microapp_sdk_result_t getCharacteristic(uint16_t handle, BleCharacteristic& characteristic);
 
-	/**
-	 * Register a custom service uuid via a call to bluenet
-	 *
-	 * @param[in] uuid reference to uuid object
-	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
-	 * @return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED if uuid is not custom
-	 * @return CS_MICROAPP_SDK_ACK_ERROR if bluenet returned different uuid than the original
-	 */
-	microapp_sdk_result_t registerCustomUuid(Uuid& uuid);
-
 public:
 	// return true if BleDevice is nontrivial, i.e. initialized from an actual advertisement
 	explicit operator bool() const;

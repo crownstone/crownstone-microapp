@@ -8,7 +8,7 @@ BleCharacteristic::BleCharacteristic(const char* uuid, uint8_t properties, uint8
 		valueSize = MAX_CHARACTERISTIC_VALUE_SIZE;
 	}
 	_uuid                    = Uuid(uuid);
-	if (!_uuid) {
+	if (!_uuid.valid()) {
 		// If uuid not valid, return early
 		return;
 	}
@@ -44,7 +44,7 @@ microapp_sdk_result_t BleCharacteristic::addLocalCharacteristic(uint16_t service
 	microapp_sdk_result_t result;
 	// if unregistered uuid, register it first
 	if (!_uuid.registered()) {
-		result = registerCustomUuid();
+		result = _uuid.registerCustom();
 		if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 			return result;
 		}
@@ -80,39 +80,6 @@ microapp_sdk_result_t BleCharacteristic::addLocalCharacteristic(uint16_t service
 	}
 	_handle            = bleRequest->peripheral.handle;
 	_flags.flags.added = true;
-	return CS_MICROAPP_SDK_ACK_SUCCESS;
-}
-
-// Only defined for local characteristics
-microapp_sdk_result_t BleCharacteristic::registerCustomUuid() {
-	if (!_flags.flags.initialized) {
-		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
-	}
-	if (_flags.flags.remote) {
-		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
-	}
-	if (_uuid.registered()) {
-		// apparently already registered so just return success
-		return CS_MICROAPP_SDK_ACK_SUCCESS;
-	}
-	uint8_t* payload               = getOutgoingMessagePayload();
-	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
-	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
-	bleRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
-	bleRequest->type               = CS_MICROAPP_SDK_BLE_UUID_REGISTER;
-	memcpy(bleRequest->requestUuidRegister.customUuid, _uuid.bytes(), UUID_128BIT_BYTE_LENGTH);
-
-	sendMessage();
-	microapp_sdk_result_t result = (microapp_sdk_result_t)bleRequest->header.ack;
-	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-		return result;
-	}
-	if (memcmp(&bleRequest->requestUuidRegister.uuid.uuid, _uuid.bytes(), UUID_16BIT_BYTE_LENGTH) != 0) {
-		// The returned short uuid is not the same as the original
-		// (it should be the same)
-		return CS_MICROAPP_SDK_ACK_ERROR;
-	}
-	_uuid.setType(bleRequest->requestUuidRegister.uuid.type);
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 

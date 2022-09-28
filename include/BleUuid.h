@@ -41,6 +41,16 @@ private:
 	bool registered();
 
 	/**
+	 * If the uuid is not a standardized uuid or already registered, register uuid with bluenet
+	 * Bluenet returns an assigned type which will be stored internally
+	 *
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success (also if already registered)
+	 * @return CS_MICROAPP_SDK_ACK_ERROR if bluenet did not return same short uuid
+	 * @return microapp_sdk_result_t with other code if bluenet failed to handle request
+	 */
+	microapp_sdk_result_t registerCustom();
+
+	/**
 	 * Set the type of the uuid which is relevant in bluenet context
 	 * so a shortened uuid + type can be linked to the full uuid and vice versa
 	 *
@@ -99,14 +109,14 @@ public:
 	Uuid(const uint8_t* uuid, uint8_t length);
 	Uuid(const uuid16_t uuid, uint8_t type);
 
-	// boolean and comparison operators
-	explicit operator bool() const;
+	// comparison operators
 	bool operator==(const Uuid& other);
 	bool operator!=(const Uuid& other);
 
 	// even though internally it's always 16 bytes, the length can be either 2 or 16
 	uint8_t length();
 	bool custom();
+	bool valid();
 
 	const char* string();
 	// return full string, even for 16-bit uuids

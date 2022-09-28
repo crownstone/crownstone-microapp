@@ -42,9 +42,6 @@ private:
 	friend class BleDevice;
 	friend class BleService;
 
-	// Default constructor
-	BleCharacteristic(){};
-
 	// Constructor for remote characteristics
 	BleCharacteristic(microapp_sdk_ble_uuid_t* uuid, uint8_t properties);
 
@@ -93,17 +90,6 @@ private:
 	 * @return microapp_sdk_result_t specifying other error
 	 */
 	microapp_sdk_result_t addLocalCharacteristic(uint16_t serviceHandle);
-
-	/**
-	 * Register the local characteristics custom uuid via a call to bluenet
-	 *
-	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
-	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if BleCharacteristic not initialized
-	 * @return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED if BleCharacteristic is not local but remote or uuid is not custom
-	 * @return CS_MICROAPP_SDK_ACK_ERROR if bluenet returned different uuid than the original
-	 * @return microapp_sdk_result_t specifying other error
-	 */
-	microapp_sdk_result_t registerCustomUuid();
 
 	/**
 	 * Write value to a local characteristic and lets bluenet know
@@ -159,6 +145,9 @@ private:
 	microapp_sdk_result_t onLocalNotificationDone();
 
 public:
+	// Empty constructor
+	BleCharacteristic(){};
+
 	explicit operator bool() const;
 
 	/**

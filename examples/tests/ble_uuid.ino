@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <BleUuid.h>
 
-const uint8_t uuid_bytes_16bit[UUID_16BIT_BYTE_LENGTH] = {0xCD, 0xAB};
+const uint8_t uuid_bytes_16bit[UUID_16BIT_BYTE_LENGTH] = {0x1A, 0x18};
 const uint8_t uuid_bytes_128bit[UUID_128BIT_BYTE_LENGTH] = {0x56, 0x34, 0x12, 0xEF, 0xCD, 0xAB,
 		0x78, 0x56, 0x34, 0x12, 0xCD, 0xAB, 0x78, 0x56, 0x34, 0x12};
 
@@ -17,13 +17,18 @@ void setup() {
 
 	delay(2000);
 
-
-	Uuid uuid_2("ABCD");
+	Uuid uuid_2("181A");
 	Serial.println(uuid_2.length());
 	Serial.println(uuid_2.string());
 	Serial.println(uuid_2.fullString());
 	Serial.println(uuid_2.bytes(), UUID_16BIT_BYTE_LENGTH);
 	Serial.println(uuid_2.fullBytes(), UUID_128BIT_BYTE_LENGTH);
+	if (uuid_2.valid()) {
+		Serial.println("2 is valid");
+	}
+	else {
+		Serial.println("2 is invalid");
+	}
 	Serial.println("-----");
 
 	delay(2000);
@@ -70,7 +75,7 @@ void setup() {
 
 	// Contains invalid characters
 	Uuid uuid_6("INVALID8-ABCD-1234-5678-ABCDEF123456");
-	if (uuid_6) {
+	if (uuid_6.valid()) {
 		Serial.println("6 is valid");
 	}
 	else {
@@ -78,7 +83,7 @@ void setup() {
 	}
 	// Wrong length
 	Uuid uuid_7("1234567-ABCD-1234-5678-ABCDEF123456");
-	if (uuid_7) {
+	if (uuid_7.valid()) {
 		Serial.println("7 is valid");
 	}
 	else {

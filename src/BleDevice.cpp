@@ -77,33 +77,6 @@ microapp_sdk_result_t BleDevice::getCharacteristic(uint16_t handle, BleCharacter
 }
 
 // Defined for both central and peripheral devices
-microapp_sdk_result_t BleDevice::registerCustomUuid(Uuid& uuid) {
-	if (uuid.registered()) {
-		// apparently already registered so just return success
-		return CS_MICROAPP_SDK_ACK_SUCCESS;
-	}
-	uint8_t* payload               = getOutgoingMessagePayload();
-	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
-	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
-	bleRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
-	bleRequest->type               = CS_MICROAPP_SDK_BLE_UUID_REGISTER;
-	memcpy(bleRequest->requestUuidRegister.customUuid, uuid.bytes(), UUID_128BIT_BYTE_LENGTH);
-
-	sendMessage();
-	microapp_sdk_result_t result = (microapp_sdk_result_t)bleRequest->header.ack;
-	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-		return result;
-	}
-	if (memcmp(&bleRequest->requestUuidRegister.uuid.uuid, uuid.bytes(), UUID_16BIT_BYTE_LENGTH) != 0) {
-		// The returned short uuid is not the same as the original
-		// (it should be the same)
-		return CS_MICROAPP_SDK_ACK_ERROR;
-	}
-	uuid.setType(bleRequest->requestUuidRegister.uuid.type);
-	return CS_MICROAPP_SDK_ACK_SUCCESS;
-}
-
-// Defined for both central and peripheral devices
 void BleDevice::poll(uint32_t timeout) {
 	if (timeout == 0) {
 		return;
@@ -177,7 +150,7 @@ bool BleDevice::discoverService(const char* serviceUuid, uint32_t timeout) {
 	microapp_sdk_result_t result;
 	Uuid uuid(serviceUuid);
 	if (!uuid.registered()) {
-		result = registerCustomUuid(uuid);
+		result = uuid.registerCustom();
 		if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 			return false;
 		}
