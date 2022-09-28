@@ -10,9 +10,10 @@ void CrownstoneDimmer::setIntensity(uint8_t intensity) {
 	microapp_sdk_switch_t* switchRequest = reinterpret_cast<microapp_sdk_switch_t*>(payload);
 	switchRequest->header.ack            = CS_MICROAPP_SDK_ACK_REQUEST;
 	switchRequest->header.messageType    = CS_MICROAPP_SDK_TYPE_SWITCH;
+	switchRequest->type                  = CS_MICROAPP_SDK_SWITCH_REQUEST_SET;
 	if (intensity > 100) {
 		intensity = 100;
 	}
-	switchRequest->value = intensity;
+	switchRequest->set = intensity;
 	sendMessage();
 }
