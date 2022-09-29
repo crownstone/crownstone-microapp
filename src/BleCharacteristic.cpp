@@ -15,6 +15,7 @@ BleCharacteristic::BleCharacteristic(const char* uuid, uint8_t properties, uint8
 	_properties              = properties;
 	_value                   = value;
 	_valueSize               = valueSize;
+	_valueLength             = valueSize;
 	_flags.flags.remote      = false;
 	_flags.flags.initialized = true;
 }
@@ -245,7 +246,8 @@ microapp_sdk_result_t BleCharacteristic::onRemoteNotification(microapp_sdk_ble_c
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
-microapp_sdk_result_t BleCharacteristic::onLocalWritten() {
+microapp_sdk_result_t BleCharacteristic::onLocalWritten(microapp_sdk_ble_peripheral_event_write_t* eventWrite) {
+	_valueLength = eventWrite->size;
 	_flags.flags.writtenAsLocal = true;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }

@@ -241,7 +241,7 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			result = characteristic->onLocalWritten();
+			result = characteristic->onLocalWritten(&peripheral->eventWrite);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}

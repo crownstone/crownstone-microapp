@@ -139,7 +139,7 @@ private:
 	microapp_sdk_result_t onRemoteRead(microapp_sdk_ble_central_event_read_t* eventRead);
 	microapp_sdk_result_t onRemoteNotification(microapp_sdk_ble_central_event_notification_t* eventNotification);
 
-	microapp_sdk_result_t onLocalWritten();
+	microapp_sdk_result_t onLocalWritten(microapp_sdk_ble_peripheral_event_write_t* eventWrite);
 	microapp_sdk_result_t onLocalSubscribed();
 	microapp_sdk_result_t onLocalUnsubscribed();
 	microapp_sdk_result_t onLocalNotificationDone();
