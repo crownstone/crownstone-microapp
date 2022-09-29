@@ -347,3 +347,19 @@ bool BleDevice::findAdvertisementDataType(GapAdvType type, ble_ad_t* foundData) 
 	}
 	return _scan.findAdvertisementDataType(type, foundData);
 }
+
+// Only defined for central devices
+void BleDevice::connectionKeepAlive() {
+	if (!_flags.flags.initialized || !_flags.flags.isCentral) {
+		return;
+	}
+	uint8_t* payload                                = getOutgoingMessagePayload();
+	microapp_sdk_ble_t* bleRequest                  = (microapp_sdk_ble_t*)(payload);
+	bleRequest->header.messageType                  = CS_MICROAPP_SDK_TYPE_BLE;
+	bleRequest->header.ack                          = CS_MICROAPP_SDK_ACK_REQUEST;
+	bleRequest->type                                = CS_MICROAPP_SDK_BLE_PERIPHERAL;
+	bleRequest->peripheral.type                     = CS_MICROAPP_SDK_BLE_PERIPHERAL_REQUEST_CONNECTION_ALIVE;
+	bleRequest->peripheral.connectionHandle         = _connectionHandle;
+
+	sendMessage();
+}

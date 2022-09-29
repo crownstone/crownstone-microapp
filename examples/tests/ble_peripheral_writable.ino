@@ -10,6 +10,7 @@ static const uint8_t NR_WRITABLE_BYTES = 2;
 uint8_t writableValue[NR_WRITABLE_BYTES];
 BleCharacteristic writableCharacteristic;
 
+// To be called when the characteristic is written by a central device
 void onCharacteristicWritten(BleDevice device, BleCharacteristic characteristic) {
 	Serial.println("Characteristic written callback");
 }
@@ -17,23 +18,20 @@ void onCharacteristicWritten(BleDevice device, BleCharacteristic characteristic)
 // The Arduino setup function.
 void setup() {
 	Serial.begin();
-
-	// Write something to the log (will be shown in the bluenet code as print statement).
-	Serial.println("BLE peripheral example");
+	Serial.println("BLE peripheral writable example");
 
 	if (!BLE.begin()) {
 		Serial.println("BLE.begin failed");
 		return;
 	}
-	writableService = BleService("BEBE");
-	// custom uuids are also possible
-	const char writableCharacteristicUuid[] = "12345678-ABCD-1234-5678-ABCDEF123456";
-	writableCharacteristic = BleCharacteristic(writableCharacteristicUuid,
+	writableService = BleService("12340000-ABCD-1234-5678-ABCDEF123456");
+	writableCharacteristic = BleCharacteristic("12340001-ABCD-1234-5678-ABCDEF123456",
 		BleCharacteristicProperties::BLERead | BleCharacteristicProperties::BLEWrite,
 		writableValue, NR_WRITABLE_BYTES);
 
 	// Register handler
 	writableCharacteristic.setEventHandler(BLEWritten, onCharacteristicWritten);
+	// Add characteristic to service and service to BLE (order is important)
 	writableService.addCharacteristic(writableCharacteristic);
 	BLE.addService(writableService);
 	writableCharacteristic.writeValue(writableValue, NR_WRITABLE_BYTES);
@@ -43,5 +41,11 @@ void setup() {
 void loop() {
 	if (writableCharacteristic.written()) {
 		Serial.println(writableCharacteristic.value(), writableCharacteristic.valueLength());
+	}
+
+	BleDevice& central = BLE.central();
+	if (central) {
+		// Keep the connection alive
+		central.connectionKeepAlive();
 	}
 }

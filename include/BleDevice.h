@@ -240,4 +240,9 @@ public:
 	 * @return false otherwise
 	 */
 	bool findAdvertisementDataType(GapAdvType type, ble_ad_t* foundData);
+
+	/**
+	 * Keep the connection with this central device alive by calling this every once in a while
+	 */
+	void connectionKeepAlive();
 };

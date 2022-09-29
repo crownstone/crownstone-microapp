@@ -83,5 +83,6 @@ void loop() {
 	if (central) {
 		Serial.println("Connected to central device with address:");
 		Serial.println(central.address());
+		central.connectionKeepAlive();
 	}
 }
