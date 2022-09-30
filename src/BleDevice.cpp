@@ -26,17 +26,31 @@ BleDevice::operator bool() const {
 void BleDevice::onConnect(uint16_t connectionHandle) {
 	_flags.flags.connected = true;
 	_connectionHandle = connectionHandle;
+	// set async result flag
+	if (_flags.flags.isPeripheral) {
+		_asyncResult = BleAsyncSuccess;
+	}
 }
 
 // Defined for both central and peripheral devices
 void BleDevice::onDisconnect() {
-	// clean up
-	_address = MacAddress();
-	_scan = BleScan();
-	_rssi = 127;
-	_serviceCount = 0;
+	// clear connection related variables and flags
 	_connectionHandle = 0;
-	_flags.asInt = 0;
+	_serviceCount = 0;
+	_flags.flags.connected = false;
+	_flags.flags.discoveryDone = false;
+	// set async result flag
+	if (_flags.flags.isPeripheral) {
+		_asyncResult = BleAsyncSuccess;
+	}
+}
+
+void BleDevice::onDiscoverDone() {
+	_flags.flags.discoveryDone = true;
+	// set async result flag
+	if (_flags.flags.isPeripheral) {
+		_asyncResult = BleAsyncSuccess;
+	}
 }
 
 // Only defined for peripheral devices
@@ -76,6 +90,26 @@ microapp_sdk_result_t BleDevice::getCharacteristic(uint16_t handle, BleCharacter
 	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 }
 
+bool BleDevice::waitForAsyncResult(uint8_t timeout) {
+	// Before calling this function, the asyncResult variable needs
+	// to be set to BleAsyncWaiting. It will even need to be set before
+	// the sendMessage call with the request to bluenet
+	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
+	while (_asyncResult == BleAsyncWaiting) {
+		// Yield. Upon an event from bluenet asyncResult will be set
+		delay(MICROAPP_LOOP_INTERVAL_MS);
+		if (--tries == 0) {
+			return false;
+		}
+	}
+	if (_asyncResult == BleAsyncFailure) {
+		_asyncResult = BleAsyncNotWaiting;
+		return false;
+	}
+	_asyncResult = BleAsyncNotWaiting;
+	return true;
+}
+
 // Defined for both central and peripheral devices
 void BleDevice::poll(uint32_t timeout) {
 	if (timeout == 0) {
@@ -95,6 +129,10 @@ bool BleDevice::disconnect(uint32_t timeout) {
 	if (!_flags.flags.connected) {
 		return false;
 	}
+	// Indicate we are waiting for an async event with a result
+	// This has to be set before the sendMessage call
+	_asyncResult = BleAsyncWaiting;
+
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);
 	bleRequest->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
@@ -118,15 +156,7 @@ bool BleDevice::disconnect(uint32_t timeout) {
 	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
 		return false;
 	}
-	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
-	while (_flags.flags.connected) {
-		// yield. Upon a disconnect event flag will be cleared
-		delay(MICROAPP_LOOP_INTERVAL_MS);
-		if (--tries == 0) {
-			return false;
-		}
-	}
-	return true;
+	return waitForAsyncResult(timeout);
 }
 
 // Defined for both central and peripheral devices
@@ -152,6 +182,9 @@ bool BleDevice::discoverService(const char* serviceUuid, uint32_t timeout) {
 	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
 		return false;
 	}
+	if (_flags.flags.discoveryDone) {
+		return true;
+	}
 	microapp_sdk_result_t result;
 	Uuid uuid(serviceUuid);
 	if (!uuid.registered()) {
@@ -160,6 +193,10 @@ bool BleDevice::discoverService(const char* serviceUuid, uint32_t timeout) {
 			return false;
 		}
 	}
+	// Indicate we are waiting for an async event with a result
+	// This has to be set before the sendMessage call
+	_asyncResult = BleAsyncWaiting;
+
 	uint8_t* payload                                  = getOutgoingMessagePayload();
 	microapp_sdk_ble_t* bleRequest                    = (microapp_sdk_ble_t*)(payload);
 	bleRequest->header.messageType                    = CS_MICROAPP_SDK_TYPE_BLE;
@@ -178,18 +215,10 @@ bool BleDevice::discoverService(const char* serviceUuid, uint32_t timeout) {
 		return true;
 	}
 	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
+		// direct failure
 		return false;
 	}
-	// now block until discovery done
-	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
-	while (!_flags.flags.discoveryDone) {
-		// yield. Upon a discovery done event flag will be set
-		delay(MICROAPP_LOOP_INTERVAL_MS);
-		if (--tries == 0) {
-			return false;
-		}
-	}
-	return true;
+	return waitForAsyncResult(timeout);
 }
 
 // Only defined for peripheral devices
@@ -221,7 +250,7 @@ bool BleDevice::hasService(const char* serviceUuid) {
 
 // Only defined for peripheral devices
 BleService& BleDevice::service(const char* uuid) {
-	static BleService empty;
+	static BleService empty = BleService();
 	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
 		return empty;
 	}
@@ -270,6 +299,7 @@ bool BleDevice::hasCharacteristic(const char* uuid) {
 // Only defined for peripheral devices
 BleCharacteristic& BleDevice::characteristic(const char* uuid) {
 	static BleCharacteristic empty;
+	empty = BleCharacteristic();
 	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
 		return empty;
 	}
@@ -346,6 +376,10 @@ bool BleDevice::connect(uint32_t timeout) {
 			return false;
 		}
 	}
+	// Indicate we are waiting for an async event with a result
+	// This has to be set before the sendMessage call
+	_asyncResult = BleAsyncWaiting;
+
 	// Next, request connect
 	uint8_t* payload                                = getOutgoingMessagePayload();
 	microapp_sdk_ble_t* bleRequest                  = (microapp_sdk_ble_t*)(payload);
@@ -366,15 +400,7 @@ bool BleDevice::connect(uint32_t timeout) {
 	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
 		return false;
 	}
-	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
-	while (!_flags.flags.connected) {
-		// yield. Upon a disconnect event flag will be cleared
-		delay(MICROAPP_LOOP_INTERVAL_MS);
-		if (--tries == 0) {
-			return false;
-		}
-	}
-	return true;
+	return waitForAsyncResult(timeout);
 }
 
 // Only defined for peripheral devices

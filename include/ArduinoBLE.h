@@ -86,7 +86,7 @@ private:
 	// Pointers to local services are stored here (for peripheral role)
 	// The actual services and their characteristics are stored on the user side
 	// The pointers are not initialized to nullptrs. Validity should be checked via _localServiceCount
-	static const uint8_t MAX_LOCAL_SERVICES = 2;
+	static const uint8_t MAX_LOCAL_SERVICES = 1;
 	BleService* _localServices[MAX_LOCAL_SERVICES];
 	uint8_t _localServiceCount = 0;
 

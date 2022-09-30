@@ -144,5 +144,6 @@ BleCharacteristic& BleService::characteristic(const char* uuidString) {
 		}
 	}
 	static BleCharacteristic empty;
+	empty = BleCharacteristic();
 	return empty;
 }

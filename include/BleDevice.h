@@ -58,6 +58,8 @@ private:
 		uint8_t asInt = 0;  // initialize to zero
 	} _flags;
 
+	BleAsyncResult _asyncResult = BleAsyncNotWaiting;
+
 	/**
 	 * Sets internal connected flag
 	 */
@@ -67,6 +69,11 @@ private:
 	 * Clear internal connected flag
 	 */
 	void onDisconnect();
+
+	/**
+	 * Set internal discoveryDone flag
+	 */
+	void onDiscoverDone();
 
 	/**
 	 * Internally add a discovered service (for peripheral devices)
@@ -99,6 +106,15 @@ private:
 	 * @return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND if characteristic was not found in services
 	 */
 	microapp_sdk_result_t getCharacteristic(uint16_t handle, BleCharacteristic** characteristic);
+
+	/**
+	 * Wait for an event from bluenet after a request made to bluenet
+	 *
+	 * @param timeout in milliseconds
+	 * @return true if event was received with success
+	 * @return false if event was not received within timeout or was received with failure
+	 */
+	bool waitForAsyncResult(uint8_t timeout);
 
 public:
 	// return true if BleDevice is nontrivial, i.e. initialized from an actual advertisement

@@ -34,6 +34,13 @@ enum BleEventType {
 	BLEWritten      = 0x07,
 };
 
+enum BleAsyncResult {
+	BleAsyncNotWaiting = 0x00,
+	BleAsyncWaiting    = 0x01,
+	BleAsyncSuccess    = 0x02,
+	BleAsyncFailure    = 0x03,
+};
+
 // Forward declarations
 class BleDevice;
 class BleCharacteristic;

@@ -63,10 +63,6 @@ private:
 			bool localNotificationDone : 1;
 			//! (only for remote characteristics) whether EVENT_NOTIFICATION has happened
 			bool remoteValueUpdated : 1;
-			//! (only for remote characteristics) whether EVENT_READ has happened
-			bool remoteValueRead : 1;
-			//! (only for remote characteristics) whether EVENT_WRITE has happened
-			bool writtenToRemote : 1;
 		} flags;
 		// initialize to zero
 		uint16_t asInt = 0;
@@ -83,6 +79,8 @@ private:
 	// used for subscribing and unsubscribing
 	uint16_t _cccdHandle  = 0;
 	uint16_t _cccdValue   = 0;
+
+	BleAsyncResult _asyncResult = BleAsyncNotWaiting;
 
 	Uuid _uuid;
 
@@ -149,6 +147,16 @@ private:
 	microapp_sdk_result_t onLocalSubscribed();
 	microapp_sdk_result_t onLocalUnsubscribed();
 	microapp_sdk_result_t onLocalNotificationDone();
+
+	/**
+	 * Wait for an event from bluenet after a request made to bluenet
+	 *
+	 * @param timeout in milliseconds
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS if event was received with success
+	 * @return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT if event was not received within timeout
+	 * @return CS_MICROAPP_SDK_ACK_ERROR if event result with failure
+	 */
+	microapp_sdk_result_t waitForAsyncResult(uint8_t timeout);
 
 public:
 	// Empty constructor

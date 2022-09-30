@@ -137,8 +137,9 @@ microapp_sdk_result_t BleCharacteristic::writeValueRemote(uint8_t* buffer, uint1
 	if (length > MAX_CHARACTERISTIC_VALUE_SIZE) {
 		length = MAX_CHARACTERISTIC_VALUE_SIZE;
 	}
-	// Clear flag
-	_flags.flags.writtenToRemote = false;
+	// Indicate we are waiting for an async event with a result
+	// This has to be set before the sendMessage call
+	_asyncResult = BleAsyncWaiting;
 
 	microapp_sdk_result_t result;
 	uint8_t* payload                             = getOutgoingMessagePayload();
@@ -162,17 +163,7 @@ microapp_sdk_result_t BleCharacteristic::writeValueRemote(uint8_t* buffer, uint1
 		return result;
 	}
 	// Block until write event happens
-	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
-	while (!_flags.flags.writtenToRemote) {
-		// yield. Upon a write event flag will be set
-		delay(MICROAPP_LOOP_INTERVAL_MS);
-		if (--tries == 0) {
-			return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT;
-		}
-	}
-	// Clear flag
-	_flags.flags.writtenToRemote = false;
-	return CS_MICROAPP_SDK_ACK_SUCCESS;
+	return waitForAsyncResult(timeout);
 }
 
 // Only defined for remote characteristics
@@ -184,8 +175,9 @@ microapp_sdk_result_t BleCharacteristic::readValueRemote(uint8_t* buffer, uint16
 	_value     = buffer;
 	_valueSize = length;
 
-	// Clear flag
-	_flags.flags.remoteValueRead = false;
+	// Indicate we are waiting for an async event with a result
+	// This has to be set before the sendMessage call
+	_asyncResult = BleAsyncWaiting;
 
 	microapp_sdk_result_t result;
 	uint8_t* payload                            = getOutgoingMessagePayload();
@@ -207,25 +199,21 @@ microapp_sdk_result_t BleCharacteristic::readValueRemote(uint8_t* buffer, uint16
 		return result;
 	}
 	// Block until read event happens
-	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
-	while (!_flags.flags.remoteValueRead) {
-		// yield. Upon a read event flag will be set
-		delay(MICROAPP_LOOP_INTERVAL_MS);
-		if (--tries == 0) {
-			return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT;
-		}
-	}
-	// Clear flag
-	_flags.flags.remoteValueRead = false;
-	return CS_MICROAPP_SDK_ACK_SUCCESS;
+	return waitForAsyncResult(timeout);
 }
 
 microapp_sdk_result_t BleCharacteristic::onRemoteWritten() {
-	_flags.flags.writtenToRemote = true;
+	if (!_flags.flags.remote) {
+		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
+	}
+	_asyncResult = BleAsyncSuccess;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
 microapp_sdk_result_t BleCharacteristic::onRemoteRead(microapp_sdk_ble_central_event_read_t* eventRead) {
+	if (!_flags.flags.remote) {
+		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
+	}
 	// Data size is limited by valueSize of characteristic
 	uint8_t size = eventRead->size;
 	if (size > _valueSize) {
@@ -234,12 +222,14 @@ microapp_sdk_result_t BleCharacteristic::onRemoteRead(microapp_sdk_ble_central_e
 	// Copy data to value pointer
 	memcpy(_value, eventRead->data, size);
 	_valueLength = size;
-	// Set flag so that blocking readValue function can return
-	_flags.flags.remoteValueRead = true;
+	_asyncResult = BleAsyncSuccess;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
 microapp_sdk_result_t BleCharacteristic::onRemoteNotification(microapp_sdk_ble_central_event_notification_t* eventNotification) {
+	if (!_flags.flags.remote) {
+		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
+	}
 	// Data size is limited by valueSize of characteristic
 	uint8_t size = eventNotification->size;
 	if (size > _valueSize) {
@@ -271,7 +261,28 @@ microapp_sdk_result_t BleCharacteristic::onLocalUnsubscribed() {
 }
 
 microapp_sdk_result_t BleCharacteristic::onLocalNotificationDone() {
+	// This flag is currently not used. It may be used in the future
 	_flags.flags.localNotificationDone = true;
+	return CS_MICROAPP_SDK_ACK_SUCCESS;
+}
+
+microapp_sdk_result_t BleCharacteristic::waitForAsyncResult(uint8_t timeout) {
+	// Before calling this function, the asyncResult variable needs
+	// to be set to BleAsyncWaiting. It will even need to be set before
+	// the sendMessage call with the request to bluenet
+	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
+	while (_asyncResult == BleAsyncWaiting) {
+		// Yield. Upon an event from bluenet asyncResult will be set
+		delay(MICROAPP_LOOP_INTERVAL_MS);
+		if (--tries == 0) {
+			return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT;
+		}
+	}
+	if (_asyncResult == BleAsyncFailure) {
+		_asyncResult = BleAsyncNotWaiting;
+		return CS_MICROAPP_SDK_ACK_ERROR;
+	}
+	_asyncResult = BleAsyncNotWaiting;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
@@ -413,8 +424,9 @@ bool BleCharacteristic::subscribe(uint32_t timeout) {
 		// Both are not allowed. Subscribing not possible
 		return false;
 	}
-	// Clear flag
-	_flags.flags.writtenToRemote = false;
+	// Indicate we are waiting for an async event with a result
+	// This has to be set before the sendMessage call
+	_asyncResult = BleAsyncWaiting;
 
 	microapp_sdk_result_t result;
 	uint8_t* payload                     = getOutgoingMessagePayload();
@@ -439,17 +451,7 @@ bool BleCharacteristic::subscribe(uint32_t timeout) {
 		return false;
 	}
 	// Block until write event happens
-	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
-	while (!_flags.flags.writtenToRemote) {
-		// yield. Upon a write event flag will be set
-		delay(MICROAPP_LOOP_INTERVAL_MS);
-		if (--tries == 0) {
-			return false;
-		}
-	}
-	// Clear flag
-	_flags.flags.writtenToRemote = false;
-	return true;
+	return (waitForAsyncResult(timeout) == CS_MICROAPP_SDK_ACK_SUCCESS);
 }
 
 bool BleCharacteristic::canUnsubscribe() {
@@ -470,8 +472,9 @@ bool BleCharacteristic::unsubscribe(uint32_t timeout) {
 	}
 	// Clear the notify and indicate bits both
 	_cccdValue = 0;
-	// Clear flag
-	_flags.flags.writtenToRemote = false;
+	// Indicate we are waiting for an async event with a result
+	// This has to be set before the sendMessage call
+	_asyncResult = BleAsyncWaiting;
 
 	microapp_sdk_result_t result;
 	uint8_t* payload                     = getOutgoingMessagePayload();
@@ -495,17 +498,7 @@ bool BleCharacteristic::unsubscribe(uint32_t timeout) {
 		return false;
 	}
 	// Block until write event happens
-	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
-	while (!_flags.flags.writtenToRemote) {
-		// yield. Upon a write event flag will be set
-		delay(MICROAPP_LOOP_INTERVAL_MS);
-		if (--tries == 0) {
-			return false;
-		}
-	}
-	// Clear flag
-	_flags.flags.writtenToRemote = false;
-	return true;
+	return (waitForAsyncResult(timeout) == CS_MICROAPP_SDK_ACK_SUCCESS);
 }
 
 // Only defined for remote characteristics

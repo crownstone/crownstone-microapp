@@ -10,20 +10,13 @@ const char* peripheralAddress = "A4:C1:38:9A:45:E3";
 
 // callback for received peripheral advertisement
 void onScannedDevice(BleDevice device) {
-	Serial.println("BLE device scanned");
-	// Serial.println(device.address());
-	// // parse service data of peripheral advertisement if available
-	// ble_ad_t serviceData;
-	// if (device.findAdvertisementDataType(GapAdvType::ServiceData16BitUuid, &serviceData)) {
-	// 	if (serviceData.len == 15) { // service data length of the Xiaomi service data advertisements
-	// 		uint16_t temperature = (serviceData.data[8] << 8) | serviceData.data[9];
-	// 		Serial.println(temperature);
-	// 	}
-	// }
+	Serial.println("   Microapp scan callback:");
+	Serial.println(device.address().c_str());
 }
 
 void onConnect(BleDevice device) {
-	Serial.println("   Microapp connect callback");
+	Serial.println("   Microapp connect callback:");
+	Serial.println(device.address().c_str());
 }
 
 // The Arduino setup function.
@@ -59,9 +52,9 @@ void loop() {
 		return;
 	}
 
-	Serial.println("   Peripheral available");
+	Serial.println("   Peripheral available:");
 	Serial.println(peripheral.address());
-	if (!peripheral.connect()) {
+	if (!peripheral.connect(10000)) {
 		Serial.println("   Connecting failed");
 		return;
 	}
@@ -74,6 +67,7 @@ void loop() {
 	if (!peripheral.hasCharacteristic("2A1F")) {
 		Serial.println("   No temperature char found");
 		peripheral.disconnect();
+		return;
 	}
 	BleCharacteristic& temperatureCharacteristic = peripheral.characteristic("2A1F");
 	uint8_t counter = 0;
@@ -85,6 +79,7 @@ void loop() {
 		if (counter++ > 10) {
 			Serial.println("   Attempting disconnect");
 			peripheral.disconnect();
+			return;
 		}
 	}
 

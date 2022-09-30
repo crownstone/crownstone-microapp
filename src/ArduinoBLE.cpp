@@ -84,7 +84,8 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 	switch (central->type) {
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_CONNECT: {
 			if (central->eventConnect.result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-				return (microapp_sdk_result_t)central->eventConnect.result;
+				_device._asyncResult = BleAsyncFailure;
+				return CS_MICROAPP_SDK_ACK_SUCCESS;
 			}
 			_device.onConnect(central->connectionHandle);
 			// check for event handlers
@@ -161,31 +162,38 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_DISCOVER_DONE: {
-			_device._flags.flags.discoveryDone = true;
+			if (central->eventDiscoverDone.result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				_device._asyncResult = BleAsyncFailure;
+				return CS_MICROAPP_SDK_ACK_SUCCESS;
+			}
+			_device.onDiscoverDone();
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_WRITE: {
-			result = (microapp_sdk_result_t)central->eventWrite.result;
-			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-				return result;
-			}
 			BleCharacteristic* characteristic;
 			result = _device.getCharacteristic(central->eventWrite.handle, &characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
-			// set flag so that blocking writeValue function can return
+			result = (microapp_sdk_result_t)central->eventWrite.result;
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				// set async result
+				characteristic->_asyncResult = BleAsyncFailure;
+				return result;
+			}
+			// set async result so blocking function may return
 			result = characteristic->onRemoteWritten();
 			return result;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_READ: {
-			result = (microapp_sdk_result_t)central->eventRead.result;
-			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-				return result;
-			}
 			BleCharacteristic* characteristic;
 			result = _device.getCharacteristic(central->eventRead.valueHandle, &characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				return result;
+			}
+			result = (microapp_sdk_result_t)central->eventRead.result;
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				characteristic->_asyncResult = BleAsyncFailure;
 				return result;
 			}
 			result = characteristic->onRemoteRead(&central->eventRead);
@@ -346,7 +354,10 @@ bool Ble::begin() {
 }
 
 void Ble::end() {
-	_flags.flags.initialized = false;
+	_address = MacAddress();
+	_scanDevice = BleDevice();
+	_device = BleDevice();
+	_flags.asInt = 0;
 	return;
 }
 
@@ -468,8 +479,9 @@ BleDevice& Ble::central() {
 		return _device;
 	}
 	else {
-		static BleDevice empty;
-		return empty;
+		// Reset device
+		_device = BleDevice();
+		return _device;
 	}
 }
 
@@ -477,6 +489,8 @@ bool Ble::scan(bool withDuplicates) {
 	if (!_flags.flags.initialized) {
 		return false;
 	}
+	// Reset existing _scanDevice
+	_scanDevice = BleDevice();
 	if (_flags.flags.isScanning) {
 		return true;
 	}
@@ -543,6 +557,8 @@ bool Ble::stopScan() {
 	if (!_flags.flags.isScanning) {  // already not scanning
 		return true;
 	}
+	// Reset existing _scanDevice
+	_scanDevice = BleDevice();
 
 	// send a message to bluenet asking it to stop forwarding ads to microapp
 	uint8_t* payload               = getOutgoingMessagePayload();
@@ -566,16 +582,20 @@ bool Ble::stopScan() {
 }
 
 BleDevice& Ble::available() {
-	if (!_flags.flags.initialized) {
-		static BleDevice empty;
-		return empty;
+	if (!_flags.flags.initialized || !_flags.flags.isScanning) {
+		// Reset device
+		_device = BleDevice();
+		return _device;
 	}
-	if (!_scanDevice._flags.flags.isPeripheral) {
-		static BleDevice empty;
-		return empty;
+	if (!_scanDevice) {
+		// Reset device
+		_device = BleDevice();
+		return _device;
 	}
 	// Set main (persistent) device as the latest scanned device
 	_device = _scanDevice;
+	// Reset scan device
+	_scanDevice = BleDevice();
 	return _device;
 }
 
