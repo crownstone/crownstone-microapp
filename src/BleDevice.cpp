@@ -110,7 +110,12 @@ bool BleDevice::disconnect(uint32_t timeout) {
 		bleRequest->peripheral.connectionHandle = _connectionHandle;
 	}
 	sendMessage();
-	if (bleRequest->header.ack != CS_MICROAPP_SDK_ACK_SUCCESS) {
+	microapp_sdk_result_t result = (microapp_sdk_result_t)bleRequest->header.ack;
+	if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
+		// direct success
+		return true;
+	}
+	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
 		return false;
 	}
 	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
@@ -160,6 +165,7 @@ bool BleDevice::discoverService(const char* serviceUuid, uint32_t timeout) {
 	bleRequest->header.messageType                    = CS_MICROAPP_SDK_TYPE_BLE;
 	bleRequest->header.ack                            = CS_MICROAPP_SDK_ACK_REQUEST;
 	bleRequest->type                                  = CS_MICROAPP_SDK_BLE_CENTRAL;
+	bleRequest->central.type                          = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_DISCOVER;
 	bleRequest->central.requestDiscover.uuidCount     = 1;
 	bleRequest->central.requestDiscover.uuids[0].type = uuid.getType();
 	bleRequest->central.requestDiscover.uuids[0].uuid = uuid.uuid16();
@@ -167,7 +173,11 @@ bool BleDevice::discoverService(const char* serviceUuid, uint32_t timeout) {
 
 	sendMessage();
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
-	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+	if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
+		// direct success
+		return true;
+	}
+	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
 		return false;
 	}
 	// now block until discovery done
@@ -297,6 +307,28 @@ String BleDevice::localName() {
 	return String(localNameString);
 }
 
+bool BleDevice::hasAdvertisedServiceUuid() {
+	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
+		return false;
+	}
+	return _scan.hasServiceUuid();
+}
+
+uint8_t BleDevice::advertisedServiceUuidCount() {
+	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
+		return false;
+	}
+	return _scan.serviceUuidCount();
+}
+
+String BleDevice::advertisedServiceUuid(uint8_t index) {
+	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
+		return String(nullptr);
+	}
+	Uuid uuid = Uuid(_scan.serviceUuid(index), CS_MICROAPP_SDK_BLE_UUID_STANDARD);
+	return String(uuid.string());
+}
+
 // Only defined for peripheral devices
 bool BleDevice::connect(uint32_t timeout) {
 	if (!_flags.flags.initialized || !_flags.flags.isPeripheral) {
@@ -326,7 +358,12 @@ bool BleDevice::connect(uint32_t timeout) {
 	memcpy(bleRequest->central.requestConnect.address.address, _address.bytes(), MAC_ADDRESS_LENGTH);
 
 	sendMessage();
-	if (bleRequest->header.ack != CS_MICROAPP_SDK_ACK_SUCCESS) {
+	result = (microapp_sdk_result_t)bleRequest->header.ack;
+	if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
+		// direct success
+		return true;
+	}
+	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
 		return false;
 	}
 	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;

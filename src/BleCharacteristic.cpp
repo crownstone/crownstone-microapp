@@ -82,7 +82,7 @@ microapp_sdk_result_t BleCharacteristic::addLocalCharacteristic(uint16_t service
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		return result;
 	}
-	_handle            = bleRequest->peripheral.handle;
+	_valueHandle            = bleRequest->peripheral.handle;
 	_flags.flags.added = true;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
@@ -113,7 +113,7 @@ microapp_sdk_result_t BleCharacteristic::writeValueLocal(uint8_t* buffer, uint16
 	bleRequest->header.ack                      = CS_MICROAPP_SDK_ACK_REQUEST;
 	bleRequest->type                            = CS_MICROAPP_SDK_BLE_PERIPHERAL;
 	bleRequest->peripheral.type                 = CS_MICROAPP_SDK_BLE_PERIPHERAL_REQUEST_VALUE_SET;
-	bleRequest->peripheral.handle               = _handle;
+	bleRequest->peripheral.handle               = _valueHandle;
 	bleRequest->peripheral.requestValueSet.size = _valueLength;
 	bleRequest->peripheral.connectionHandle     = 0;
 
@@ -149,12 +149,16 @@ microapp_sdk_result_t BleCharacteristic::writeValueRemote(uint8_t* buffer, uint1
 	bleRequest->central.type                     = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_WRITE;
 	bleRequest->central.requestWrite.buffer      = buffer;
 	bleRequest->central.requestWrite.size        = length;
-	bleRequest->central.requestWrite.valueHandle = _handle;
+	bleRequest->central.requestWrite.handle      = _valueHandle;
 	bleRequest->central.connectionHandle         = 0;
 
 	sendMessage();
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
-	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+	if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
+		// direct success
+		return result;
+	}
+	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
 		return result;
 	}
 	// Block until write event happens
@@ -190,12 +194,16 @@ microapp_sdk_result_t BleCharacteristic::readValueRemote(uint8_t* buffer, uint16
 	bleRequest->header.ack                      = CS_MICROAPP_SDK_ACK_REQUEST;
 	bleRequest->type                            = CS_MICROAPP_SDK_BLE_CENTRAL;
 	bleRequest->central.type                    = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_READ;
-	bleRequest->central.requestRead.valueHandle = _handle;
+	bleRequest->central.requestRead.valueHandle = _valueHandle;
 	bleRequest->central.connectionHandle        = 0;
 
 	sendMessage();
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
-	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+	if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
+		// direct success
+		return result;
+	}
+	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
 		return result;
 	}
 	// Block until read event happens
@@ -392,6 +400,19 @@ bool BleCharacteristic::subscribe(uint32_t timeout) {
 	if (!_flags.flags.initialized || !_flags.flags.remote) {
 		return false;
 	}
+	// Write to _cccdValue: bit 0 for notify, bit 1 for indicate
+	// We only use the first two bits, but BLE specs says the value should be 2 bytes
+	// If notify is available, we use that. Otherwise, we try indicate
+	if (_properties & BleCharacteristicProperties::BLENotify) {
+		_cccdValue = 1;
+	}
+	else if (_properties & BleCharacteristicProperties::BLEIndicate) {
+		_cccdValue = 1 << 1;
+	}
+	else {
+		// Both are not allowed. Subscribing not possible
+		return false;
+	}
 	// Clear flag
 	_flags.flags.writtenToRemote = false;
 
@@ -401,12 +422,20 @@ bool BleCharacteristic::subscribe(uint32_t timeout) {
 	bleRequest->header.messageType       = CS_MICROAPP_SDK_TYPE_BLE;
 	bleRequest->header.ack               = CS_MICROAPP_SDK_ACK_REQUEST;
 	bleRequest->type                     = CS_MICROAPP_SDK_BLE_CENTRAL;
-	bleRequest->central.type             = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_SUBSCRIBE;
+	bleRequest->central.type             = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_WRITE;
+	bleRequest->central.requestWrite.handle = _cccdHandle;
+	bleRequest->central.requestWrite.buffer = reinterpret_cast<uint8_t*>(&_cccdValue);
+	bleRequest->central.requestWrite.size = 2;
 	bleRequest->central.connectionHandle = BLE_CONNECTION_HANDLE_PLACEHOLDER;
 
 	sendMessage();
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
-	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+		result = (microapp_sdk_result_t)bleRequest->header.ack;
+	if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
+		// direct success
+		return true;
+	}
+	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
 		return false;
 	}
 	// Block until write event happens
@@ -436,6 +465,11 @@ bool BleCharacteristic::unsubscribe(uint32_t timeout) {
 	if (!_flags.flags.initialized || !_flags.flags.remote) {
 		return false;
 	}
+	if (!canUnsubscribe()) {
+		return false;
+	}
+	// Clear the notify and indicate bits both
+	_cccdValue = 0;
 	// Clear flag
 	_flags.flags.writtenToRemote = false;
 
@@ -445,12 +479,19 @@ bool BleCharacteristic::unsubscribe(uint32_t timeout) {
 	bleRequest->header.messageType       = CS_MICROAPP_SDK_TYPE_BLE;
 	bleRequest->header.ack               = CS_MICROAPP_SDK_ACK_REQUEST;
 	bleRequest->type                     = CS_MICROAPP_SDK_BLE_CENTRAL;
-	bleRequest->central.type             = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_UNSUBSCRIBE;
+	bleRequest->central.type             = CS_MICROAPP_SDK_BLE_CENTRAL_REQUEST_WRITE;
 	bleRequest->central.connectionHandle = BLE_CONNECTION_HANDLE_PLACEHOLDER;
+	bleRequest->central.requestWrite.handle = _cccdHandle;
+	bleRequest->central.requestWrite.buffer = reinterpret_cast<uint8_t*>(&_cccdValue);
+	bleRequest->central.requestWrite.size = 2;
 
 	sendMessage();
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
-	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+	if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
+		// direct success
+		return true;
+	}
+	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
 		return false;
 	}
 	// Block until write event happens

@@ -43,13 +43,17 @@ bool BleScan::findAdvertisementDataType(GapAdvType type, ble_ad_t* foundData) {
 	return false;
 }
 
-bool BleScan::hasServiceDataUuid(uuid16_t uuid) {
+bool BleScan::hasServiceUuid(uuid16_t uuid) {
 	GapAdvType serviceUuidListTypes[2] = {
 			GapAdvType::IncompleteList16BitServiceUuids,
 			GapAdvType::CompleteList16BitServiceUuids};
 	ble_ad_t ad;
 	for (uint8_t i = 0; i < sizeof(serviceUuidListTypes)/sizeof(serviceUuidListTypes[0]); i++) {
 		if (findAdvertisementDataType(serviceUuidListTypes[i], &ad)) {
+			// uuid == 0 means any uuid
+			if (uuid == 0 && ad.len >= sizeof(uuid)) {
+				return true;
+			}
 			// check ad for uuid
 			for (uint8_t j = 0; j < ad.len; j += sizeof(uuid)) {
 				if (uuid == ((ad.data[j + 1] << 8) | ad.data[j])) {
@@ -59,4 +63,37 @@ bool BleScan::hasServiceDataUuid(uuid16_t uuid) {
 		}
 	}
 	return false;
+}
+
+uint8_t BleScan::serviceUuidCount() {
+	GapAdvType serviceUuidListTypes[2] = {
+			GapAdvType::IncompleteList16BitServiceUuids,
+			GapAdvType::CompleteList16BitServiceUuids};
+	ble_ad_t ad;
+	uint8_t count = 0;
+	for (uint8_t i = 0; i < sizeof(serviceUuidListTypes)/sizeof(serviceUuidListTypes[0]); i++) {
+		if (findAdvertisementDataType(serviceUuidListTypes[i], &ad)) {
+			count += ad.len / UUID_16BIT_BYTE_LENGTH;
+		}
+	}
+	return count;
+}
+
+uuid16_t BleScan::serviceUuid(uint8_t index) {
+	GapAdvType serviceUuidListTypes[2] = {
+			GapAdvType::IncompleteList16BitServiceUuids,
+			GapAdvType::CompleteList16BitServiceUuids};
+	ble_ad_t ad;
+	uint8_t count = 0;
+	for (uint8_t i = 0; i < sizeof(serviceUuidListTypes)/sizeof(serviceUuidListTypes[0]); i++) {
+		if (findAdvertisementDataType(serviceUuidListTypes[i], &ad)) {
+			for (uint8_t j = 0; j < ad.len; j += 2) {
+				if (count == index) {
+					return ((ad.data[j + 1] << 8) | ad.data[j]);
+				}
+				count++;
+			}
+		}
+	}
+	return 0;
 }

@@ -223,6 +223,29 @@ public:
 	String localName();
 
 	/**
+	 * Query if a discovered BLE device is advertising a service UUID
+	 *
+	 * @return true if the device is advertising a service UUID
+	 * @return false otherwise
+	 */
+	bool hasAdvertisedServiceUuid();
+
+	/**
+	 * Query the number of advertised services a discovered BLE device is advertising
+	 *
+	 * @return the number of advertised services a discovered BLE device is advertising
+	 */
+	uint8_t advertisedServiceUuidCount();
+
+	/**
+	 * Query an advertised service UUID discovered BLE device is advertising
+	 *
+	 * @param index (optional) the index of the service UUID. Defaults to 0
+	 * @return advertised service UUID (as a string)
+	 */
+	String advertisedServiceUuid(uint8_t index = 0);
+
+	/**
 	 * Connect to a BLE device
 	 *
 	 * @param timeout in milliseconds

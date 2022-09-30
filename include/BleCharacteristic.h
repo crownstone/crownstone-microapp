@@ -74,9 +74,15 @@ private:
 
 	uint8_t _properties   = 0;
 	uint8_t* _value       = nullptr;
+	// valueSize is the max size of the characteristic, set via the constructor
 	uint16_t _valueSize   = 0;
+	// valueLength is the current size of the characteristic, and can change
 	uint16_t _valueLength = 0;
-	uint16_t _handle      = 0;
+	uint16_t _valueHandle = 0;
+	// client characteristic configuration descriptor
+	// used for subscribing and unsubscribing
+	uint16_t _cccdHandle  = 0;
+	uint16_t _cccdValue   = 0;
 
 	Uuid _uuid;
 

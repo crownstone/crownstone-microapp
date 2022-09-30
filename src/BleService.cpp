@@ -75,7 +75,11 @@ microapp_sdk_result_t BleService::getCharacteristic(uint16_t handle, BleCharacte
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}
 	for (uint8_t i = 0; i < _characteristicCount; i++) {
-		if (_characteristics[i]->_handle == handle) {
+		if (_characteristics[i]->_valueHandle == handle) {
+			*characteristic = _characteristics[i];
+			return CS_MICROAPP_SDK_ACK_SUCCESS;
+		}
+		if (_characteristics[i]->_cccdHandle == handle) {
 			*characteristic = _characteristics[i];
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}

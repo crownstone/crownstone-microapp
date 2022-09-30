@@ -60,6 +60,10 @@ void loop() {
 	if (writableCharacteristic.written()) {
 		Serial.println(writableCharacteristic.value(), writableCharacteristic.valueLength());
 	}
+	uint8_t len = writableCharacteristic.valueLength();
+	uint8_t loopBuffer[len];
+	writableCharacteristic.readValue(loopBuffer, len);
+	Serial.println(loopBuffer, len);
 
 	BleDevice& central = BLE.central();
 	if (central) {

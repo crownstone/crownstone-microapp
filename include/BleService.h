@@ -49,9 +49,9 @@ private:
 	microapp_sdk_result_t addLocalService();
 
 	/**
-	 * Get a characteristic based on its handle
+	 * Get a characteristic based on its handle (value or cccd)
 	 *
-	 * @param[in] handle the handle of the characteristic
+	 * @param[in] handle the value or cccd handle of the characteristic
 	 * @param[out] characteristic if found, pointer to characteristic pointer will be placed here
 	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
 	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if service not initialized

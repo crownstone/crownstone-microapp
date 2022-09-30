@@ -56,10 +56,25 @@ public:
 	/**
 	 * Checks if a service with passed uuid is advertised by the device
 	 *
-	 * @param uuid     the uuid to filter
-	 * @return true    if found
-	 * @return false   if not found
+	 * @param uuid (optional) uuid to check. Default 0 means check for any
+	 * @return true if found
+	 * @return false if not found
 	 */
-	bool hasServiceDataUuid(uuid16_t uuid);
+	bool hasServiceUuid(uuid16_t uuid = 0);
+
+	/**
+	 * Finds the number of 16-bit service uuids advertised by the device
+	 *
+	 * @return the number of services advertised
+	 */
+	uint8_t serviceUuidCount();
+
+	/**
+	 * Return the uuid advertised by the device, indexed by the index parameter
+	 *
+	 * @param index (optional) index of the service uuid. Default 0
+	 * @return uuid indexed by index. Returns 0 if not found
+	 */
+	uuid16_t serviceUuid(uint8_t index = 0);
 
 };

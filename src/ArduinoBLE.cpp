@@ -146,7 +146,8 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 					properties |= BleCharacteristicProperties::BLEIndicate;
 				}
 				BleCharacteristic characteristic(&central->eventDiscover.uuid, properties);
-				characteristic._handle = central->eventDiscover.valueHandle;
+				characteristic._valueHandle = central->eventDiscover.valueHandle;
+				characteristic._cccdHandle = central->eventDiscover.cccdHandle;
 				_remoteCharacteristics[_remoteCharacteristicCount] = characteristic;
 				// add to device
 				Uuid serviceUuid(central->eventDiscover.serviceUuid.uuid, central->eventDiscover.serviceUuid.type);
@@ -169,7 +170,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 				return result;
 			}
 			BleCharacteristic* characteristic;
-			result = _device.getCharacteristic(central->eventNotification.valueHandle, &characteristic);
+			result = _device.getCharacteristic(central->eventWrite.handle, &characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
@@ -602,10 +603,10 @@ bool Ble::matchesFilter(BleScan scan, MacAddress address) {
 			return true;
 		}
 		case BleFilterUuid: {
-			if (_scanFilter.uuid.length() != UUID_16BIT_BYTE_LENGTH) {
+			if (_scanFilter.uuid.custom()) {
 				return false;
 			}
-			return scan.hasServiceDataUuid(_scanFilter.uuid.uuid16());
+			return scan.hasServiceUuid(_scanFilter.uuid.uuid16());
 		}
 		case BleFilterNone: {
 			// If no filter is set, we pass the filter by default
