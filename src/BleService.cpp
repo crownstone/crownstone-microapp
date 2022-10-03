@@ -1,5 +1,7 @@
 #include <BleService.h>
 
+#include <Serial.h>
+
 // Only used for local services
 BleService::BleService(const char* uuid) {
 	_uuid                    = Uuid(uuid);

@@ -1,8 +1,6 @@
 #include <Arduino.h>
 #include <ArduinoBLE.h>
 
-#include <Serial.h>
-
 /*
  * An ordinary C function. Calls internal handler
  */
@@ -100,6 +98,9 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_DISCONNECT: {
 			_device.onDisconnect();
+			// clean up own member variables as well
+			_remoteServiceCount = 0;
+			_remoteCharacteristicCount = 0;
 			// check for event handlers
 			BleEventHandlerRegistration registration;
 			result = getBleEventHandlerRegistration(BLEDisconnected, registration);
@@ -113,10 +114,10 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_DISCOVER: {
 			if (central->eventDiscover.valueHandle == 0) {
 				// discovered a service
-				BleService service(&central->eventDiscover.uuid);
 				if (_remoteServiceCount >= MAX_REMOTE_SERVICES) {
 					return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
 				}
+				BleService service(&central->eventDiscover.uuid);
 				_remoteServices[_remoteServiceCount] = service;
 				// add to device
 				result = _device.addDiscoveredService(&_remoteServices[_remoteServiceCount]);

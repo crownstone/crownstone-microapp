@@ -174,6 +174,11 @@ private:
 	 */
 	microapp_sdk_result_t getLocalCharacteristic(uint16_t handle, BleCharacteristic** characteristic);
 
+	/**
+	 * Clean up on device disconnect
+	 */
+	void onDeviceDisconnect();
+
 public:
 	// Should be called via BLE macro (e.g. BLE.begin())
 	static Ble& getInstance() {
