@@ -63,10 +63,34 @@ int main() {
 	return -1;
 }
 
+// provided by the linker
+extern void (*__preinit_array_start []) (void) __attribute__((weak));
+extern void (*__preinit_array_end []) (void) __attribute__((weak));
+extern void (*__init_array_start []) (void) __attribute__((weak));
+extern void (*__init_array_end []) (void) __attribute__((weak));
+
+void __libc_init_array (void)
+{
+  size_t count;
+  size_t i;
+
+  count = __preinit_array_end - __preinit_array_start;
+  for (i = 0; i < count; i++)
+    __preinit_array_start[i] ();
+
+  // normally here a call to custom _init() function
+
+  count = __init_array_end - __init_array_start;
+  for (i = 0; i < count; i++)
+    __init_array_start[i] ();
+}
+
+
 /*
  * We will enter from the Reset_Handler. This is the very first instruction as defined in the assembly file startup.S.
  */
 __attribute__((weak)) void _start(void) {
+	__libc_init_array();
 	main();
 }
 
