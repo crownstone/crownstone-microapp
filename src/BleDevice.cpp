@@ -55,7 +55,7 @@ void BleDevice::onDiscoverDone() {
 
 // Only defined for peripheral devices
 microapp_sdk_result_t BleDevice::addDiscoveredService(BleService* service) {
-	if (_serviceCount >= MAX_SERVICES) {
+	if (_serviceCount >= MAX_REMOTE_SERVICES) {
 		return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
 	}
 	_services[_serviceCount] = service;

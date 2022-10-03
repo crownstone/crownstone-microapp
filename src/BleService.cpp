@@ -95,7 +95,7 @@ microapp_sdk_result_t BleService::addDiscoveredCharacteristic(BleCharacteristic*
 	if (!_flags.flags.remote) {
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
-	if (_characteristicCount >= MAX_CHARACTERISTICS) {
+	if (_characteristicCount >= MAX_CHARACTERISTICS_PER_SERVICE) {
 		return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
 	}
 	_characteristics[_characteristicCount] = characteristic;
@@ -112,7 +112,7 @@ String BleService::uuid() {
 
 // Only for local services
 void BleService::addCharacteristic(BleCharacteristic& characteristic) {
-	if (_characteristicCount >= MAX_CHARACTERISTICS) {
+	if (_characteristicCount >= MAX_CHARACTERISTICS_PER_SERVICE) {
 		return;
 	}
 	if (_flags.flags.remote) {

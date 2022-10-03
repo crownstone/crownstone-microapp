@@ -41,6 +41,12 @@ struct BleFilter {
 	Uuid uuid;
 };
 
+#ifndef MAX_LOCAL_SERVICES
+#define MAX_LOCAL_SERVICES 1
+#endif
+
+#define MAX_REMOTE_CHARACTERISTICS (MAX_REMOTE_SERVICES * MAX_CHARACTERISTICS_PER_SERVICE)
+
 /**
  * Main class for scanning, connecting and handling Bluetooth Low Energy devices
  *
@@ -86,21 +92,18 @@ private:
 	// Pointers to local services are stored here (for peripheral role)
 	// The actual services and their characteristics are stored on the user side
 	// The pointers are not initialized to nullptrs. Validity should be checked via _localServiceCount
-	static const uint8_t MAX_LOCAL_SERVICES = 1;
 	BleService* _localServices[MAX_LOCAL_SERVICES];
 	uint8_t _localServiceCount = 0;
 
 	// Discovered remote services, characteristics and their values are stored here
-	static const uint8_t MAX_REMOTE_SERVICES = 2;
 	BleService _remoteServices[MAX_REMOTE_SERVICES];
 	uint8_t _remoteServiceCount = 0;
 
-	static const uint8_t MAX_REMOTE_CHARACTERISTICS = 10;
 	BleCharacteristic _remoteCharacteristics[MAX_REMOTE_CHARACTERISTICS];
 	uint8_t _remoteCharacteristicCount = 0;
 
 	// Event handlers set by the user
-	static const uint8_t MAX_BLE_EVENT_HANDLER_REGISTRATIONS = 3;
+	static constexpr uint8_t MAX_BLE_EVENT_HANDLER_REGISTRATIONS = 3;
 
 	/*
 	 * Store callbacks set by users

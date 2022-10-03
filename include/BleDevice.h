@@ -8,6 +8,10 @@
 #include <String.h>
 #include <microapp.h>
 
+#ifndef MAX_REMOTE_SERVICES
+#define MAX_REMOTE_SERVICES 2
+#endif
+
 // Forward declarations
 bool registeredBleInterrupt(MicroappSdkBleType bleType);
 microapp_sdk_result_t registerBleInterrupt(MicroappSdkBleType bleType);
@@ -38,8 +42,7 @@ private:
 	uint16_t _connectionHandle = 0;
 
 	// Services with characteristics for peripheral devices
-	static const uint8_t MAX_SERVICES = 2;
-	BleService* _services[MAX_SERVICES];  // array of pointers
+	BleService* _services[MAX_REMOTE_SERVICES];  // array of pointers
 	uint8_t _serviceCount = 0;
 
 	union __attribute__((packed)) flags_t {

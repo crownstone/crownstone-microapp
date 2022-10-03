@@ -45,8 +45,8 @@ enum BleAsyncResult {
 class BleDevice;
 class BleCharacteristic;
 
-typedef void (*DeviceEventHandler)(BleDevice);
-typedef void (*CharacteristicEventHandler)(BleDevice, BleCharacteristic);
+typedef void (*DeviceEventHandler)(BleDevice&);
+typedef void (*CharacteristicEventHandler)(BleDevice&, BleCharacteristic&);
 // Both of the above can be cast to a  (generic) BleEventHandler (and back)
 // so both can be stored in the BleEventHandlerRegistration
 typedef void (*BleEventHandler)(void);

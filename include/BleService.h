@@ -6,6 +6,10 @@
 #include <String.h>
 #include <microapp.h>
 
+#ifndef MAX_CHARACTERISTICS_PER_SERVICE
+#define MAX_CHARACTERISTICS_PER_SERVICE 6
+#endif
+
 class BleService {
 
 private:
@@ -34,8 +38,7 @@ private:
 	Uuid _uuid;
 	uint16_t _handle = 0;
 
-	static const uint8_t MAX_CHARACTERISTICS = 6;
-	BleCharacteristic* _characteristics[MAX_CHARACTERISTICS];
+	BleCharacteristic* _characteristics[MAX_CHARACTERISTICS_PER_SERVICE];
 	uint8_t _characteristicCount = 0;
 
 	/**
