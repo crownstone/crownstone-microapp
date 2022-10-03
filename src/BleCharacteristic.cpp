@@ -16,8 +16,8 @@ BleCharacteristic::BleCharacteristic(const char* uuid, uint8_t properties, uint8
 	_value                   = value;
 	_valueSize               = valueSize;
 	_valueLength             = valueSize;
-	_flags.flags.remote      = false;
-	_flags.flags.initialized = true;
+	_flags.remote      = false;
+	_flags.initialized = true;
 }
 
 // Only used for remote characteristics
@@ -26,20 +26,20 @@ BleCharacteristic::BleCharacteristic(microapp_sdk_ble_uuid_t* uuid, uint8_t prop
 	_properties              = properties;
 	_value                   = nullptr;
 	_valueSize               = 0;
-	_flags.flags.remote      = true;
-	_flags.flags.initialized = true;
+	_flags.remote      = true;
+	_flags.initialized = true;
 }
 
 BleCharacteristic::operator bool() const {
-	return _flags.flags.initialized;
+	return _flags.initialized;
 }
 
 // Only defined for local characteristics
 microapp_sdk_result_t BleCharacteristic::addLocalCharacteristic(uint16_t serviceHandle) {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}
-	if (_flags.flags.remote) {
+	if (_flags.remote) {
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
 	microapp_sdk_result_t result;
@@ -83,16 +83,16 @@ microapp_sdk_result_t BleCharacteristic::addLocalCharacteristic(uint16_t service
 		return result;
 	}
 	_valueHandle            = bleRequest->peripheral.handle;
-	_flags.flags.added = true;
+	_flags.added = true;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
 // Only defined for local characteristics
 microapp_sdk_result_t BleCharacteristic::writeValueLocal(uint8_t* buffer, uint16_t length) {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}
-	if (_flags.flags.remote) {
+	if (_flags.remote) {
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
 	if (length > _valueSize) {
@@ -128,10 +128,10 @@ microapp_sdk_result_t BleCharacteristic::writeValueLocal(uint8_t* buffer, uint16
 
 // Only defined for remote characteristics
 microapp_sdk_result_t BleCharacteristic::writeValueRemote(uint8_t* buffer, uint16_t length, uint32_t timeout) {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}
-	if (!_flags.flags.remote) {
+	if (!_flags.remote) {
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
 	if (length > MAX_CHARACTERISTIC_VALUE_SIZE) {
@@ -203,7 +203,7 @@ microapp_sdk_result_t BleCharacteristic::readValueRemote(uint8_t* buffer, uint16
 }
 
 microapp_sdk_result_t BleCharacteristic::onRemoteWritten() {
-	if (!_flags.flags.remote) {
+	if (!_flags.remote) {
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
 	_asyncResult = BleAsyncSuccess;
@@ -211,7 +211,7 @@ microapp_sdk_result_t BleCharacteristic::onRemoteWritten() {
 }
 
 microapp_sdk_result_t BleCharacteristic::onRemoteRead(microapp_sdk_ble_central_event_read_t* eventRead) {
-	if (!_flags.flags.remote) {
+	if (!_flags.remote) {
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
 	// Data size is limited by valueSize of characteristic
@@ -227,7 +227,7 @@ microapp_sdk_result_t BleCharacteristic::onRemoteRead(microapp_sdk_ble_central_e
 }
 
 microapp_sdk_result_t BleCharacteristic::onRemoteNotification(microapp_sdk_ble_central_event_notification_t* eventNotification) {
-	if (!_flags.flags.remote) {
+	if (!_flags.remote) {
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
 	// Data size is limited by valueSize of characteristic
@@ -240,29 +240,29 @@ microapp_sdk_result_t BleCharacteristic::onRemoteNotification(microapp_sdk_ble_c
 	// Only set new value length so user may request new length
 	_valueLength = size;
 	// Set flag so user may poll whether notify happened
-	_flags.flags.remoteValueUpdated = true;
+	_flags.remoteValueUpdated = true;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
 microapp_sdk_result_t BleCharacteristic::onLocalWritten(microapp_sdk_ble_peripheral_event_write_t* eventWrite) {
 	_valueLength = eventWrite->size;
-	_flags.flags.writtenAsLocal = true;
+	_flags.writtenAsLocal = true;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
 microapp_sdk_result_t BleCharacteristic::onLocalSubscribed() {
-	_flags.flags.subscribed = true;
+	_flags.subscribed = true;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
 microapp_sdk_result_t BleCharacteristic::onLocalUnsubscribed() {
-	_flags.flags.subscribed = false;
+	_flags.subscribed = false;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
 microapp_sdk_result_t BleCharacteristic::onLocalNotificationDone() {
 	// This flag is currently not used. It may be used in the future
-	_flags.flags.localNotificationDone = true;
+	_flags.localNotificationDone = true;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
@@ -287,7 +287,7 @@ microapp_sdk_result_t BleCharacteristic::waitForAsyncResult(uint8_t timeout) {
 }
 
 String BleCharacteristic::uuid() {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return String(nullptr);
 	}
 	return String(_uuid.string());
@@ -302,7 +302,7 @@ uint16_t BleCharacteristic::valueSize() {
 }
 
 uint8_t* BleCharacteristic::value() {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return nullptr;
 	}
 	return _value;
@@ -313,10 +313,10 @@ uint16_t BleCharacteristic::valueLength() {
 }
 
 uint16_t BleCharacteristic::readValue(uint8_t* buffer, uint16_t length) {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return 0;
 	}
-	if (!_flags.flags.remote) {
+	if (!_flags.remote) {
 		if (_valueLength < length) {
 			length = _valueLength;
 		}
@@ -329,16 +329,16 @@ uint16_t BleCharacteristic::readValue(uint8_t* buffer, uint16_t length) {
 			return 0;
 		}
 		// Clear valueUpdated flag after set on notify
-		_flags.flags.remoteValueUpdated = false;
+		_flags.remoteValueUpdated = false;
 		return _valueLength;
 	}
 }
 
 bool BleCharacteristic::writeValue(uint8_t* buffer, uint16_t length) {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return false;
 	}
-	if (_flags.flags.remote) {
+	if (_flags.remote) {
 		return (writeValueRemote(buffer, length) == CS_MICROAPP_SDK_ACK_SUCCESS);
 	}
 	else {
@@ -348,7 +348,7 @@ bool BleCharacteristic::writeValue(uint8_t* buffer, uint16_t length) {
 
 // Only defined for local characteristics
 void BleCharacteristic::setEventHandler(BleEventType eventType, CharacteristicEventHandler eventHandler) {
-	if (!_flags.flags.initialized || _flags.flags.remote) {
+	if (!_flags.initialized || _flags.remote) {
 		return;
 	}
 	microapp_sdk_result_t result;
@@ -367,31 +367,31 @@ void BleCharacteristic::setEventHandler(BleEventType eventType, CharacteristicEv
 
 // Only defined for local characteristics
 bool BleCharacteristic::written() {
-	if (!_flags.flags.initialized || _flags.flags.remote) {
+	if (!_flags.initialized || _flags.remote) {
 		return false;
 	}
-	bool result = _flags.flags.writtenAsLocal;
+	bool result = _flags.writtenAsLocal;
 	// Clear the flag upon this call
-	_flags.flags.writtenAsLocal = false;
+	_flags.writtenAsLocal = false;
 	return result;
 }
 
 bool BleCharacteristic::subscribed() {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return false;
 	}
-	return _flags.flags.subscribed;
+	return _flags.subscribed;
 }
 
 bool BleCharacteristic::canRead() {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return false;
 	}
 	return _properties & BleCharacteristicProperties::BLERead;
 }
 
 bool BleCharacteristic::canWrite() {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return false;
 	}
 	return (_properties & BleCharacteristicProperties::BLEWrite
@@ -399,7 +399,7 @@ bool BleCharacteristic::canWrite() {
 }
 
 bool BleCharacteristic::canSubscribe() {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return false;
 	}
 	return (_properties & BleCharacteristicProperties::BLEIndicate
@@ -408,7 +408,7 @@ bool BleCharacteristic::canSubscribe() {
 
 // Only defined for remote characteristics
 bool BleCharacteristic::subscribe(uint32_t timeout) {
-	if (!_flags.flags.initialized || !_flags.flags.remote) {
+	if (!_flags.initialized || !_flags.remote) {
 		return false;
 	}
 	// Write to _cccdValue: bit 0 for notify, bit 1 for indicate
@@ -455,7 +455,7 @@ bool BleCharacteristic::subscribe(uint32_t timeout) {
 }
 
 bool BleCharacteristic::canUnsubscribe() {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return false;
 	}
 	return (_properties & BleCharacteristicProperties::BLEIndicate
@@ -464,7 +464,7 @@ bool BleCharacteristic::canUnsubscribe() {
 
 // Only defined for remote characteristics
 bool BleCharacteristic::unsubscribe(uint32_t timeout) {
-	if (!_flags.flags.initialized || !_flags.flags.remote) {
+	if (!_flags.initialized || !_flags.remote) {
 		return false;
 	}
 	if (!canUnsubscribe()) {
@@ -503,8 +503,8 @@ bool BleCharacteristic::unsubscribe(uint32_t timeout) {
 
 // Only defined for remote characteristics
 bool BleCharacteristic::valueUpdated() {
-	if (!_flags.flags.initialized || !_flags.flags.remote) {
+	if (!_flags.initialized || !_flags.remote) {
 		return false;
 	}
-	return _flags.flags.remoteValueUpdated;
+	return _flags.remoteValueUpdated;
 }

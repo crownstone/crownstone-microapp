@@ -22,17 +22,13 @@ private:
 	// Constructor for remote (discovered) service
 	BleService(microapp_sdk_ble_uuid_t* uuid);
 
-	union __attribute__((packed)) flags_t {
-		struct __attribute__((packed)) {
-			//! whether characteristic is empty or not
-			bool initialized : 1;
-			//! whether characteristic is local or remote
-			bool remote : 1;
-			//! (only for local service) whether service has been added to bluenet
-			bool added : 1;
-		} flags;
-		// initialize to zero
-		uint8_t asInt = 0;
+	struct {
+		//! whether characteristic is empty or not
+		bool initialized = false;
+		//! whether characteristic is local or remote
+		bool remote = false;
+		//! (only for local service) whether service has been added to bluenet
+		bool added = false;
 	} _flags;
 
 	Uuid _uuid;

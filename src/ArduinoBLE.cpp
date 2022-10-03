@@ -40,7 +40,7 @@ microapp_sdk_result_t Ble::handleScanEvent(microapp_sdk_ble_scan_t* scanInterrup
 	// for scan type, only interrupt type is EVENT_SCAN for now
 	switch (scanInterrupt->type) {
 		case CS_MICROAPP_SDK_BLE_SCAN_EVENT_SCAN: {
-			if (!_flags.flags.isScanning) {
+			if (!_flags.isScanning) {
 				return CS_MICROAPP_SDK_ACK_SUCCESS;
 			}
 			// Apply a wrapper BleScan (no copy) to parse scan data
@@ -72,7 +72,7 @@ microapp_sdk_result_t Ble::handleScanEvent(microapp_sdk_ble_scan_t* scanInterrup
 }
 
 microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* central) {
-	if (!_device._flags.flags.isPeripheral) {
+	if (!_device._flags.isPeripheral) {
 		// Other device is not a peripheral
 		// Thus, we do nothing with central events
 		// First scan for a peripheral
@@ -323,7 +323,7 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 
 // Only defined for peripheral
 microapp_sdk_result_t Ble::getLocalCharacteristic(uint16_t handle, BleCharacteristic** characteristic) {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}
 	for (uint8_t i = 0; i < _localServiceCount; i++) {
@@ -350,7 +350,7 @@ bool Ble::begin() {
 		return false;
 	}
 	_address = MacAddress(bleRequest->requestMac.address.address, MAC_ADDRESS_LENGTH, bleRequest->requestMac.address.type);
-	_flags.flags.initialized = true;
+	_flags.initialized = true;
 	return true;
 }
 
@@ -358,12 +358,16 @@ void Ble::end() {
 	_address = MacAddress();
 	_scanDevice = BleDevice();
 	_device = BleDevice();
-	_flags.asInt = 0;
+	_flags.initialized = false;
+	_flags.isScanning = false;
+	_flags.registeredCentralInterrupts = false;
+	_flags.registeredPeripheralInterrupts = false;
+	_flags.registeredScanInterrupts = false;
 	return;
 }
 
 void Ble::poll(int timeout) {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return;
 	}
 	if (timeout == 0) {
@@ -424,14 +428,14 @@ bool Ble::setEventHandler(BleEventType eventType, DeviceEventHandler eventHandle
 }
 
 bool Ble::connected() {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return false;
 	}
 	return _device.connected();
 }
 
 bool Ble::disconnect(uint32_t timeout) {
-	if (!_device.connected() || !_flags.flags.initialized) {
+	if (!_device.connected() || !_flags.initialized) {
 		return false;
 	}
 	else {
@@ -440,7 +444,7 @@ bool Ble::disconnect(uint32_t timeout) {
 }
 
 String Ble::address() {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return String(nullptr);
 	}
 	return String(_address.string());
@@ -448,7 +452,7 @@ String Ble::address() {
 
 int8_t Ble::rssi() {
 	// If not connected return 127 as per the official arduino library
-	if (!_device.connected() || !_flags.flags.initialized) {
+	if (!_device.connected() || !_flags.initialized) {
 		return 127;
 	}
 	else {
@@ -457,7 +461,7 @@ int8_t Ble::rssi() {
 }
 
 void Ble::addService(BleService& service) {
-	if (_localServiceCount >= MAX_LOCAL_SERVICES || !_flags.flags.initialized) {
+	if (_localServiceCount >= MAX_LOCAL_SERVICES || !_flags.initialized) {
 		return;
 	}
 	microapp_sdk_result_t result;
@@ -476,7 +480,7 @@ void Ble::addService(BleService& service) {
 }
 
 BleDevice& Ble::central() {
-	if (_device.connected() && _device._flags.flags.isCentral) {
+	if (_device.connected() && _device._flags.isCentral) {
 		return _device;
 	}
 	else {
@@ -487,12 +491,12 @@ BleDevice& Ble::central() {
 }
 
 bool Ble::scan(bool withDuplicates) {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return false;
 	}
 	// Reset existing _scanDevice
 	_scanDevice = BleDevice();
-	if (_flags.flags.isScanning) {
+	if (_flags.isScanning) {
 		return true;
 	}
 
@@ -509,12 +513,12 @@ bool Ble::scan(bool withDuplicates) {
 	if (!success) {
 		return false;
 	}
-	_flags.flags.isScanning = true;
+	_flags.isScanning = true;
 	return true;
 }
 
 bool Ble::scanForName(const char* name, bool withDuplicates) {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return false;
 	}
 	_scanFilter.type         = BleFilterLocalName;
@@ -529,7 +533,7 @@ bool Ble::scanForName(const char* name, bool withDuplicates) {
 }
 
 bool Ble::scanForAddress(const char* address, bool withDuplicates) {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return false;
 	}
 	_scanFilter.type    = BleFilterAddress;
@@ -539,7 +543,7 @@ bool Ble::scanForAddress(const char* address, bool withDuplicates) {
 }
 
 bool Ble::scanForUuid(const char* uuid, bool withDuplicates) {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return false;
 	}
 	if (strlen(uuid) != UUID_16BIT_STRING_LENGTH) {
@@ -552,10 +556,10 @@ bool Ble::scanForUuid(const char* uuid, bool withDuplicates) {
 }
 
 bool Ble::stopScan() {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return false;
 	}
-	if (!_flags.flags.isScanning) {  // already not scanning
+	if (!_flags.isScanning) {  // already not scanning
 		return true;
 	}
 	// Reset existing _scanDevice
@@ -578,12 +582,12 @@ bool Ble::stopScan() {
 	}
 
 	_scanFilter.type        = BleFilterNone;  // reset filter
-	_flags.flags.isScanning = false;
+	_flags.isScanning = false;
 	return true;
 }
 
 BleDevice& Ble::available() {
-	if (!_flags.flags.initialized || !_flags.flags.isScanning) {
+	if (!_flags.initialized || !_flags.isScanning) {
 		// Reset device
 		_device = BleDevice();
 		return _device;
@@ -697,9 +701,9 @@ microapp_sdk_result_t removeBleEventHandlerRegistration(BleEventType eventType) 
 
 bool registeredBleInterrupt(MicroappSdkBleType bleType) {
 	switch (bleType) {
-		case CS_MICROAPP_SDK_BLE_SCAN: return BLE._flags.flags.registeredScanInterrupts;
-		case CS_MICROAPP_SDK_BLE_CENTRAL: return BLE._flags.flags.registeredCentralInterrupts;
-		case CS_MICROAPP_SDK_BLE_PERIPHERAL: return BLE._flags.flags.registeredPeripheralInterrupts;
+		case CS_MICROAPP_SDK_BLE_SCAN: return BLE._flags.registeredScanInterrupts;
+		case CS_MICROAPP_SDK_BLE_CENTRAL: return BLE._flags.registeredCentralInterrupts;
+		case CS_MICROAPP_SDK_BLE_PERIPHERAL: return BLE._flags.registeredPeripheralInterrupts;
 		default: return false;
 	}
 }
@@ -753,9 +757,9 @@ microapp_sdk_result_t registerBleInterrupt(MicroappSdkBleType bleType) {
 		return result;
 	}
 	switch (bleType) {
-		case CS_MICROAPP_SDK_BLE_SCAN: BLE._flags.flags.registeredScanInterrupts = true; break;
-		case CS_MICROAPP_SDK_BLE_CENTRAL: BLE._flags.flags.registeredCentralInterrupts = true; break;
-		case CS_MICROAPP_SDK_BLE_PERIPHERAL: BLE._flags.flags.registeredPeripheralInterrupts = true; break;
+		case CS_MICROAPP_SDK_BLE_SCAN: BLE._flags.registeredScanInterrupts = true; break;
+		case CS_MICROAPP_SDK_BLE_CENTRAL: BLE._flags.registeredCentralInterrupts = true; break;
+		case CS_MICROAPP_SDK_BLE_PERIPHERAL: BLE._flags.registeredPeripheralInterrupts = true; break;
 		default:
 			// would have returned early earlier this function
 			break;

@@ -7,27 +7,27 @@ BleService::BleService(const char* uuid) {
 		// If uuid not valid, return early
 		return;
 	}
-	_flags.flags.remote      = false;
-	_flags.flags.initialized = true;
+	_flags.remote      = false;
+	_flags.initialized = true;
 }
 
 // Only used for remote (discovered) services
 BleService::BleService(microapp_sdk_ble_uuid_t* uuid) {
 	_uuid = Uuid(uuid->uuid, uuid->type);
-	_flags.flags.remote      = true;
-	_flags.flags.initialized = true;
+	_flags.remote      = true;
+	_flags.initialized = true;
 }
 
 BleService::operator bool() const {
-	return _flags.flags.initialized;
+	return _flags.initialized;
 }
 
 // Only for local services
 microapp_sdk_result_t BleService::addLocalService() {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}
-	if (_flags.flags.remote) {
+	if (_flags.remote) {
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
 	microapp_sdk_result_t result;
@@ -66,12 +66,12 @@ microapp_sdk_result_t BleService::addLocalService() {
 			return result;
 		}
 	}
-	_flags.flags.added = true;
+	_flags.added = true;
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
 microapp_sdk_result_t BleService::getCharacteristic(uint16_t handle, BleCharacteristic** characteristic) {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}
 	for (uint8_t i = 0; i < _characteristicCount; i++) {
@@ -89,10 +89,10 @@ microapp_sdk_result_t BleService::getCharacteristic(uint16_t handle, BleCharacte
 
 // Only for remote services
 microapp_sdk_result_t BleService::addDiscoveredCharacteristic(BleCharacteristic* characteristic) {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}
-	if (!_flags.flags.remote) {
+	if (!_flags.remote) {
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
 	if (_characteristicCount >= MAX_CHARACTERISTICS_PER_SERVICE) {
@@ -104,7 +104,7 @@ microapp_sdk_result_t BleService::addDiscoveredCharacteristic(BleCharacteristic*
 }
 
 String BleService::uuid() {
-	if (!_flags.flags.initialized) {
+	if (!_flags.initialized) {
 		return String(nullptr);
 	}
 	return String(_uuid.string());
@@ -115,7 +115,7 @@ void BleService::addCharacteristic(BleCharacteristic& characteristic) {
 	if (_characteristicCount >= MAX_CHARACTERISTICS_PER_SERVICE) {
 		return;
 	}
-	if (_flags.flags.remote) {
+	if (_flags.remote) {
 		return;
 	}
 	_characteristics[_characteristicCount] = &characteristic;

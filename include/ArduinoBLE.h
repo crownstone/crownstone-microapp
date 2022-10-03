@@ -63,18 +63,14 @@ private:
 
 	Ble(){};
 
-	union __attribute__((packed)) flags_t {
-		struct __attribute__((packed)) {
-			//! whether begin has been called
-			bool initialized : 1;
-			//! whether scans are handled
-			bool isScanning : 1;
-			bool registeredScanInterrupts : 1;
-			bool registeredCentralInterrupts : 1;
-			bool registeredPeripheralInterrupts : 1;
-		} flags;
-		// initialize to zero
-		uint8_t asInt = 0;
+	struct {
+		//! whether begin has been called
+		bool initialized = false;
+		//! whether scans are handled
+		bool isScanning = false;
+		bool registeredScanInterrupts = false;
+		bool registeredCentralInterrupts = false;
+		bool registeredPeripheralInterrupts = false;
 	} _flags;
 
 	// Address of the crownstone itself
@@ -173,11 +169,6 @@ private:
 	 * @return CS_MICROAPP_SDK_ACK_SUCCESS if found
 	 */
 	microapp_sdk_result_t getLocalCharacteristic(uint16_t handle, BleCharacteristic** characteristic);
-
-	/**
-	 * Clean up on device disconnect
-	 */
-	void onDeviceDisconnect();
 
 public:
 	// Should be called via BLE macro (e.g. BLE.begin())

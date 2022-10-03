@@ -47,26 +47,23 @@ private:
 
 	static constexpr uint16_t MAX_CHARACTERISTIC_VALUE_SIZE = 256;
 
-	union __attribute__((packed)) flags_t {
-		struct __attribute__((packed)) {
-			//! whether characteristic is empty or not
-			bool initialized : 1;
-			//! whether characteristic is local or remote
-			bool remote : 1;
-			//! (only for local characteristics) whether characteristic has been added to bluenet
-			bool added : 1;
-			//! (only for local characteristics) whether characteristic is subscribed to
-			bool subscribed : 1;
-			//! (only for local characteristics) whether characteristic is written to
-			bool writtenAsLocal : 1;
-			//! (only for local characteristics) whether notification is done
-			bool localNotificationDone : 1;
-			//! (only for remote characteristics) whether EVENT_NOTIFICATION has happened
-			bool remoteValueUpdated : 1;
-		} flags;
-		// initialize to zero
-		uint16_t asInt = 0;
+	struct {
+		//! whether characteristic is empty or not
+		bool initialized = false;
+		//! whether characteristic is local or remote
+		bool remote = false;
+		//! (only for local characteristics) whether characteristic has been added to bluenet
+		bool added = false;
+		//! (only for local characteristics) whether characteristic is subscribed to
+		bool subscribed = false;
+		//! (only for local characteristics) whether characteristic is written to
+		bool writtenAsLocal = false;
+		//! (only for local characteristics) whether notification is done
+		bool localNotificationDone = false;
+		//! (only for remote characteristics) whether EVENT_NOTIFICATION has happened
+		bool remoteValueUpdated = false;
 	} _flags;
+
 
 	uint8_t _properties   = 0;
 	uint8_t* _value       = nullptr;

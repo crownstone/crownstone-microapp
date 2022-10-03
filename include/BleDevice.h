@@ -45,20 +45,17 @@ private:
 	BleService* _services[MAX_REMOTE_SERVICES];  // array of pointers
 	uint8_t _serviceCount = 0;
 
-	union __attribute__((packed)) flags_t {
-		struct __attribute__((packed)) {
-			// device is initialized with nondefault constructor
-			bool initialized : 1;
-			// whether device is connected
-			bool connected : 1;
-			// device has central role
-			bool isCentral : 1;
-			// device has peripheral role
-			bool isPeripheral : 1;
-			// discovery has been completed (only for peripheral device)
-			bool discoveryDone : 1;
-		} flags;
-		uint8_t asInt = 0;  // initialize to zero
+	struct {
+		// device is initialized with nondefault constructor
+		bool initialized = false;
+		// whether device is connected
+		bool connected = false;
+		// device has central role
+		bool isCentral = false;
+		// device has peripheral role
+		bool isPeripheral = false;
+		// discovery has been completed (only for peripheral device)
+		bool discoveryDone = false;
 	} _flags;
 
 	BleAsyncResult _asyncResult = BleAsyncNotWaiting;
