@@ -82,8 +82,9 @@ private:
 	// Filter for device scans
 	BleFilter _scanFilter;
 
-	// Remote device acting as either central or peripheral
-	BleDevice _device;
+	// Remote device acting as peripheral
+	BleDevice _peripheral;
+	BleDevice _central;
 
 	// Pointers to local services are stored here (for peripheral role)
 	// The actual services and their characteristics are stored on the user side

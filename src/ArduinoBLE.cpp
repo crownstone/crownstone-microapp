@@ -72,32 +72,31 @@ microapp_sdk_result_t Ble::handleScanEvent(microapp_sdk_ble_scan_t* scanInterrup
 }
 
 microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* central) {
-	if (!_device._flags.isPeripheral) {
-		// Other device is not a peripheral
-		// Thus, we do nothing with central events
-		// First scan for a peripheral
+	if (!_peripheral || !_peripheral._flags.isPeripheral) {
+		// First scan for a peripheral device
+		// and connect to it via available() and connect()
 		return CS_MICROAPP_SDK_ACK_ERR_DISABLED;
 	}
 	microapp_sdk_result_t result;
 	switch (central->type) {
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_CONNECT: {
 			if (central->eventConnect.result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-				_device._asyncResult = BleAsyncFailure;
+				_peripheral._asyncResult = BleAsyncFailure;
 				return CS_MICROAPP_SDK_ACK_SUCCESS;
 			}
-			_device.onConnect(central->connectionHandle);
+			_peripheral.onConnect(central->connectionHandle);
 			// check for event handlers
 			BleEventHandlerRegistration registration;
 			result = getBleEventHandlerRegistration(BLEConnected, registration);
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 				// call callback
 				DeviceEventHandler handler = (DeviceEventHandler)registration.eventHandler;
-				handler(_device);
+				handler(_peripheral);
 			}
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_DISCONNECT: {
-			_device.onDisconnect();
+			_peripheral.onDisconnect();
 			// clean up own member variables as well
 			_remoteServiceCount = 0;
 			_remoteCharacteristicCount = 0;
@@ -107,7 +106,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 				// call callback
 				DeviceEventHandler handler = (DeviceEventHandler)registration.eventHandler;
-				handler(_device);
+				handler(_peripheral);
 			}
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
@@ -120,7 +119,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 				BleService service(&central->eventDiscover.uuid);
 				_remoteServices[_remoteServiceCount] = service;
 				// add to device
-				result = _device.addDiscoveredService(&_remoteServices[_remoteServiceCount]);
+				result = _peripheral.addDiscoveredService(&_remoteServices[_remoteServiceCount]);
 				if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 					return result;
 				}
@@ -153,7 +152,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 				_remoteCharacteristics[_remoteCharacteristicCount] = characteristic;
 				// add to device
 				Uuid serviceUuid(central->eventDiscover.serviceUuid.uuid, central->eventDiscover.serviceUuid.type);
-				result = _device.addDiscoveredCharacteristic(
+				result = _peripheral.addDiscoveredCharacteristic(
 						&_remoteCharacteristics[_remoteCharacteristicCount], serviceUuid);
 				if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 					return result;
@@ -164,15 +163,15 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_DISCOVER_DONE: {
 			if (central->eventDiscoverDone.result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-				_device._asyncResult = BleAsyncFailure;
+				_peripheral._asyncResult = BleAsyncFailure;
 				return CS_MICROAPP_SDK_ACK_SUCCESS;
 			}
-			_device.onDiscoverDone();
+			_peripheral.onDiscoverDone();
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_WRITE: {
 			BleCharacteristic* characteristic;
-			result = _device.getCharacteristic(central->eventWrite.handle, &characteristic);
+			result = _peripheral.getCharacteristic(central->eventWrite.handle, &characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
@@ -188,7 +187,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_READ: {
 			BleCharacteristic* characteristic;
-			result = _device.getCharacteristic(central->eventRead.valueHandle, &characteristic);
+			result = _peripheral.getCharacteristic(central->eventRead.valueHandle, &characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
@@ -202,7 +201,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 		}
 		case CS_MICROAPP_SDK_BLE_CENTRAL_EVENT_NOTIFICATION: {
 			BleCharacteristic* characteristic;
-			result = _device.getCharacteristic(central->eventNotification.valueHandle, &characteristic);
+			result = _peripheral.getCharacteristic(central->eventNotification.valueHandle, &characteristic);
 			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 				return result;
 			}
@@ -220,28 +219,28 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 	switch (peripheral->type) {
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL_EVENT_CONNECT: {
 			// Build central device
-			_device = BleDevice(
+			_central = BleDevice(
 					MacAddress(peripheral->eventConnect.address.address, MAC_ADDRESS_LENGTH, peripheral->eventConnect.address.type));
-			_device.onConnect(peripheral->connectionHandle);
+			_central.onConnect(peripheral->connectionHandle);
 			// check for event handlers
 			BleEventHandlerRegistration registration;
 			result = getBleEventHandlerRegistration(BLEConnected, registration);
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 				// call callback
 				DeviceEventHandler handler = (DeviceEventHandler)registration.eventHandler;
-				handler(_device);
+				handler(_central);
 			}
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 		case CS_MICROAPP_SDK_BLE_PERIPHERAL_EVENT_DISCONNECT: {
-			_device.onDisconnect();
+			_central.onDisconnect();
 			// check for event handlers
 			BleEventHandlerRegistration registration;
 			result = getBleEventHandlerRegistration(BLEDisconnected, registration);
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 				// call callback
 				DeviceEventHandler handler = (DeviceEventHandler)registration.eventHandler;
-				handler(_device);
+				handler(_central);
 			}
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
@@ -260,7 +259,7 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 				// call callback
 				CharacteristicEventHandler handler = (CharacteristicEventHandler)registration.eventHandler;
-				handler(_device, *characteristic);
+				handler(_central, *characteristic);
 			}
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
@@ -283,7 +282,7 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 				// call callback
 				CharacteristicEventHandler handler = (CharacteristicEventHandler)registration.eventHandler;
-				handler(_device, *characteristic);
+				handler(_central, *characteristic);
 			}
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
@@ -302,7 +301,7 @@ microapp_sdk_result_t Ble::handlePeripheralEvent(microapp_sdk_ble_peripheral_t* 
 			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 				// call callback
 				CharacteristicEventHandler handler = (CharacteristicEventHandler)registration.eventHandler;
-				handler(_device, *characteristic);
+				handler(_central, *characteristic);
 			}
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
@@ -357,7 +356,8 @@ bool Ble::begin() {
 void Ble::end() {
 	_address = MacAddress();
 	_scanDevice = BleDevice();
-	_device = BleDevice();
+	_peripheral = BleDevice();
+	_central = BleDevice();
 	_flags.initialized = false;
 	_flags.isScanning = false;
 	_flags.registeredCentralInterrupts = false;
@@ -431,15 +431,24 @@ bool Ble::connected() {
 	if (!_flags.initialized) {
 		return false;
 	}
-	return _device.connected();
+	return (_central.connected() || _peripheral.connected());
 }
 
 bool Ble::disconnect(uint32_t timeout) {
-	if (!_device.connected() || !_flags.initialized) {
+	if (!_flags.initialized) {
 		return false;
 	}
+	// It's only possible for one device to be connected at a time,
+	// either central or peripheral
+	if (_central.connected()) {
+		return _central.disconnect(timeout);
+	}
+	else if (_peripheral.connected()) {
+		return _peripheral.disconnect(timeout);
+	}
 	else {
-		return _device.disconnect(timeout);
+		// Neither central nor peripheral were connected
+		return false;
 	}
 }
 
@@ -452,11 +461,20 @@ String Ble::address() {
 
 int8_t Ble::rssi() {
 	// If not connected return 127 as per the official arduino library
-	if (!_device.connected() || !_flags.initialized) {
+	if (!_flags.initialized) {
 		return 127;
 	}
+	// It's only possible for one device to be connected at a time,
+	// either central or peripheral
+	if (_central.connected()) {
+		return _central.rssi();
+	}
+	else if (_peripheral.connected()) {
+		return _peripheral.rssi();
+	}
 	else {
-		return _device.rssi();
+		// Neither central nor peripheral were connected
+		return 127;
 	}
 }
 
@@ -480,13 +498,14 @@ void Ble::addService(BleService& service) {
 }
 
 BleDevice& Ble::central() {
-	if (_device.connected() && _device._flags.isCentral) {
-		return _device;
+	if (!_flags.initialized || !_central.connected() ||
+		!_central._flags.isCentral) {
+		// Reset central device
+		_central = BleDevice();
+		return _central;
 	}
 	else {
-		// Reset device
-		_device = BleDevice();
-		return _device;
+		return _central;
 	}
 }
 
@@ -587,21 +606,17 @@ bool Ble::stopScan() {
 }
 
 BleDevice& Ble::available() {
-	if (!_flags.initialized || !_flags.isScanning) {
-		// Reset device
-		_device = BleDevice();
-		return _device;
-	}
-	if (!_scanDevice) {
-		// Reset device
-		_device = BleDevice();
-		return _device;
+	if (!_flags.initialized || !_flags.isScanning ||
+		!_scanDevice || !_scanDevice._flags.isPeripheral) {
+		// Reset peripheral device
+		_peripheral = BleDevice();
+		return _peripheral;
 	}
 	// Set main (persistent) device as the latest scanned device
-	_device = _scanDevice;
+	_peripheral = _scanDevice;
 	// Reset scan device
 	_scanDevice = BleDevice();
-	return _device;
+	return _peripheral;
 }
 
 bool Ble::matchesFilter(BleScan scan, MacAddress address) {

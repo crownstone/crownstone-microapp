@@ -26,11 +26,11 @@ void updateTemperature() {
 	temperatureCharacteristic.writeValue(temperatureValue, NR_TEMPERATURE_BYTES);
 }
 
-void onCentralConnected(BleDevice device) {
+void onCentralConnected(BleDevice& device) {
 	Serial.println("BLE central connected");
 }
 
-void onCentralDisconnected(BleDevice device) {
+void onCentralDisconnected(BleDevice& device) {
 	Serial.println("BLE central disconnected");
 }
 
