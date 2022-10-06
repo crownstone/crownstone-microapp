@@ -48,11 +48,25 @@ Uuid::Uuid(const uuid16_t uuid, uint8_t type) {
 }
 
 bool Uuid::operator==(const Uuid& other) {
-	return (memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) == 0);
+	// if either this uuid or other uuid are shortened, compare only short uuid
+	// otherwise, compare full uuid
+	if (this->_length == UUID_16BIT_BYTE_LENGTH || other._length == UUID_16BIT_BYTE_LENGTH) {
+		return (this->uuid16() == other.uuid16());
+	}
+	else {
+		return (memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) == 0);
+	}
 }
 
 bool Uuid::operator!=(const Uuid& other) {
-	return (memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) != 0);
+	// if either this uuid or other uuid are shortened, compare only short uuid
+	// otherwise, compare full uuid
+	if (this->_length == UUID_16BIT_BYTE_LENGTH || other._length == UUID_16BIT_BYTE_LENGTH) {
+		return (this->uuid16() != other.uuid16());
+	}
+	else {
+		return (memcmp(this->_uuid, other._uuid, UUID_128BIT_BYTE_LENGTH) != 0);
+	}
 }
 
 bool Uuid::registered() {
@@ -145,7 +159,7 @@ const uint8_t* Uuid::fullBytes() {
 	return _uuid;
 }
 
-uuid16_t Uuid::uuid16() {
+uuid16_t Uuid::uuid16() const {
 	return (_uuid[BASE_UUID_OFFSET_16BIT + 1] << 8) | (_uuid[BASE_UUID_OFFSET_16BIT] & 0xFF);
 }
 

@@ -12,20 +12,20 @@ BleCharacteristic::BleCharacteristic(const char* uuid, uint8_t properties, uint8
 		// If uuid not valid, return early
 		return;
 	}
-	_properties              = properties;
-	_value                   = value;
-	_valueSize               = valueSize;
-	_valueLength             = valueSize;
+	_properties        = properties;
+	_value             = value;
+	_valueSize         = valueSize;
+	_valueLength       = valueSize;
 	_flags.remote      = false;
 	_flags.initialized = true;
 }
 
 // Only used for remote characteristics
 BleCharacteristic::BleCharacteristic(microapp_sdk_ble_uuid_t* uuid, uint8_t properties) {
-	_uuid                    = Uuid(uuid->uuid, uuid->type);
-	_properties              = properties;
-	_value                   = nullptr;
-	_valueSize               = 0;
+	_uuid              = Uuid(uuid->uuid, uuid->type);
+	_properties        = properties;
+	_value             = nullptr;
+	_valueSize         = 0;
 	_flags.remote      = true;
 	_flags.initialized = true;
 }
@@ -157,9 +157,11 @@ microapp_sdk_result_t BleCharacteristic::writeValueRemote(uint8_t* buffer, uint1
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
 	if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 		// direct success
+		_asyncResult = BleAsyncNotWaiting;
 		return result;
 	}
 	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
+		_asyncResult = BleAsyncNotWaiting;
 		return result;
 	}
 	// Block until write event happens
@@ -193,9 +195,11 @@ microapp_sdk_result_t BleCharacteristic::readValueRemote(uint8_t* buffer, uint16
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
 	if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 		// direct success
+		_asyncResult = BleAsyncNotWaiting;
 		return result;
 	}
 	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
+		_asyncResult = BleAsyncNotWaiting;
 		return result;
 	}
 	// Block until read event happens
@@ -445,9 +449,11 @@ bool BleCharacteristic::subscribe(uint32_t timeout) {
 		result = (microapp_sdk_result_t)bleRequest->header.ack;
 	if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 		// direct success
+		_asyncResult = BleAsyncNotWaiting;
 		return true;
 	}
 	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
+		_asyncResult = BleAsyncNotWaiting;
 		return false;
 	}
 	// Block until write event happens
@@ -492,9 +498,11 @@ bool BleCharacteristic::unsubscribe(uint32_t timeout) {
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
 	if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 		// direct success
+		_asyncResult = BleAsyncNotWaiting;
 		return true;
 	}
 	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
+		_asyncResult = BleAsyncNotWaiting;
 		return false;
 	}
 	// Block until write event happens

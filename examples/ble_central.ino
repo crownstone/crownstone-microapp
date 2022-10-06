@@ -39,7 +39,6 @@ void setup() {
 		Serial.println("   Setting event handler failed");
 	}
 	// Find devices with 'Environmental Sensing' service
-	// BLE.scanForUuid("181A");
 	BLE.scanForAddress(peripheralAddress);
 	Serial.println("   End of setup");
 }
@@ -82,6 +81,5 @@ void loop() {
 			return;
 		}
 	}
-
 	BLE.scanForAddress(peripheralAddress);
 }

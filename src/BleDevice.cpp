@@ -151,9 +151,11 @@ bool BleDevice::disconnect(uint32_t timeout) {
 	microapp_sdk_result_t result = (microapp_sdk_result_t)bleRequest->header.ack;
 	if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 		// direct success
+		_asyncResult = BleAsyncNotWaiting;
 		return true;
 	}
 	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
+		_asyncResult = BleAsyncNotWaiting;
 		return false;
 	}
 	return waitForAsyncResult(timeout);
@@ -212,10 +214,12 @@ bool BleDevice::discoverService(const char* serviceUuid, uint32_t timeout) {
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
 	if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 		// direct success
+		_asyncResult = BleAsyncNotWaiting;
 		return true;
 	}
 	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
 		// direct failure
+		_asyncResult = BleAsyncNotWaiting;
 		return false;
 	}
 	return waitForAsyncResult(timeout);
@@ -395,9 +399,11 @@ bool BleDevice::connect(uint32_t timeout) {
 	result = (microapp_sdk_result_t)bleRequest->header.ack;
 	if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
 		// direct success
+		_asyncResult = BleAsyncNotWaiting;
 		return true;
 	}
 	if (result != CS_MICROAPP_SDK_ACK_IN_PROGRESS) {
+		_asyncResult = BleAsyncNotWaiting;
 		return false;
 	}
 	return waitForAsyncResult(timeout);

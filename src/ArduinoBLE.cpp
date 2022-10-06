@@ -518,6 +518,13 @@ bool Ble::scan(bool withDuplicates) {
 	if (_flags.isScanning) {
 		return true;
 	}
+	// First register interrupts for scans if not done yet
+	if (!registeredBleInterrupt(CS_MICROAPP_SDK_BLE_SCAN)) {
+		microapp_sdk_result_t result = registerBleInterrupt(CS_MICROAPP_SDK_BLE_SCAN);
+		if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+			return false;
+		}
+	}
 
 	uint8_t* payload               = getOutgoingMessagePayload();
 	microapp_sdk_ble_t* bleRequest = (microapp_sdk_ble_t*)(payload);

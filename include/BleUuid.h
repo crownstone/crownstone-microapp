@@ -125,6 +125,6 @@ public:
 	const uint8_t* bytes();
 	const uint8_t* fullBytes();
 
-	// makes sense only for 16-bit uuids! Returns a 16-bit int version of the uuid
-	uuid16_t uuid16();
+	// Returns a shortened 16-bit uint version of the uuid
+	uuid16_t uuid16() const;
 };

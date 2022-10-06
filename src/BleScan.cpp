@@ -55,8 +55,10 @@ bool BleScan::hasServiceUuid(uuid16_t uuid) {
 				return true;
 			}
 			// check ad for uuid
+			uuid16_t scanUuid;
 			for (uint8_t j = 0; j < ad.len; j += sizeof(uuid)) {
-				if (uuid == ((ad.data[j + 1] << 8) | ad.data[j])) {
+				scanUuid = ((ad.data[j + 1] << 8) | ad.data[j]);
+				if (uuid == scanUuid) {
 					return true;
 				}
 			}
