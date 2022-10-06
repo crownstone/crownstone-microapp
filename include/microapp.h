@@ -18,7 +18,7 @@ struct interrupt_registration_t {
 	bool registered;
 };
 
-#define MAX_INTERRUPT_REGISTRATIONS 4
+#define MAX_INTERRUPT_REGISTRATIONS 6
 
 extern interrupt_registration_t interruptRegistrations[MAX_INTERRUPT_REGISTRATIONS];
 
