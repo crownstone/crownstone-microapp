@@ -79,7 +79,7 @@ public:
 	/**
 	 * Create a new (local) BLE service
 	 *
-	 * @param uuid 16-bit or 128-bit UUID in string format
+	 * @param[in] uuid 16-bit or 128-bit UUID in string format
 	 */
 	BleService(const char* uuid);
 
@@ -107,7 +107,7 @@ public:
 	/**
 	 * Query if the BLE service has a particular characteristic
 	 *
-	 * @param uuid UUID of the characteristic to check as a string
+	 * @param[in] uuid UUID of the characteristic to check as a string
 	 * @return true if the service provides the characteristic
 	 * @return false otherwise
 	 */
@@ -116,8 +116,10 @@ public:
 	/**
 	 * Get a BleCharacteristic representing a BLE characteristic the service provides
 	 *
-	 * @param uuid UUID of the characteristic as a string
+	 * @param[in] uuid UUID of the characteristic as a string
+	 * @param[in] index index of the characteristic to look for
 	 * @return BleCharacteristic belonging to the provided uuid
 	 */
 	BleCharacteristic& characteristic(const char* uuid);
+	BleCharacteristic& characteristic(uint8_t index);
 };

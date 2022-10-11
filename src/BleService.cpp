@@ -127,6 +127,9 @@ uint8_t BleService::characteristicCount() {
 }
 
 bool BleService::hasCharacteristic(const char* uuidString) {
+	if (!_flags.initialized) {
+		return false;
+	}
 	Uuid uuid(uuidString);
 	for (int i = 0; i < _characteristicCount; i++) {
 		if (_characteristics[i]->_uuid == uuid) {
@@ -137,13 +140,25 @@ bool BleService::hasCharacteristic(const char* uuidString) {
 }
 
 BleCharacteristic& BleService::characteristic(const char* uuidString) {
+	static BleCharacteristic empty;
+	empty = BleCharacteristic();
+	if (!_flags.initialized) {
+		return empty;
+	}
 	Uuid uuid(uuidString);
 	for (int i = 0; i < _characteristicCount; i++) {
 		if (_characteristics[i]->_uuid == uuid) {
 			return *_characteristics[i];
 		}
 	}
+	return empty;
+}
+
+BleCharacteristic& BleService::characteristic(uint8_t index) {
 	static BleCharacteristic empty;
 	empty = BleCharacteristic();
-	return empty;
+	if (!_flags.initialized || index >= _characteristicCount) {
+		return empty;
+	}
+	return *_characteristics[index];
 }

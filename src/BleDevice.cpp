@@ -319,6 +319,26 @@ BleCharacteristic& BleDevice::characteristic(const char* uuid) {
 }
 
 // Only defined for peripheral devices
+BleCharacteristic& BleDevice::characteristic(uint8_t index) {
+	static BleCharacteristic empty;
+	empty = BleCharacteristic();
+	if (!_flags.initialized || !_flags.isPeripheral) {
+		return empty;
+	}
+	if (!_flags.discoveryDone) {
+		return empty;
+	}
+	for (uint8_t i = 0; i < _serviceCount; i++) {
+		uint8_t characteristicCount = _services[i]->characteristicCount();
+		if (index < characteristicCount) {
+			return _services[i]->characteristic(index);
+		}
+		index -= characteristicCount;
+	}
+	return empty;
+}
+
+// Only defined for peripheral devices
 bool BleDevice::hasLocalName() {
 	if (!_flags.initialized || !_flags.isPeripheral) {
 		return false;

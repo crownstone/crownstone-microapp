@@ -218,9 +218,11 @@ public:
 	 * Get a BleCharacteristic representing a BLE characteristic the device provides
 	 *
 	 * @param[in] uuid a string with the uuid of the characteristic to look for
+	 * @param[in] index index of the characteristic to look for
 	 * @return a reference (!) to the BleCharacteristic with the provided uuid, if found
 	 */
 	BleCharacteristic& characteristic(const char* uuid);
+	BleCharacteristic& characteristic(uint8_t index);
 
 	/**
 	 * Returns whether the device has advertised a local name

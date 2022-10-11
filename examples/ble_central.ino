@@ -38,13 +38,13 @@ void setup() {
 	if (!BLE.setEventHandler(BLEConnected, onConnect)) {
 		Serial.println("   Setting event handler failed");
 	}
-	// Find devices with 'Environmental Sensing' service
 	BLE.scanForAddress(peripheralAddress);
 	Serial.println("   End of setup");
 }
 
 // The Arduino loop function.
 void loop() {
+	// Poll for scanned devices
 	BleDevice& peripheral = BLE.available();
 
 	if(!peripheral) {
@@ -53,33 +53,52 @@ void loop() {
 
 	Serial.println("   Peripheral available:");
 	Serial.println(peripheral.address());
+	// Try to connect
 	if (!peripheral.connect(10000)) {
 		Serial.println("   Connecting failed");
 		return;
 	}
+	// We are looking for service with uuid 181A 'Environmental Sensing'
 	if (!peripheral.discoverService("181A")) {
 		Serial.println("   Service discovery failed");
 		peripheral.disconnect();
 		return;
 	}
-	// Check for 'Temperature Celsius' characteristic
+	// Print all found characteristics
+	for (uint8_t i = 0; i < peripheral.characteristicCount(); i++) {
+		Serial.println(peripheral.characteristic(i).uuid());
+	}
+	// Check for 2A1F 'Temperature Celsius' characteristic
 	if (!peripheral.hasCharacteristic("2A1F")) {
 		Serial.println("   No temperature char found");
 		peripheral.disconnect();
 		return;
 	}
 	BleCharacteristic& temperatureCharacteristic = peripheral.characteristic("2A1F");
-	uint8_t counter = 0;
-	while (peripheral.connected()) {
-		uint8_t buffer[2];
-		temperatureCharacteristic.readValue(buffer, 2);
-		Serial.println(buffer, 2);
-		delay(1000);
-		if (counter++ > 10) {
-			Serial.println("   Attempting disconnect");
-			peripheral.disconnect();
-			return;
-		}
+	// Subscribe to the characteristic so that we get notifications
+	if (!temperatureCharacteristic.subscribe()) {
+		Serial.println("   Subscribing to char failed");
+		peripheral.disconnect();
+		return;
 	}
+	uint8_t counter = 0;
+	uint8_t buffer[2];
+	while (peripheral.connected()) {
+		// Poll locally for notifications
+		if (temperatureCharacteristic.valueUpdated()) {
+			// Read characteristic value into buffer
+			temperatureCharacteristic.readValue(buffer, 2);
+			Serial.println(buffer, 2);
+			// Disconnect after 10 notifications
+			if (counter++ > 10) {
+				Serial.println("   Attempting disconnect");
+				peripheral.disconnect();
+				return;
+			}
+		}
+		// Without a delay, microapp may retain control too long and bluenet watchdog may trigger
+		delay(MICROAPP_LOOP_INTERVAL_MS);
+	}
+	// Start scanning again
 	BLE.scanForAddress(peripheralAddress);
 }
