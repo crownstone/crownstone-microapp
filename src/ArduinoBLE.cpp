@@ -555,6 +555,7 @@ bool Ble::scanForName(const char* name, bool withDuplicates) {
 
 	memcpy(_scanFilter.localName, name, _scanFilter.localNameLen);
 	// TODO: do something with withDuplicates argument
+	// Note that scan resets previously scanned devices
 	return scan(withDuplicates);
 }
 
@@ -565,6 +566,7 @@ bool Ble::scanForAddress(const char* address, bool withDuplicates) {
 	_scanFilter.type    = BleFilterAddress;
 	_scanFilter.address = MacAddress(address);
 	// TODO: do something with withDuplicates argument
+	// Note that scan resets previously scanned devices
 	return scan(withDuplicates);
 }
 
@@ -578,6 +580,7 @@ bool Ble::scanForUuid(const char* uuid, bool withDuplicates) {
 	_scanFilter.type = BleFilterUuid;
 	_scanFilter.uuid = Uuid(uuid);
 	// TODO: do something with withDuplicates argument
+	// Note that scan resets previously scanned devices
 	return scan(withDuplicates);
 }
 
