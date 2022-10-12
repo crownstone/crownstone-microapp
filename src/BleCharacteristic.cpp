@@ -367,11 +367,7 @@ microapp_sdk_result_t BleCharacteristic::setEventHandler(BleEventType eventType,
 	if (!_flags.initialized) {
 		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
 	}
-	microapp_sdk_result_t result;
-	result = registerBleEventHandler(eventType, eventHandler);
-	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
-		return result;
-	}
+	return registerBleEventHandler(eventType, eventHandler);
 }
 
 // Only defined for local characteristics
