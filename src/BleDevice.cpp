@@ -94,11 +94,11 @@ bool BleDevice::waitForAsyncResult(uint32_t timeout) {
 	// Before calling this function, the asyncResult variable needs
 	// to be set to BleAsyncWaiting. It will even need to be set before
 	// the sendMessage call with the request to bluenet
-	uint8_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
+	int16_t tries = timeout / MICROAPP_LOOP_INTERVAL_MS;
 	while (_asyncResult == BleAsyncWaiting) {
 		// Yield. Upon an event from bluenet asyncResult will be set
 		delay(MICROAPP_LOOP_INTERVAL_MS);
-		if (tries-- == 0) {
+		if (--tries <= 0) {
 			return false;
 		}
 	}
