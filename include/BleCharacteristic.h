@@ -155,6 +155,17 @@ private:
 	 */
 	microapp_sdk_result_t waitForAsyncResult(uint32_t timeout);
 
+	/**
+	 * Internal function for setting generic event handler
+	 *
+	 * @param eventType the event type
+	 * @param eventHandler of the generic type BleEventHandler
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
+	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if characteristic is not initialized
+	 * @return microapp_sdk_result_t specifying other error
+	 */
+	microapp_sdk_result_t setEventHandler(BleEventType eventType, BleEventHandler eventHandler);
+
 public:
 	// Empty constructor
 	BleCharacteristic(){};
@@ -229,11 +240,11 @@ public:
 	/**
 	 * Set the event handler (callback) function that will be called when the specified event occurs
 	 *
-	 * @param eventType event type (BLESubscribed, BLEUnsubscribed, BLERead, BLEWritten)
+	 * @param eventType event type (BLESubscribed, BLEUnsubscribed, BLERead, BLEWritten, BLENotification)
 	 * @param eventHandler function to call when the event occurs
 	 */
 	void setEventHandler(BleEventType eventType, CharacteristicEventHandler eventHandler);
-
+	void setEventHandler(BleEventType eventType, NotificationEventHandler eventHandler);
 	/**
 	 * Query if the characteristic value has been written by another BLE device
 	 *

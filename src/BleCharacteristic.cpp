@@ -350,13 +350,25 @@ bool BleCharacteristic::writeValue(uint8_t* buffer, uint16_t length) {
 	}
 }
 
+
+microapp_sdk_result_t BleCharacteristic::setEventHandler(BleEventType eventType, BleEventHandler eventHandler) {
+	if (!_flags.initialized) {
+		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
+	}
+	microapp_sdk_result_t result;
+	result = registerBleEventHandler(eventType, eventHandler);
+	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+		return result;
+	}
+}
+
 // Only defined for local characteristics
 void BleCharacteristic::setEventHandler(BleEventType eventType, CharacteristicEventHandler eventHandler) {
-	if (!_flags.initialized || _flags.remote) {
+	if (_flags.remote) {
 		return;
 	}
 	microapp_sdk_result_t result;
-	result = registerBleEventHandler(eventType, (BleEventHandler)eventHandler);
+	result = setEventHandler(eventType, (BleEventHandler) eventHandler);
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		return;
 	}
@@ -364,7 +376,26 @@ void BleCharacteristic::setEventHandler(BleEventType eventType, CharacteristicEv
 		result = registerBleInterrupt(CS_MICROAPP_SDK_BLE_PERIPHERAL);
 		if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 			removeBleEventHandlerRegistration(eventType);
-			return;
+		}
+	}
+}
+
+// Only defined for remote characteristics
+void BleCharacteristic::setEventHandler(BleEventType eventType, NotificationEventHandler eventHandler) {
+	if (!_flags.remote) {
+		return;
+	}
+	microapp_sdk_result_t result;
+	result = setEventHandler(eventType, (BleEventHandler) eventHandler);
+	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+		return;
+	}
+	// central ble interrupts should already be registered by this point,
+	// but let's check regardless
+	if (!registeredBleInterrupt(CS_MICROAPP_SDK_BLE_CENTRAL)) {
+		result = registerBleInterrupt(CS_MICROAPP_SDK_BLE_CENTRAL);
+		if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+			removeBleEventHandlerRegistration(eventType);
 		}
 	}
 }

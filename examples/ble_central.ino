@@ -10,13 +10,18 @@ const char* peripheralAddress = "A4:C1:38:9A:45:E3";
 
 // callback for received peripheral advertisement
 void onScannedDevice(BleDevice& device) {
-	Serial.println("   Microapp scan callback:");
+	Serial.print("   Microapp scan callback for ");
 	Serial.println(device.address().c_str());
 }
 
 void onConnect(BleDevice& device) {
-	Serial.println("   Microapp connect callback:");
+	Serial.print("   Microapp connect callback for ");
 	Serial.println(device.address().c_str());
+}
+
+void onNotification(BleDevice& device, BleCharacteristic& characteristic, uint8_t* data, uint16_t size) {
+	Serial.print("   Microapp notification for ");
+	Serial.println(characteristic.uuid());
 }
 
 // The Arduino setup function.
@@ -75,6 +80,7 @@ void loop() {
 		return;
 	}
 	BleCharacteristic& temperatureCharacteristic = peripheral.characteristic("2A1F");
+	temperatureCharacteristic.setEventHandler(BLENotification, onNotification);
 	// Subscribe to the characteristic so that we get notifications
 	if (!temperatureCharacteristic.subscribe()) {
 		Serial.println("   Subscribing to char failed");

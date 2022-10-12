@@ -206,7 +206,17 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 				return result;
 			}
 			result = characteristic->onRemoteNotification(&central->eventNotification);
-			return result;
+			if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
+				return result;
+			}
+			// check for event handlers
+			BleEventHandlerRegistration registration;
+			result = getBleEventHandlerRegistration(BLENotification, registration);
+			if (result == CS_MICROAPP_SDK_ACK_SUCCESS) {
+				// call callback
+				NotificationEventHandler handler = (NotificationEventHandler)registration.eventHandler;
+				handler(_peripheral, *characteristic, central->eventNotification.data, central->eventNotification.size);
+			}
 		}
 		default: {
 			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
