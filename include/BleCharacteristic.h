@@ -115,6 +115,7 @@ private:
 	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
 	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if BleCharacteristic not initialized
 	 * @return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED if BleCharacteristic is not remote but local
+	 * @return CS_MICROAPP_SDK_ACK_ERR_DISABLED if characteristic can't be written
 	 * @return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT if no (valid) WRITE event is received within timeout
 	 * @return microapp_sdk_result_t specifying other error
 	 */
@@ -129,12 +130,12 @@ private:
 	 * @param timeout in milliseconds
 	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
 	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if BleCharacteristic not initialized
+	 * @return CS_MICROAPP_SDK_ACK_ERR_DISABLED if characteristic can't be read
 	 * @return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED if BleCharacteristic is not remote but local
 	 * @return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT if no (valid) READ event is received within timeout
 	 * @return microapp_sdk_result_t specifying other error
 	 */
 	microapp_sdk_result_t readValueRemote(uint8_t* buffer, uint16_t length, uint32_t timeout = 5000);
-
 
 	microapp_sdk_result_t onRemoteWritten();
 	microapp_sdk_result_t onRemoteRead(microapp_sdk_ble_central_event_read_t* eventRead);

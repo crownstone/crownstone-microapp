@@ -134,6 +134,9 @@ microapp_sdk_result_t BleCharacteristic::writeValueRemote(uint8_t* buffer, uint1
 	if (!_flags.remote) {
 		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 	}
+	if (!canWrite()) {
+		return CS_MICROAPP_SDK_ACK_ERR_DISABLED;
+	}
 	if (length > MAX_CHARACTERISTIC_VALUE_SIZE) {
 		length = MAX_CHARACTERISTIC_VALUE_SIZE;
 	}
@@ -170,6 +173,15 @@ microapp_sdk_result_t BleCharacteristic::writeValueRemote(uint8_t* buffer, uint1
 
 // Only defined for remote characteristics
 microapp_sdk_result_t BleCharacteristic::readValueRemote(uint8_t* buffer, uint16_t length, uint32_t timeout) {
+	if (!_flags.initialized) {
+		return CS_MICROAPP_SDK_ACK_ERR_EMPTY;
+	}
+	if (!_flags.remote) {
+		return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
+	}
+	if (!canRead()) {
+		return CS_MICROAPP_SDK_ACK_ERR_DISABLED;
+	}
 	if (length > MAX_CHARACTERISTIC_VALUE_SIZE) {
 		length = MAX_CHARACTERISTIC_VALUE_SIZE;
 	}
