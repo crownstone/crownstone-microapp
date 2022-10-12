@@ -114,7 +114,7 @@ private:
 	 * @return true if event was received with success
 	 * @return false if event was not received within timeout or was received with failure
 	 */
-	bool waitForAsyncResult(uint8_t timeout);
+	bool waitForAsyncResult(uint32_t timeout);
 
 public:
 	// return true if BleDevice is nontrivial, i.e. initialized from an actual advertisement

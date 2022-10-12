@@ -87,7 +87,11 @@ void loop() {
 		// Poll locally for notifications
 		if (temperatureCharacteristic.valueUpdated()) {
 			// Read characteristic value into buffer
-			temperatureCharacteristic.readValue(buffer, 2);
+			if (!temperatureCharacteristic.readValue(buffer, 2)) {
+				Serial.println("   Reading failed");
+				peripheral.disconnect();
+				return;
+			}
 			Serial.println(buffer, 2);
 			// Disconnect after 10 notifications
 			if (counter++ > 10) {

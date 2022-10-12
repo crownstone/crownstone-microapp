@@ -270,7 +270,7 @@ microapp_sdk_result_t BleCharacteristic::onLocalNotificationDone() {
 	return CS_MICROAPP_SDK_ACK_SUCCESS;
 }
 
-microapp_sdk_result_t BleCharacteristic::waitForAsyncResult(uint8_t timeout) {
+microapp_sdk_result_t BleCharacteristic::waitForAsyncResult(uint32_t timeout) {
 	// Before calling this function, the asyncResult variable needs
 	// to be set to BleAsyncWaiting. It will even need to be set before
 	// the sendMessage call with the request to bluenet

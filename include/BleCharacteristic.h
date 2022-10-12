@@ -153,7 +153,7 @@ private:
 	 * @return CS_MICROAPP_SDK_ACK_ERR_TIMEOUT if event was not received within timeout
 	 * @return CS_MICROAPP_SDK_ACK_ERROR if event result with failure
 	 */
-	microapp_sdk_result_t waitForAsyncResult(uint8_t timeout);
+	microapp_sdk_result_t waitForAsyncResult(uint32_t timeout);
 
 public:
 	// Empty constructor

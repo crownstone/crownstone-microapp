@@ -90,7 +90,7 @@ microapp_sdk_result_t BleDevice::getCharacteristic(uint16_t handle, BleCharacter
 	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 }
 
-bool BleDevice::waitForAsyncResult(uint8_t timeout) {
+bool BleDevice::waitForAsyncResult(uint32_t timeout) {
 	// Before calling this function, the asyncResult variable needs
 	// to be set to BleAsyncWaiting. It will even need to be set before
 	// the sendMessage call with the request to bluenet
