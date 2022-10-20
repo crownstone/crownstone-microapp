@@ -14,7 +14,7 @@ const uint8_t MICROAPP_IPC_CURRENT_PROTOCOL_VERSION           = 1;
 // the actually supported string length depends on the opcode
 // the limit here is just to prevent looping forever
 uint8_t strlen(const char* str) {
-	for (size_t i = 0; i < MAX_STRING_SIZE; ++i) {
+	for (microapp_size_t i = 0; i < MAX_STRING_SIZE; ++i) {
 		if (str[i] == 0) {
 			return i;
 		}
@@ -26,13 +26,13 @@ uint8_t strlen(const char* str) {
 // returns 0 if ptr1 and ptr2 are equal
 // returns -1 if for the first unmatching byte i we have ptr1[i] < ptr2[i]
 // returns 1 if for the first unmatching byte i we have ptr1[i] > ptr2[i]
-int memcmp(const void* ptr1, const void* ptr2, size_t num) {
+int memcmp(const void* ptr1, const void* ptr2, microapp_size_t num) {
 	char* p = (char*)ptr1;
 	char* q = (char*)ptr2;
 	if (ptr1 == ptr2) {  // point to the same address
 		return 0;
 	}
-	for (size_t i = 0; i < num; ++i) {
+	for (microapp_size_t i = 0; i < num; ++i) {
 		if (*(p + i) < *(q + i)) {
 			return -1;
 		}
@@ -43,10 +43,10 @@ int memcmp(const void* ptr1, const void* ptr2, size_t num) {
 	return 0;
 }
 
-void* memcpy(void* dest, const void* src, size_t num) {
+void* memcpy(void* dest, const void* src, microapp_size_t num) {
 	uint8_t* p = (uint8_t*)src;
 	uint8_t* q = (uint8_t*)dest;
-	for (size_t i = 0; i < num; ++i) {
+	for (microapp_size_t i = 0; i < num; ++i) {
 		*q = *p;
 		p++;
 		q++;
@@ -259,8 +259,8 @@ microapp_sdk_result_t registerInterrupt(interrupt_registration_t* interrupt) {
 		if (!interruptRegistrations[i].registered) {
 			interruptRegistrations[i].registered = true;
 			interruptRegistrations[i].handler    = interrupt->handler;
-			interruptRegistrations[i].type      = interrupt->type;
-			interruptRegistrations[i].id      = interrupt->id;
+			interruptRegistrations[i].type       = interrupt->type;
+			interruptRegistrations[i].id         = interrupt->id;
 			return CS_MICROAPP_SDK_ACK_SUCCESS;
 		}
 	}

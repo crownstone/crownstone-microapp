@@ -10,121 +10,121 @@ void Serial_::begin() {
 	// does nothing
 }
 
-size_t Serial_::write(char value) {
+microapp_size_t Serial_::write(char value) {
 	return _write(value);
 }
 
-size_t Serial_::write(float value) {
+microapp_size_t Serial_::write(float value) {
 	return _write(value);
 }
 
-size_t Serial_::write(double value) {
+microapp_size_t Serial_::write(double value) {
 	return _write(value);
 }
 
-size_t Serial_::write(int value) {
+microapp_size_t Serial_::write(int value) {
 	return _write(value);
 }
 
-size_t Serial_::write(short value) {
+microapp_size_t Serial_::write(short value) {
 	return _write(value);
 }
 
-size_t Serial_::write(unsigned int value) {
+microapp_size_t Serial_::write(unsigned int value) {
 	return _write(value);
 }
 
-size_t Serial_::write(const char* str) {
+microapp_size_t Serial_::write(const char* str) {
 	return _write(str);
 }
 
-size_t Serial_::write(String str) {
+microapp_size_t Serial_::write(String str) {
 	return _write(str);
 }
 
-size_t Serial_::write(const uint8_t* buf, int length) {
+microapp_size_t Serial_::write(const uint8_t* buf, int length) {
 	return _write(buf, length);
 }
 
 // Copies of the above functions
 
-size_t Serial_::print(char value) {
+microapp_size_t Serial_::print(char value) {
 	return _write(value);
 }
 
-size_t Serial_::print(float value) {
+microapp_size_t Serial_::print(float value) {
 	return _write(value);
 }
 
-size_t Serial_::print(double value) {
+microapp_size_t Serial_::print(double value) {
 	return _write(value);
 }
 
-size_t Serial_::print(int value) {
+microapp_size_t Serial_::print(int value) {
 	return _write(value);
 }
 
-size_t Serial_::print(short value) {
+microapp_size_t Serial_::print(short value) {
 	return _write(value);
 }
 
-size_t Serial_::print(unsigned int value) {
+microapp_size_t Serial_::print(unsigned int value) {
 	return _write(value);
 }
 
-size_t Serial_::print(const char* str) {
+microapp_size_t Serial_::print(const char* str) {
 	return _write(str);
 }
 
-size_t Serial_::print(String str) {
+microapp_size_t Serial_::print(String str) {
 	return _write(str);
 }
 
-size_t Serial_::print(const uint8_t* buf, int length) {
+microapp_size_t Serial_::print(const uint8_t* buf, int length) {
 	return _write(buf, length);
 }
 
 // Copies of the above functions, but with newline option enabled
 
-size_t Serial_::println(char value) {
+microapp_size_t Serial_::println(char value) {
 	return _write(value, CS_MICROAPP_SDK_LOG_FLAG_NEWLINE);
 }
 
-size_t Serial_::println(float value) {
+microapp_size_t Serial_::println(float value) {
 	return _write(value, CS_MICROAPP_SDK_LOG_FLAG_NEWLINE);
 }
 
-size_t Serial_::println(double value) {
+microapp_size_t Serial_::println(double value) {
 	return _write(value, CS_MICROAPP_SDK_LOG_FLAG_NEWLINE);
 }
 
-size_t Serial_::println(int value) {
+microapp_size_t Serial_::println(int value) {
 	return _write(value, CS_MICROAPP_SDK_LOG_FLAG_NEWLINE);
 }
 
-size_t Serial_::println(short value) {
+microapp_size_t Serial_::println(short value) {
 	return _write(value, CS_MICROAPP_SDK_LOG_FLAG_NEWLINE);
 }
 
-size_t Serial_::println(unsigned int value) {
+microapp_size_t Serial_::println(unsigned int value) {
 	return _write(value, CS_MICROAPP_SDK_LOG_FLAG_NEWLINE);
 }
 
-size_t Serial_::println(const char* str) {
+microapp_size_t Serial_::println(const char* str) {
 	return _write(str, CS_MICROAPP_SDK_LOG_FLAG_NEWLINE);
 }
 
-size_t Serial_::println(String str) {
+microapp_size_t Serial_::println(String str) {
 	return _write(str, CS_MICROAPP_SDK_LOG_FLAG_NEWLINE);
 }
 
-size_t Serial_::println(const uint8_t* buf, int length) {
+microapp_size_t Serial_::println(const uint8_t* buf, int length) {
 	return _write(buf, length, CS_MICROAPP_SDK_LOG_FLAG_NEWLINE);
 }
 
 /// Implementations (protected)
 
-size_t Serial_::_write(char value, MicroappSdkLogFlags flags) {
+microapp_size_t Serial_::_write(char value, MicroappSdkLogFlags flags) {
 	uint8_t* payload                    = getOutgoingMessagePayload();
 	microapp_sdk_log_char_t* logRequest = reinterpret_cast<microapp_sdk_log_char_t*>(payload);
 	logRequest->value                   = value;
@@ -132,7 +132,7 @@ size_t Serial_::_write(char value, MicroappSdkLogFlags flags) {
 	return _write(reinterpret_cast<microapp_sdk_log_header_t*>(logRequest), Type::Char, flags);
 }
 
-size_t Serial_::_write(float value, MicroappSdkLogFlags flags) {
+microapp_size_t Serial_::_write(float value, MicroappSdkLogFlags flags) {
 	uint8_t* payload                     = getOutgoingMessagePayload();
 	microapp_sdk_log_float_t* logRequest = reinterpret_cast<microapp_sdk_log_float_t*>(payload);
 	logRequest->value                    = value;
@@ -140,7 +140,7 @@ size_t Serial_::_write(float value, MicroappSdkLogFlags flags) {
 	return _write(reinterpret_cast<microapp_sdk_log_header_t*>(logRequest), Type::Float, flags);
 }
 
-size_t Serial_::_write(double value, MicroappSdkLogFlags flags) {
+microapp_size_t Serial_::_write(double value, MicroappSdkLogFlags flags) {
 	uint8_t* payload                      = getOutgoingMessagePayload();
 	microapp_sdk_log_double_t* logRequest = reinterpret_cast<microapp_sdk_log_double_t*>(payload);
 	logRequest->value                     = value;
@@ -148,7 +148,7 @@ size_t Serial_::_write(double value, MicroappSdkLogFlags flags) {
 	return _write(reinterpret_cast<microapp_sdk_log_header_t*>(logRequest), Type::Double, flags);
 }
 
-size_t Serial_::_write(int value, MicroappSdkLogFlags flags) {
+microapp_size_t Serial_::_write(int value, MicroappSdkLogFlags flags) {
 	uint8_t* payload                   = getOutgoingMessagePayload();
 	microapp_sdk_log_int_t* logRequest = reinterpret_cast<microapp_sdk_log_int_t*>(payload);
 	logRequest->value                  = value;
@@ -156,7 +156,7 @@ size_t Serial_::_write(int value, MicroappSdkLogFlags flags) {
 	return _write(reinterpret_cast<microapp_sdk_log_header_t*>(logRequest), Type::Int, flags);
 }
 
-size_t Serial_::_write(short value, MicroappSdkLogFlags flags) {
+microapp_size_t Serial_::_write(short value, MicroappSdkLogFlags flags) {
 	uint8_t* payload                     = getOutgoingMessagePayload();
 	microapp_sdk_log_short_t* logRequest = reinterpret_cast<microapp_sdk_log_short_t*>(payload);
 	logRequest->value                    = value;
@@ -164,7 +164,7 @@ size_t Serial_::_write(short value, MicroappSdkLogFlags flags) {
 	return _write(reinterpret_cast<microapp_sdk_log_header_t*>(logRequest), Type::Short, flags);
 }
 
-size_t Serial_::_write(unsigned int value, MicroappSdkLogFlags flags) {
+microapp_size_t Serial_::_write(unsigned int value, MicroappSdkLogFlags flags) {
 	uint8_t* payload                    = getOutgoingMessagePayload();
 	microapp_sdk_log_uint_t* logRequest = reinterpret_cast<microapp_sdk_log_uint_t*>(payload);
 	logRequest->value                   = value;
@@ -172,7 +172,7 @@ size_t Serial_::_write(unsigned int value, MicroappSdkLogFlags flags) {
 	return _write(reinterpret_cast<microapp_sdk_log_header_t*>(logRequest), Type::UnsignedInt, flags);
 }
 
-size_t Serial_::_write(const char* str, MicroappSdkLogFlags flags) {
+microapp_size_t Serial_::_write(const char* str, MicroappSdkLogFlags flags) {
 	uint8_t* payload                      = getOutgoingMessagePayload();
 	microapp_sdk_log_string_t* logRequest = reinterpret_cast<microapp_sdk_log_string_t*>(payload);
 	if (strlen(str) > MAX_STRING_SIZE) {
@@ -185,7 +185,7 @@ size_t Serial_::_write(const char* str, MicroappSdkLogFlags flags) {
 	return _write(reinterpret_cast<microapp_sdk_log_header_t*>(logRequest), Type::Str, flags);
 }
 
-size_t Serial_::_write(String str, MicroappSdkLogFlags flags) {
+microapp_size_t Serial_::_write(String str, MicroappSdkLogFlags flags) {
 	uint8_t* payload                      = getOutgoingMessagePayload();
 	microapp_sdk_log_string_t* logRequest = reinterpret_cast<microapp_sdk_log_string_t*>(payload);
 	if (str.length() > MAX_STRING_SIZE) {
@@ -198,7 +198,7 @@ size_t Serial_::_write(String str, MicroappSdkLogFlags flags) {
 	return _write(reinterpret_cast<microapp_sdk_log_header_t*>(logRequest), Type::Str, flags);
 }
 
-size_t Serial_::_write(const uint8_t* buf, int length, MicroappSdkLogFlags flags) {
+microapp_size_t Serial_::_write(const uint8_t* buf, int length, MicroappSdkLogFlags flags) {
 	uint8_t* payload                     = getOutgoingMessagePayload();
 	microapp_sdk_log_array_t* logRequest = reinterpret_cast<microapp_sdk_log_array_t*>(payload);
 	if (length < 0) {
@@ -219,7 +219,7 @@ size_t Serial_::_write(const uint8_t* buf, int length, MicroappSdkLogFlags flags
 // For example if the string is too long, we will truncate it and return only the first portion rather
 // than silently fail.
 //
-size_t Serial_::_write(microapp_sdk_log_header_t* logRequest, Type type, MicroappSdkLogFlags flags) {
+microapp_size_t Serial_::_write(microapp_sdk_log_header_t* logRequest, Type type, MicroappSdkLogFlags flags) {
 	logRequest->header.messageType = CS_MICROAPP_SDK_TYPE_LOG;
 	logRequest->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
 	logRequest->type               = type;

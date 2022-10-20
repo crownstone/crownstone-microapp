@@ -13,6 +13,8 @@ public:
 		_str = (char*)str;
 	}
 
+	// Make sure that the buffer containing str is of at least length len+1
+	// to save space for the 0 termination character
 	String(char* str, unsigned int len) {
 		_len      = len;
 		_str      = str;

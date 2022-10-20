@@ -4,13 +4,13 @@
 
 # Adjust target config file for nrf52832 vs nrf52840
 TARGET_CONFIG_FILE=target_nrf52840.mk
-#TARGET_CONFIG_FILE=target_nrf52832.mk
+# TARGET_CONFIG_FILE=target_nrf52832.mk
 
 include $(TARGET_CONFIG_FILE)
 include config.mk
 -include private.mk
 
-SOURCE_FILES=include/startup.S src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp src/BleUtils.cpp src/BleDevice.cpp src/Mesh.cpp src/CrownstoneDimmer.cpp src/CrownstoneRelay.cpp src/ServiceData.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c
+SOURCE_FILES=include/startup.S src/main.c src/microapp.c src/Arduino.c src/Wire.cpp src/Serial.cpp src/ArduinoBLE.cpp src/BleUtils.cpp src/BleDevice.cpp src/BleScan.cpp src/BleService.cpp src/BleCharacteristic.cpp src/BleMacAddress.cpp src/BleUuid.cpp src/Mesh.cpp src/CrownstoneDimmer.cpp src/CrownstoneRelay.cpp src/ServiceData.cpp src/PowerUsage.cpp src/Presence.cpp $(SHARED_PATH)/ipc/cs_IpcRamData.c $(TARGET).c
 
 # First initialize, then create .hex file, then .bin file and file end with info
 all: init $(TARGET).hex $(TARGET).bin $(TARGET).info

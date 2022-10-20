@@ -33,7 +33,7 @@ public:
 	 */
 	void write(uint16_t appUuid, const char* str);
 	void write(uint16_t appUuid, String str);
-	void write(uint16_t appUuid, uint8_t* buf, size_t size);
+	void write(uint16_t appUuid, uint8_t* buf, microapp_size_t size);
 };
 
 #define ServiceData ServiceData_::getInstance()

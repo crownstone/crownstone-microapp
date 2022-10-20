@@ -1,84 +1,228 @@
 #pragma once
 
+#include <BleScan.h>
+#include <BleService.h>
+#include <BleMacAddress.h>
+#include <BleUuid.h>
 #include <BleUtils.h>
 #include <String.h>
 #include <microapp.h>
 
-// struct containing a pointer to a block of data, and a length field to indicate the length of the block
-struct data_ptr_t {
-	uint8_t* data = nullptr;
-	size_t len    = 0;
-};
+#ifndef MAX_REMOTE_SERVICES
+#define MAX_REMOTE_SERVICES 2
+#endif
 
-// Incomplete list of GAP advertisement types, see
-// https://www.bluetooth.com/specifications/assigned-numbers/
-enum GapAdvType {
-	Flags                            = 0x01,
-	IncompleteList16BitServiceUuids  = 0x02,
-	CompleteList16BitServiceUuids    = 0x03,
-	IncompleteList32BitServiceUuids  = 0x04,
-	CompleteList32BitServiceUuids    = 0x05,
-	IncompleteList128BitServiceUuids = 0x06,
-	CompleteList128BitServiceUuids   = 0x07,
-	ShortenedLocalName               = 0x08,
-	CompleteLocalName                = 0x09,
-	ServiceData16BitUuid             = 0x16,
-	ServiceData32BitUuid             = 0x20,
-	ServiceData128BitUuid            = 0x21,
-	ManufacturerSpecificData         = 0xFF,
-};
+// Forward declarations
+bool registeredBleInterrupt(MicroappSdkBleType bleType);
+microapp_sdk_result_t registerBleInterrupt(MicroappSdkBleType bleType);
 
 class BleDevice {
 
 private:
-	friend class Ble;  // exceptions for Ble class
+	// exceptions for Ble related classes
+	friend class Ble;
 
-	BleDevice(){};  // default constructor
+	// private empty constructor
+	BleDevice(){};
 
-	microapp_sdk_ble_t* _device;  // the raw advertisement data
+	// constructor from scan (peripheral)
+	BleDevice(BleScan scan, MacAddress address, rssi_t rssi);
+	// constructor from connect (central)
+	BleDevice(MacAddress address);
+
+	// raw scan data
+	uint8_t _scanData[MAX_BLE_ADV_DATA_LENGTH];
+	// wrapper class pointing to _scanData
+	BleScan _scan;
 
 	MacAddress _address;
+	rssi_t _rssi = 127;
 
-	char _localName[MAX_BLE_ADV_DATA_LENGTH];  // maximum length equals max ble advertisement length (31 bytes)
-	uint8_t _localNameLen = 0;
+	// connectionHandle used internally for communication with bluenet
+	uint16_t _connectionHandle = 0;
 
-	union __attribute__((packed)) flags_t {
-		struct __attribute__((packed)) {
-			bool nonEmpty : 1;               // device is not empty
-			bool hasCompleteLocalName : 1;   // has a complete local name field
-			bool hasShortenedLocalName : 1;  // has a shortened local name field
-			bool checkedLocalName : 1;       // _device has already been checked for local name field
-			bool cachedLocalName : 1;        // local name is cached in _localName
-			bool connected : 1;              // whether peripheral device is connected
-		} flags;
-		uint8_t asInt = 0;  // initialize to zero
+	// Services with characteristics for peripheral devices
+	BleService* _services[MAX_REMOTE_SERVICES];  // array of pointers
+	uint8_t _serviceCount = 0;
+
+	struct {
+		// device is initialized with nondefault constructor
+		bool initialized = false;
+		// whether device is connected
+		bool connected = false;
+		// device has central role
+		bool isCentral = false;
+		// device has peripheral role
+		bool isPeripheral = false;
+		// discovery has been completed (only for peripheral device)
+		bool discoveryDone = false;
 	} _flags;
 
-public:
-	BleDevice(microapp_sdk_ble_t* dev);  // non-empty constructor
+	BleAsyncResult _asyncResult = BleAsyncNotWaiting;
 
+	/**
+	 * Sets internal connected flag
+	 */
+	void onConnect(uint16_t connectionHandle);
+
+	/**
+	 * Clear internal connected flag
+	 */
+	void onDisconnect();
+
+	/**
+	 * Set internal discoveryDone flag
+	 */
+	void onDiscoverDone();
+
+	/**
+	 * Internally add a discovered service (for peripheral devices)
+	 *
+	 * @param service pointer to a discovered service
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
+	 * @return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE if no space for new services
+	 */
+	microapp_sdk_result_t addDiscoveredService(BleService* service);
+
+	/**
+	 * Internally add a discovered characteristic (for peripheral devices)
+	 *
+	 * @param characteristic pointer to a discovered characteristic
+	 * @param serviceUuid uuid of the service to which the characteristic belongs
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
+	 * @return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND if service no service with the serviceUuid was found
+	 * @return microapp_sdk_result_t specifying error
+	 */
+	microapp_sdk_result_t addDiscoveredCharacteristic(BleCharacteristic* characteristic, Uuid serviceUuid);
+
+	/**
+	 * Get a characteristic based on its handle (for peripheral devices)
+	 *
+	 * @param[in] handle the handle of the characteristic
+	 * @param[out] characteristic if found, pointer to characteristic pointer will be placed here
+	 * @return CS_MICROAPP_SDK_ACK_SUCCESS on success
+	 * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if device is not initialized
+	 * @return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED if device does not perform peripheral role
+	 * @return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND if characteristic was not found in services
+	 */
+	microapp_sdk_result_t getCharacteristic(uint16_t handle, BleCharacteristic** characteristic);
+
+	/**
+	 * Wait for an event from bluenet after a request made to bluenet
+	 *
+	 * @param timeout in milliseconds
+	 * @return true if event was received with success
+	 * @return false if event was not received within timeout or was received with failure
+	 */
+	bool waitForAsyncResult(uint32_t timeout);
+
+public:
 	// return true if BleDevice is nontrivial, i.e. initialized from an actual advertisement
-	explicit operator bool() const { return _flags.flags.nonEmpty; }
+	explicit operator bool() const;
+
+	/**
+	 * Poll for BLE events and handle them
+	 *
+	 * @param timeout in milliseconds
+	 */
+	void poll(uint32_t timeout = 0);
+
+	/**
+	 * Query if a BLE device is connected
+	 *
+	 * @return true if the BLE device is connected
+	 * @return false otherwise
+	 */
+	bool connected();
+
+	/**
+	 * Disconnect the BLE device, if connected
+	 *
+	 * @param timeout in milliseconds
+	 * @return true if the BLE device was disconnected
+	 * @return false otherwise
+	 */
+	bool disconnect(uint32_t timeout = 5000);
 
 	/**
 	 * Get device address of the last scanned advertisement which matched the filter.
 	 *
-	 * @return        String in the format "AA:BB:CC:DD:EE:FF".
+	 * @return string in the format "AA:BB:CC:DD:EE:FF".
 	 */
 	String address();
 
 	/**
 	 * Get received signal strength of last scanned advertisement of the device.
 	 *
-	 * @return       RSSI value of the last scanned advertisement which matched the filter.
+	 * @return RSSI value of the last scanned advertisement which matched the filter.
 	 */
 	int8_t rssi();
 
 	/**
-	 * Get type of advertisement
+	 * (Not implemented!) Discover all the attributes of the BLE device
 	 *
+	 * @return true if successful
+	 * @return false on failure
 	 */
-	uint8_t type();
+	bool discoverAttributes();
+
+	/**
+	 * Discover the attributes of a particular service on the BLE device
+	 *
+	 * @param serviceUuid string containing uuid of the service to be discovered
+	 * @param timeout in milliseconds
+	 * @return true if successful
+	 * @return false on failure
+	 */
+	bool discoverService(const char* serviceUuid, uint32_t timeout = 5000);
+
+	/**
+	 * Query the numer of services discovered for the BLE device
+	 *
+	 * @return the number of services discovered for the BLE device
+	 */
+	uint8_t serviceCount();
+
+	/**
+	 * Query if the BLE device has a particular service
+	 *
+	 * @return true if the device provides the service
+	 * @return false otherwise
+	 */
+	bool hasService(const char* serviceUuid);
+
+	/**
+	 * Get a BleService representing a BLE service the device provides
+	 *
+	 * @param[in] uuid a string with the uuid of the characteristic to look for
+	 * @return a reference (!) to the BleService with the provided uuid, if found
+	 */
+	BleService& service(const char* uuid);
+
+	/**
+	 * Query the numer of characteristics discovered for the BLE device
+	 *
+	 * @return the number of characteristics discovered for the BLE device
+	 */
+	uint8_t characteristicCount();
+
+	/**
+	 * Query if the BLE device has a particular characteristic
+	 *
+	 * @return true if the device provides the characteristic
+	 * @return false otherwise
+	 */
+	bool hasCharacteristic(const char* uuid);
+
+	/**
+	 * Get a BleCharacteristic representing a BLE characteristic the device provides
+	 *
+	 * @param[in] uuid a string with the uuid of the characteristic to look for
+	 * @param[in] index index of the characteristic to look for
+	 * @return a reference (!) to the BleCharacteristic with the provided uuid, if found
+	 */
+	BleCharacteristic& characteristic(const char* uuid);
+	BleCharacteristic& characteristic(uint8_t index);
 
 	/**
 	 * Returns whether the device has advertised a local name
@@ -91,33 +235,55 @@ public:
 	/**
 	 * Returns the advertised local name of the device as a string
 	 *
-	 * @return      String of the advertisement data in either the complete local name field or the shortened local name
-	 * field. Returns empty string if the device does not advertise a local name.
+	 * @return string of the advertisement data in either the complete local name field or the shortened local name
+	 * field Returns empty string if the device does not advertise a local name.
 	 */
 	String localName();
 
-	bool connect();
-	bool connected();
+	/**
+	 * Query if a discovered BLE device is advertising a service UUID
+	 *
+	 * @return true if the device is advertising a service UUID
+	 * @return false otherwise
+	 */
+	bool hasAdvertisedServiceUuid();
 
 	/**
-	 * Tries to find an ad of specified GAP ad data type. and if found returns true and a pointer to its location.
+	 * Query the number of advertised services a discovered BLE device is advertising
 	 *
-	 * @param[in] type          GAP advertisement type according to
-	 * https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile.
-	 * @param[out] foundData    data_ptr_t containing a pointer to the first byte of advData containing the data of type
-	 * type and its length.
-	 *
-	 * @return true             if the advertisement data of given type is found.
-	 * @return false            if the advertisement data of given type is not found.
+	 * @return the number of advertised services a discovered BLE device is advertising
 	 */
-	bool findAdvertisementDataType(GapAdvType type, data_ptr_t* foundData);
+	uint8_t advertisedServiceUuidCount();
 
 	/**
-	 * Checks if a service with passed uuid is advertised by the device
+	 * Query an advertised service UUID discovered BLE device is advertising
 	 *
-	 * @param uuid     the uuid to filter
-	 * @return true    if found
-	 * @return false   if not found
+	 * @param index (optional) the index of the service UUID. Defaults to 0
+	 * @return advertised service UUID (as a string)
 	 */
-	bool findServiceDataUuid(uuid16_t uuid);
+	String advertisedServiceUuid(uint8_t index = 0);
+
+	/**
+	 * Connect to a BLE device
+	 *
+	 * @param timeout in milliseconds
+	 * @return true if the connection was successful
+	 * @return false otherwise
+	 */
+	bool connect(uint32_t timeout = 5000);
+
+	/**
+	 * Find an advertisement of type type in the scanned advertisement data
+	 *
+	 * @param[in] type the type of ad to look for
+	 * @param[out] foundData pointer to found ad + length of the ad, if present
+	 * @return true if the advertisement contains an ad of type type
+	 * @return false otherwise
+	 */
+	bool findAdvertisementDataType(GapAdvType type, ble_ad_t* foundData);
+
+	/**
+	 * Keep the connection with this central device alive by calling this every once in a while
+	 */
+	void connectionKeepAlive();
 };

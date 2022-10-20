@@ -18,15 +18,15 @@ struct interrupt_registration_t {
 	bool registered;
 };
 
-#define MAX_INTERRUPT_REGISTRATIONS 4
+#define MAX_INTERRUPT_REGISTRATIONS 6
 
 extern interrupt_registration_t interruptRegistrations[MAX_INTERRUPT_REGISTRATIONS];
 
-// define size_t as a 16-bit unsigned int
-typedef uint16_t size_t;
+// define microapp_size_t as a 16-bit unsigned int
+typedef uint16_t microapp_size_t;
 
 // redefine the max size of a string
-const size_t MAX_STRING_SIZE = MICROAPP_SDK_MAX_STRING_LENGTH;
+const microapp_size_t MAX_STRING_SIZE = MICROAPP_SDK_MAX_STRING_LENGTH;
 
 /**
  * Finds the length of a null-terminated string
@@ -50,7 +50,7 @@ uint8_t strlen(const char* str);
  * @return 1         if for the first unmatching byte i we have ptr1[i] >
  * ptr2[i]
  */
-int memcmp(const void* ptr1, const void* ptr2, size_t num);
+int memcmp(const void* ptr1, const void* ptr2, microapp_size_t num);
 
 /**
  * Copies num bytes from src to dest
@@ -61,7 +61,7 @@ int memcmp(const void* ptr1, const void* ptr2, size_t num);
  *
  * @return           A pointer to dest
  */
-void* memcpy(void* dest, const void* src, size_t num);
+void* memcpy(void* dest, const void* src, microapp_size_t num);
 
 /*
  * Get outgoing message buffer (can be used for sendMessage);

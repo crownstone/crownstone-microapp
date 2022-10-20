@@ -39,7 +39,7 @@ void onScannedDevice(BleDevice device) {
 #endif
 
 	// parse service data of beacon advertisement if available
-	data_ptr_t serviceData;
+	ble_ad_t serviceData;
 	if (device.findAdvertisementDataType(GapAdvType::ServiceData16BitUuid, &serviceData)) {
 		if (serviceData.len == 15) { // service data length of the Xiaomi service data advertisements
 			uint16_t temperature = (serviceData.data[8] << 8) | serviceData.data[9];
@@ -61,8 +61,15 @@ void setup() {
 	// Write something to the log (will be shown in the bluenet code as print statement).
 	Serial.println("BLE scanner example");
 
+	if (!BLE.begin()) {
+		Serial.println("BLE.begin failed");
+		return;
+	}
+
 	// Register scan handler
-	BLE.setEventHandler(BLEDeviceScanned, onScannedDevice);
+	if (!BLE.setEventHandler(BLEDeviceScanned, onScannedDevice)) {
+		Serial.println("Setting event handler failed");
+	}
 }
 
 // The Arduino loop function.

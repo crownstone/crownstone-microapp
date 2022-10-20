@@ -11,7 +11,7 @@ static int counter = 100;
 volatile byte state = LOW;
 volatile byte state2 = LOW;
 
-const size_t serviceDataSize = 1;
+const microapp_size_t serviceDataSize = 1;
 const uint16_t serviceDataUuid = 0x1234;
 uint8_t serviceData[serviceDataSize];
 
