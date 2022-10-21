@@ -267,7 +267,7 @@ microapp_sdk_result_t registerInterrupt(interrupt_registration_t* interrupt) {
 	return CS_MICROAPP_SDK_ACK_ERR_NO_SPACE;
 }
 
-microapp_sdk_result_t removeInterruptRegistration(MicroappSdkMessageType type, uint8_t id) {
+microapp_sdk_result_t removeInterruptRegistration(MicroappSdkType type, uint8_t id) {
 	for (int i = 0; i < MAX_INTERRUPT_REGISTRATIONS; ++i) {
 		if (!interruptRegistrations[i].registered) {
 			continue;
@@ -280,7 +280,7 @@ microapp_sdk_result_t removeInterruptRegistration(MicroappSdkMessageType type, u
 	return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND;
 }
 
-microapp_sdk_result_t callInterrupt(MicroappSdkMessageType type, uint8_t id, microapp_sdk_header_t* interruptHeader) {
+microapp_sdk_result_t callInterrupt(MicroappSdkType type, uint8_t id, microapp_sdk_header_t* interruptHeader) {
 	for (int i = 0; i < MAX_INTERRUPT_REGISTRATIONS; ++i) {
 		if (!interruptRegistrations[i].registered) {
 			continue;
@@ -324,6 +324,6 @@ microapp_sdk_result_t handleInterrupt(microapp_sdk_header_t* interruptHeader) {
 		}
 	}
 	// Call the interrupt
-	MicroappSdkMessageType type = (MicroappSdkMessageType)interruptHeader->messageType;
+	MicroappSdkType type = (MicroappSdkType)interruptHeader->messageType;
 	return callInterrupt(type, id, interruptHeader);
 }
