@@ -13,6 +13,11 @@
 #include <stdint.h>
 
 /**
+ * Handle an incoming data message.
+ */
+typedef void (*MessageHandler)(uint8_t* data, microapp_size_t size);
+
+/**
  * Class to send data messages to uart, and receive data messages from control command.
  */
 class MessageClass {
@@ -58,6 +63,13 @@ public:
 	 */
 	microapp_size_t readBytes(void* data, microapp_size_t size);
 
+	/**
+	 * Set a message handler.
+	 *
+	 * When set, this replaces available() and readBytes().
+	 */
+	bool setHandler(MessageHandler& handler);
+
 private:
 	MessageClass();
 	MessageClass(MessageClass const&)   = delete;
@@ -71,6 +83,9 @@ private:
 
 	//! Keeps up number of bytes available to read.
 	microapp_size_t _available = 0;
+
+	//! The message handler.
+	MessageHandler* _handler = nullptr;
 
 	//! Handle an interrupt.
 	microapp_sdk_result_t handleInterrupt(void* interrupt);

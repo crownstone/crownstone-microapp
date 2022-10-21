@@ -54,6 +54,10 @@ microapp_sdk_result_t MessageClass::handleInterrupt(void* interrupt) {
 	auto message = reinterpret_cast<microapp_sdk_message_t*>(interrupt);
 	switch (message->type) {
 		case CS_MICROAPP_SDK_MSG_EVENT_RECEIVED_MSG: {
+			if (_handler != nullptr) {
+				(*_handler)(message->receivedMessage.data, message->receivedMessage.size);
+				return CS_MICROAPP_SDK_ACK_SUCCESS;
+			}
 
 			size_t totalSize = _available + message->receivedMessage.size;
 			if (totalSize > sizeof(_receiveBuffer)) {
@@ -83,7 +87,7 @@ microapp_size_t MessageClass::readBytes(void* data, microapp_size_t size) {
 	// Copy data to the buffer.
 	memcpy(data, _receiveBuffer, size);
 
-	// Shift the data in the buffer.
+	// Shift the data in the buffer, in case there is more available.
 	for (int i = 0; i < _available - size; ++i) {
 		_receiveBuffer[i] = _receiveBuffer[i + size];
 	}
@@ -113,3 +117,7 @@ microapp_size_t MessageClass::write(void* data, microapp_size_t size) {
 	return size;
 }
 
+bool MessageClass::setHandler(MessageHandler& handler) {
+	_handler = &handler;
+	return true;
+}
