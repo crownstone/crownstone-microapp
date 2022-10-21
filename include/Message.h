@@ -91,7 +91,7 @@ private:
 	microapp_sdk_result_t handleInterrupt(void* interrupt);
 
 	//! Give access to private functions to this function.
-	friend microapp_sdk_result_t handleInterruptStatic(void*);
+	friend microapp_sdk_result_t handleMessageInterrupt(void*);
 };
 
 //! The global instance.
