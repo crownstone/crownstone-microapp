@@ -133,8 +133,9 @@ public:
 	 * @param[in] msg         Pointer to the message.
 	 * @param[in] msgSize     Size of the message, currently max 7.
 	 * @param[in] stoneId     ID of the Crownstone to send the message to, or 0 to send it to every Crownstone.
+	 * @param[in] doNotRelay  When set to true, the mesh message will not be relayed, and thus only received by neighbouring nodes.
 	 */
-	void sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId);
+	void sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId = 0, bool doNotRelay = false);
 
 	/**
 	 * Get own stone id

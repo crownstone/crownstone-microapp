@@ -99,13 +99,14 @@ void MeshClass::readMeshMsg(MeshMsg* msg) {
 	}
 }
 
-void MeshClass::sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId) {
+void MeshClass::sendMeshMsg(uint8_t* msg, uint8_t msgSize, uint8_t stoneId, bool doNotRelay) {
 	uint8_t* payload                 = getOutgoingMessagePayload();
 	microapp_sdk_mesh_t* meshRequest = reinterpret_cast<microapp_sdk_mesh_t*>(payload);
 	meshRequest->header.ack          = CS_MICROAPP_SDK_ACK_REQUEST;
 	meshRequest->header.messageType  = CS_MICROAPP_SDK_TYPE_MESH;
 	meshRequest->type                = CS_MICROAPP_SDK_MESH_SEND;
 	meshRequest->stoneId             = stoneId;
+	meshRequest->options.doNotRelay  = doNotRelay;
 
 	int msgSizeSent = msgSize;
 	if (msgSize > MAX_MICROAPP_MESH_PAYLOAD_SIZE) {
