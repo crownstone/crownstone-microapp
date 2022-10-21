@@ -79,5 +79,5 @@ private:
 	friend microapp_sdk_result_t handleInterruptStatic(void*);
 };
 
-
+//! The global instance.
 #define Message MessageClass::getInstance()

@@ -34,6 +34,18 @@ bool MessageClass::begin() {
 		// No empty interrupt slots available on microapp side
 		return false;
 	}
+
+	// Register an interrupt on the bluenet side.
+	uint8_t* payload            = getOutgoingMessagePayload();
+	auto request                = (microapp_sdk_message_t*)(payload);
+	request->header.messageType = CS_MICROAPP_SDK_TYPE_MESSAGE;
+	request->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
+	request->type               = CS_MICROAPP_SDK_MSG_REGISTER_INTERRUPT;
+
+	if (sendMessage() != CS_MICROAPP_SDK_ACK_SUCCESS) {
+		return false;
+	}
+
 	_registeredInterrupt = true;
 	return true;
 }
