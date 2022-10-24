@@ -3,6 +3,8 @@
 
 /**
  * A microapp example for acting as a BLE peripheral
+ * This app simulates being a temperature sensor
+ * It advertises a service with temperature characteristic containing fake values
  */
 
 uint16_t loopCounter = 0;
@@ -26,12 +28,14 @@ void updateTemperature() {
 	temperatureCharacteristic.writeValue(temperatureValue, NR_TEMPERATURE_BYTES);
 }
 
-void onCentralConnected(BleDevice& device) {
-	Serial.println("BLE central connected");
+void onCentralConnected(BleDevice& central) {
+	Serial.print("BLE device connected: ");
+	Serial.println(central.address().c_str());
 }
 
-void onCentralDisconnected(BleDevice& device) {
-	Serial.println("BLE central disconnected");
+void onCentralDisconnected(BleDevice& central) {
+	Serial.print("BLE device disconnected: ");
+	Serial.println(central.address().c_str());
 }
 
 // The Arduino setup function.
@@ -81,8 +85,9 @@ void loop() {
 	BleDevice& central = BLE.central();
 
 	if (central) {
-		Serial.println("Connected to central device with address:");
-		Serial.println(central.address());
 		central.connectionKeepAlive();
 	}
+
+	// wait for one second
+	delay(1000);
 }

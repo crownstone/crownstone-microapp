@@ -18,7 +18,7 @@ uint8_t readableValue[NR_READABLE_BYTES];
 BleCharacteristic readableCharacteristic;
 
 // To be called when the characteristic is written by a central device
-void onCharacteristicSubscribed(BleDevice device, BleCharacteristic characteristic) {
+void onCharacteristicSubscribed(BleDevice& device, BleCharacteristic& characteristic) {
 	Serial.println("Characteristic subscribed callback");
 }
 
@@ -70,4 +70,5 @@ void loop() {
 		// Keep the connection alive
 		central.connectionKeepAlive();
 	}
+	delay(1000);
 }

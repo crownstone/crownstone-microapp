@@ -6,7 +6,7 @@
  */
 
 const char* peripheralAddress = "A4:C1:38:9A:45:E3";
-// const char* peripheralName = "ATC_9A45E3";
+const char* peripheralName = "ATC_9A45E3";
 
 // callback for received peripheral advertisement
 void onScannedDevice(BleDevice& device) {
@@ -29,10 +29,10 @@ void setup() {
 	Serial.begin();
 
 	// Write something to the log (will be shown in the bluenet code as print statement).
-	Serial.println("   BLE central example");
+	Serial.println("   BLE central ATC example");
 
 	if (!BLE.begin()) {
-		Serial.println("BLE.begin failed");
+		Serial.println("   BLE.begin failed");
 		return;
 	}
 

@@ -25,7 +25,7 @@ boolean led3state = LOW;
 const char* bleBeaconAddress = "A4:C1:38:9A:45:E3";
 
 #ifdef ENABLE_BLE_INTERRUPTS
-void onScannedDevice(BleDevice device) {
+void onScannedDevice(BleDevice& device) {
 	// toggle led1
 	Serial.println("Scanned device");
 	led1state = !led1state;
