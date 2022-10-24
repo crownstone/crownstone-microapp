@@ -14,7 +14,7 @@ MessageClass::MessageClass() {
 
 }
 
-microapp_sdk_result_t handleInterruptStatic(void* interrupt) {
+microapp_sdk_result_t handleMessageInterrupt(void* interrupt) {
 	return Message.handleInterrupt(interrupt);
 }
 
@@ -28,7 +28,7 @@ bool MessageClass::begin() {
 	interrupt_registration_t interrupt;
 	interrupt.type               = CS_MICROAPP_SDK_TYPE_MESSAGE;
 	interrupt.id                 = 0;
-	interrupt.handler            = handleInterruptStatic;
+	interrupt.handler            = handleMessageInterrupt;
 	microapp_sdk_result_t result = registerInterrupt(&interrupt);
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
 		// No empty interrupt slots available on microapp side

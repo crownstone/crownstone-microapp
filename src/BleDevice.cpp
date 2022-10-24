@@ -2,9 +2,12 @@
 #include <BleDevice.h>
 
 // Construct as a peripheral device
-BleDevice::BleDevice(BleScan scan, MacAddress address, rssi_t rssi) {
-	memcpy(_scanData, scan._scanData, scan._scanSize);
-	_scan                     = BleScan(_scanData, scan._scanSize);
+BleDevice::BleDevice(uint8_t* scanData, uint8_t scanSize, MacAddress address, rssi_t rssi) {
+	_scanSize = scanSize;
+	if (_scanSize > sizeof(_scanData)) {
+		_scanSize = sizeof(_scanData);
+	}
+	memcpy(_scanData, scanData, scanSize);
 	_address                  = address;
 	_rssi                     = rssi;
 	_flags.isPeripheral = true;
@@ -343,7 +346,7 @@ bool BleDevice::hasLocalName() {
 	if (!_flags.initialized || !_flags.isPeripheral) {
 		return false;
 	}
-	return (_scan.localName().len != 0);
+	return (BleScan::localName(_scanData, _scanSize).len != 0);
 }
 
 // Only defined for peripheral devices
@@ -351,7 +354,7 @@ String BleDevice::localName() {
 	if (!_flags.initialized || !_flags.isPeripheral) {
 		return String(nullptr);
 	}
-	ble_ad_t localName = _scan.localName();
+	ble_ad_t localName = BleScan::localName(_scanData, _scanSize);
 	if (localName.len == 0) {
 		return String(nullptr);
 	}
@@ -365,21 +368,21 @@ bool BleDevice::hasAdvertisedServiceUuid() {
 	if (!_flags.initialized || !_flags.isPeripheral) {
 		return false;
 	}
-	return _scan.hasServiceUuid();
+	return BleScan::hasServiceUuid(_scanData, _scanSize);
 }
 
 uint8_t BleDevice::advertisedServiceUuidCount() {
 	if (!_flags.initialized || !_flags.isPeripheral) {
 		return false;
 	}
-	return _scan.serviceUuidCount();
+	return BleScan::serviceUuidCount(_scanData, _scanSize);
 }
 
 String BleDevice::advertisedServiceUuid(uint8_t index) {
 	if (!_flags.initialized || !_flags.isPeripheral) {
 		return String(nullptr);
 	}
-	Uuid uuid = Uuid(_scan.serviceUuid(index), CS_MICROAPP_SDK_BLE_UUID_STANDARD);
+	Uuid uuid = Uuid(BleScan::serviceUuid(_scanData, _scanSize, index), CS_MICROAPP_SDK_BLE_UUID_STANDARD);
 	return String(uuid.string());
 }
 
@@ -434,7 +437,7 @@ bool BleDevice::findAdvertisementDataType(GapAdvType type, ble_ad_t* foundData) 
 	if (!_flags.initialized || !_flags.isPeripheral) {
 		return false;
 	}
-	return _scan.findAdvertisementDataType(type, foundData);
+	return BleScan::findAdvertisementDataType(_scanData, _scanSize, type, foundData);
 }
 
 // Only defined for central devices

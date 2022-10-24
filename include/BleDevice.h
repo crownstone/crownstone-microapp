@@ -26,14 +26,13 @@ private:
 	BleDevice(){};
 
 	// constructor from scan (peripheral)
-	BleDevice(BleScan scan, MacAddress address, rssi_t rssi);
+	BleDevice(uint8_t* scanData, uint8_t scanSize, MacAddress address, rssi_t rssi);
 	// constructor from connect (central)
 	BleDevice(MacAddress address);
 
 	// raw scan data
 	uint8_t _scanData[MAX_BLE_ADV_DATA_LENGTH];
-	// wrapper class pointing to _scanData
-	BleScan _scan;
+	uint8_t _scanSize = 0;
 
 	MacAddress _address;
 	rssi_t _rssi = 127;

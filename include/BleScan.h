@@ -12,9 +12,9 @@
  * @param data pointer to ad data which has valid data of size (len-1)
  */
 struct ble_ad_t {
-	uint8_t type  = 0;
-	uint8_t len   = 0;
-	uint8_t* data = nullptr;
+	uint8_t type        = 0;
+	uint8_t len         = 0;
+	const uint8_t* data = nullptr;
 };
 
 /**
@@ -28,9 +28,6 @@ private:
 
 	BleScan(){}; // default constructor
 
-	uint8_t* _scanData = nullptr;
-	uint8_t _scanSize = 0;
-
 	/**
 	 * Tries to find an ad of specified GAP ad data type in the raw scan data
 	 * If found returns true and a ble_ad_t with ad type, length and pointer to its data
@@ -41,17 +38,16 @@ private:
 	 * @return true             if the advertisement data of given type is found.
 	 * @return false            if the advertisement data of given type is not found.
 	 */
-	bool findAdvertisementDataType(GapAdvType type, ble_ad_t* foundData);
+	static bool findAdvertisementDataType(const uint8_t* scanData, uint8_t scanSize, GapAdvType type, ble_ad_t* foundData);
 
 public:
-	BleScan(uint8_t* scanData, uint8_t scanSize);
 
 	/**
 	 * Query the local name advertised in the scan (either complete or shortened)
 	 *
 	 * @return An ad with a pointer to the local name and its length (nullptr and 0 if not found, respectively)
 	 */
-	ble_ad_t localName();
+	static ble_ad_t localName(const uint8_t* scanData, uint8_t scanSize);
 
 	/**
 	 * Checks if a service with passed uuid is advertised by the device
@@ -60,14 +56,14 @@ public:
 	 * @return true if found
 	 * @return false if not found
 	 */
-	bool hasServiceUuid(uuid16_t uuid = 0);
+	static bool hasServiceUuid(const uint8_t* scanData, uint8_t scanSize, uuid16_t uuid = 0);
 
 	/**
 	 * Finds the number of 16-bit service uuids advertised by the device
 	 *
 	 * @return the number of services advertised
 	 */
-	uint8_t serviceUuidCount();
+	static uint8_t serviceUuidCount(const uint8_t* scanData, uint8_t scanSize);
 
 	/**
 	 * Return the uuid advertised by the device, indexed by the index parameter
@@ -75,6 +71,6 @@ public:
 	 * @param index (optional) index of the service uuid. Default 0
 	 * @return uuid indexed by index. Returns 0 if not found
 	 */
-	uuid16_t serviceUuid(uint8_t index = 0);
+	static uuid16_t serviceUuid(const uint8_t* scanData, uint8_t scanSize, uint8_t index = 0);
 
 };

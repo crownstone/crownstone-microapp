@@ -42,7 +42,7 @@ class Ble {
 private:
 	friend microapp_sdk_result_t handleBleInterrupt(void*);
 	friend microapp_sdk_result_t registerBleEventHandler(BleEventType, BleEventHandler);
-	friend microapp_sdk_result_t getBleEventHandlerRegistration(BleEventType, BleEventHandlerRegistration&);
+	friend BleEventHandler* getBleEventHandler(BleEventType);
 	friend microapp_sdk_result_t removeBleEventHandlerRegistration(BleEventType);
 	friend bool registeredBleInterrupt(MicroappSdkBleType);
 	friend microapp_sdk_result_t registerBleInterrupt(MicroappSdkBleType);
@@ -316,15 +316,12 @@ public:
 microapp_sdk_result_t registerBleEventHandler(BleEventType eventType, BleEventHandler eventHandler);
 
 /**
- * Based on the event type, get the event handler registration
+ * Based on the event type, get the event handler.
  *
- * @param eventType the type of BLE event for which to get the registration
- * @param registration an empty instance of BleEventHandlerRegistration in which the result is placed
- * @return CS_MICROAPP_SDK_ACK_ERR_EMPTY if the eventHandler field is empty
- * @return CS_MICROAPP_SDK_ACK_ERR_NOT_FOUND if no registration is found for the provided eventType
- * @return CS_MICROAPP_SDK_ACK_SUCCESS upon success
+ * @param[in] eventType      The type of BLE event for which to get the registration
+ * @return                   The handler, or a null pointer when no handler is registered.
  */
-microapp_sdk_result_t getBleEventHandlerRegistration(BleEventType eventType, BleEventHandlerRegistration& registration);
+BleEventHandler* getBleEventHandler(BleEventType eventType);
 
 /**
  * Remove the event handler registration
