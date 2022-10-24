@@ -23,6 +23,7 @@ enum GapAdvType {
 // Types of BLE event for which event handlers can be set
 // The naming of these corresponds with ArduinoBLE syntax
 enum BleEventType {
+	BLENone          = 0x00,
 	// BleDevice
 	BLEDeviceScanned = 0x01,
 	BLEConnected     = 0x02,
@@ -56,9 +57,10 @@ typedef void (*BleEventHandler)(void);
 
 // Registration for user callbacks that can be kept local.
 struct BleEventHandlerRegistration {
-	BleEventHandler eventHandler = nullptr;
-	bool filled                  = false;
+	//! The type, set to BLENone when empty.
 	BleEventType eventType;
+	//! The handler.
+	BleEventHandler eventHandler;
 };
 
 typedef int8_t rssi_t;
