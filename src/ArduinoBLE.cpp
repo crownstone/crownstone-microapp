@@ -43,15 +43,15 @@ microapp_sdk_result_t Ble::handleScanEvent(microapp_sdk_ble_scan_t* scanInterrup
 			if (!_flags.isScanning) {
 				return CS_MICROAPP_SDK_ACK_SUCCESS;
 			}
+
 			// Apply a wrapper BleScan (no copy) to parse scan data
 			BleScan scan(scanInterrupt->eventScan.data, scanInterrupt->eventScan.size);
 			MacAddress address(scanInterrupt->eventScan.address.address, MAC_ADDRESS_LENGTH, scanInterrupt->eventScan.address.type);
-			if (!matchesFilter(scan, address)) {
-				return CS_MICROAPP_SDK_ACK_SUCCESS;
-			}
+
 			// Copy the scan data into the _scanDevice
 			rssi_t rssi = scanInterrupt->eventScan.rssi;
 			_scanDevice = BleDevice(scan, address, rssi);
+
 			// Get the event handler registration
 			BleEventHandlerRegistration registration;
 			microapp_sdk_result_t result = getBleEventHandlerRegistration(BLEDeviceScanned, registration);
@@ -60,6 +60,7 @@ microapp_sdk_result_t Ble::handleScanEvent(microapp_sdk_ble_scan_t* scanInterrup
 				// We do not return an error but silently return
 				return CS_MICROAPP_SDK_ACK_SUCCESS;
 			}
+
 			// Call the event handler
 			DeviceEventHandler handler = (DeviceEventHandler)registration.eventHandler;
 			handler(_scanDevice);
@@ -217,6 +218,7 @@ microapp_sdk_result_t Ble::handleCentralEvent(microapp_sdk_ble_central_t* centra
 				NotificationEventHandler handler = (NotificationEventHandler)registration.eventHandler;
 				handler(_peripheral, *characteristic, central->eventNotification.data, central->eventNotification.size);
 			}
+			return result;
 		}
 		default: {
 			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
@@ -553,19 +555,36 @@ bool Ble::scan(bool withDuplicates) {
 	return true;
 }
 
+microapp_sdk_result_t Ble::setScanFilter(microapp_sdk_ble_scan_filter_t& scanFilter) {
+	microapp_sdk_ble_t* request = (microapp_sdk_ble_t*)getOutgoingMessagePayload();
+	request->header.messageType = CS_MICROAPP_SDK_TYPE_BLE;
+	request->header.ack         = CS_MICROAPP_SDK_ACK_REQUEST;
+	request->type               = CS_MICROAPP_SDK_BLE_SCAN;
+	request->scan.type          = CS_MICROAPP_SDK_BLE_SCAN_REQUEST_FILTER;
+	memcpy(&request->scan.filter, &scanFilter, sizeof(scanFilter));
+
+	return sendMessage();
+}
+
 bool Ble::scanForName(const char* name, bool withDuplicates) {
 	if (!_flags.initialized) {
 		return false;
 	}
-	_scanFilter.type         = BleFilterLocalName;
-	_scanFilter.localNameLen = strlen(name);
-	if (_scanFilter.localNameLen > MAX_BLE_ADV_DATA_LENGTH) {
-		_scanFilter.localNameLen = MAX_BLE_ADV_DATA_LENGTH;
+
+	microapp_sdk_ble_scan_filter_t scanFilter;
+	scanFilter.type = CS_MICROAPP_SDK_BLE_SCAN_FILTER_NAME;
+
+	// Clip the name if it's too long.
+	scanFilter.name.size = strlen(name);
+	if (scanFilter.name.size > sizeof(scanFilter.name.name)) {
+		scanFilter.name.size = sizeof(scanFilter.name.name);
+	}
+	memcpy(scanFilter.name.name, name, scanFilter.name.size);
+
+	if (setScanFilter(scanFilter) != CS_MICROAPP_SDK_ACK_SUCCESS) {
+		return false;
 	}
 
-	memcpy(_scanFilter.localName, name, _scanFilter.localNameLen);
-	// TODO: do something with withDuplicates argument
-	// Note that scan resets previously scanned devices
 	return scan(withDuplicates);
 }
 
@@ -573,24 +592,44 @@ bool Ble::scanForAddress(const char* address, bool withDuplicates) {
 	if (!_flags.initialized) {
 		return false;
 	}
-	_scanFilter.type    = BleFilterAddress;
-	_scanFilter.address = MacAddress(address);
-	// TODO: do something with withDuplicates argument
-	// Note that scan resets previously scanned devices
+
+	microapp_sdk_ble_scan_filter_t scanFilter;
+	scanFilter.type = CS_MICROAPP_SDK_BLE_SCAN_FILTER_MAC;
+
+	MacAddress mac(address);
+	memcpy(scanFilter.mac, mac.bytes(), MAC_ADDRESS_LENGTH);
+
+	if (setScanFilter(scanFilter) != CS_MICROAPP_SDK_ACK_SUCCESS) {
+		return false;
+	}
+
 	return scan(withDuplicates);
 }
 
-bool Ble::scanForUuid(const char* uuid, bool withDuplicates) {
+bool Ble::scanForUuid(const char* uuidString, bool withDuplicates) {
 	if (!_flags.initialized) {
 		return false;
 	}
-	if (strlen(uuid) != UUID_16BIT_STRING_LENGTH) {
+	if (strlen(uuidString) != UUID_16BIT_STRING_LENGTH) {
 		return false;
 	}
-	_scanFilter.type = BleFilterUuid;
-	_scanFilter.uuid = Uuid(uuid);
-	// TODO: do something with withDuplicates argument
-	// Note that scan resets previously scanned devices
+
+	Uuid uuid(uuidString);
+	if (!uuid.valid()) {
+		return false;
+	}
+	if (uuid.custom()) {
+		return false;
+	}
+
+	microapp_sdk_ble_scan_filter_t scanFilter;
+	scanFilter.type = CS_MICROAPP_SDK_BLE_SCAN_FILTER_SERVICE_16_BIT;
+	scanFilter.service16bit = uuid.uuid16();
+
+	if (setScanFilter(scanFilter) != CS_MICROAPP_SDK_ACK_SUCCESS) {
+		return false;
+	}
+
 	return scan(withDuplicates);
 }
 
@@ -620,7 +659,6 @@ bool Ble::stopScan() {
 		return false;
 	}
 
-	_scanFilter.type        = BleFilterNone;  // reset filter
 	_flags.isScanning = false;
 	return true;
 }
@@ -637,47 +675,6 @@ BleDevice& Ble::available() {
 	// Reset scan device
 	_scanDevice = BleDevice();
 	return _peripheral;
-}
-
-bool Ble::matchesFilter(BleScan scan, MacAddress address) {
-	switch (_scanFilter.type) {
-		case BleFilterAddress: {
-			if (address != _scanFilter.address) {
-				return false;
-			}
-			return true;
-		}
-		case BleFilterLocalName: {
-			ble_ad_t localName = scan.localName();
-			if (localName.len == 0) {
-				return false;
-			}
-			if (localName.len != _scanFilter.localNameLen) {
-				return false;
-			}
-			// compare local name to name in filter
-			// in the ad, name is not zero terminated, so use length of name provided by user
-			if (memcmp(localName.data, _scanFilter.localName, _scanFilter.localNameLen) != 0) {
-				return false;
-			}
-			return true;
-		}
-		case BleFilterUuid: {
-			if (_scanFilter.uuid.custom()) {
-				return false;
-			}
-			return scan.hasServiceUuid(_scanFilter.uuid.uuid16());
-		}
-		case BleFilterNone: {
-			// If no filter is set, we pass the filter by default
-			return true;
-		}
-		default: {
-			// Unknown filter type
-			return false;
-		}
-	}
-	return false;
 }
 
 microapp_sdk_result_t registerBleEventHandler(BleEventType eventType, BleEventHandler eventHandler) {

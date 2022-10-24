@@ -27,20 +27,6 @@ enum BleFilterType {
 	BleFilterUuid
 };
 
-// Stores the filter for filtering scanned BLE devices
-struct BleFilter {
-	// defines which property is currently being filtered on
-	BleFilterType type;
-	// address to be filtered on
-	MacAddress address;
-	// max length of name equals max advertisement length + 1 for 0 termination
-	char localName[MAX_BLE_ADV_DATA_LENGTH + 1];
-	// length of the name field
-	uint16_t localNameLen;
-	// service data uuid
-	Uuid uuid;
-};
-
 #ifndef MAX_LOCAL_SERVICES
 #define MAX_LOCAL_SERVICES 1
 #endif
@@ -79,8 +65,6 @@ private:
 	// Device only used for incoming scans
 	// Is overwritten as new scans come in that pass the filter
 	BleDevice _scanDevice;
-	// Filter for device scans
-	BleFilter _scanFilter;
 
 	// Remote device acting as peripheral
 	BleDevice _peripheral;
@@ -108,14 +92,9 @@ private:
 	BleEventHandlerRegistration _bleEventHandlerRegistration[MAX_BLE_EVENT_HANDLER_REGISTRATIONS];
 
 	/**
-	 * Compares the scanned device device against the filter and returns true upon a match
-	 *
-	 * @param[in] scan the scan data
-	 * @param[in] address the address of the scanned device
-	 * @return true if the scan passes the filter
-	 * @return false otherwise
+	 * Set the scan filter at the bluenet side.
 	 */
-	bool matchesFilter(BleScan scan, MacAddress address);
+	microapp_sdk_result_t setScanFilter(microapp_sdk_ble_scan_filter_t& scanFilter);
 
 	/**
 	 * Handles interrupts entering the BLE class from bluenet
@@ -259,6 +238,7 @@ public:
 
 	/**
 	 * Sends command to bluenet to call registered microapp callback function upon receiving advertisements
+	 * Resets reviously scanned devices.
 	 *
 	 * @param[in] withDuplicates  If true, returns duplicate advertisements. (Not implemented)
 	 *
