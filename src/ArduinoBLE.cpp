@@ -44,13 +44,10 @@ microapp_sdk_result_t Ble::handleScanEvent(microapp_sdk_ble_scan_t* scanInterrup
 				return CS_MICROAPP_SDK_ACK_SUCCESS;
 			}
 
-			// Apply a wrapper BleScan (no copy) to parse scan data
-			BleScan scan(scanInterrupt->eventScan.data, scanInterrupt->eventScan.size);
-			MacAddress address(scanInterrupt->eventScan.address.address, MAC_ADDRESS_LENGTH, scanInterrupt->eventScan.address.type);
-
 			// Copy the scan data into the _scanDevice
+			MacAddress address(scanInterrupt->eventScan.address.address, MAC_ADDRESS_LENGTH, scanInterrupt->eventScan.address.type);
 			rssi_t rssi = scanInterrupt->eventScan.rssi;
-			_scanDevice = BleDevice(scan, address, rssi);
+			_scanDevice = BleDevice(scanInterrupt->eventScan.data, scanInterrupt->eventScan.size, address, rssi);
 
 			// Call the event handler, if any.
 			auto handler = (DeviceEventHandler*)getBleEventHandler(BLEDeviceScanned);
