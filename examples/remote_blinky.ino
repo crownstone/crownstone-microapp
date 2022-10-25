@@ -42,12 +42,12 @@ BleCharacteristic myCharacteristic(
 		sizeof(myCharacteristicValue));
 
 // callback for received peripheral advertisement
-void onScannedDevice(BleDevice device) {
+void onScannedDevice(BleDevice& device) {
 	Serial.println("   Microapp scan callback:");
 	Serial.println(device.address().c_str());
 }
 
-void onConnect(BleDevice device) {
+void onConnect(BleDevice& device) {
 	Serial.println("   Microapp connect callback:");
 	Serial.println(device.address().c_str());
 }
