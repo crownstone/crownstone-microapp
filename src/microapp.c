@@ -319,6 +319,16 @@ microapp_sdk_result_t handleInterrupt(microapp_sdk_header_t* interruptHeader) {
 			id                              = meshInterrupt->type;
 			break;
 		}
+		case CS_MICROAPP_SDK_TYPE_MESSAGE: {
+			auto messageInterrupt = reinterpret_cast<microapp_sdk_message_t*>(interruptHeader);
+			id                    = messageInterrupt->type;
+			break;
+		}
+		case CS_MICROAPP_SDK_TYPE_BLUENET_EVENT: {
+			auto eventInterrupt = reinterpret_cast<microapp_sdk_bluenet_event_t*>(interruptHeader);
+			id                  = eventInterrupt->type;
+			break;
+		}
 		default: {
 			return CS_MICROAPP_SDK_ACK_ERR_UNDEFINED;
 		}
