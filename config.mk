@@ -30,7 +30,7 @@ READELF=$(GCC_PATH)/arm-none-eabi-readelf
 BUILD_PATH=build
 
 # The target name
-TARGET_NAME=basic
+TARGET_NAME=hello
 
 # The target source file
 TARGET_SOURCE=examples/$(TARGET_NAME).ino
