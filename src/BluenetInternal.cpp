@@ -8,6 +8,7 @@
  */
 
 #include <BluenetInternal.h>
+#include <cs_MicroappStructs.h>
 #include <stdint.h>
 
 BluenetInternalClass::BluenetInternalClass() {
@@ -35,13 +36,13 @@ microapp_sdk_result_t BluenetInternalClass::handleInterrupt(void* interrupt) {
 	}
 }
 
-bool BluenetInternalClass::setEventHandler(BluenetEventHandler& eventHandler) {
+bool BluenetInternalClass::setEventHandler(BluenetEventHandler eventHandler) {
 	if (!_registeredInterrupt) {
 		// Register interrupt on the microapp side,
 		// with an indirect handler
 		interrupt_registration_t interrupt;
 		interrupt.type               = CS_MICROAPP_SDK_TYPE_BLUENET_EVENT;
-		interrupt.id                 = 0;
+		interrupt.id                 = CS_MICROAPP_SDK_BLUENET_EVENT_EVENT;
 		interrupt.handler            = handleBluenetInternalInterrupt;
 		microapp_sdk_result_t result = registerInterrupt(&interrupt);
 		if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
@@ -51,7 +52,7 @@ bool BluenetInternalClass::setEventHandler(BluenetEventHandler& eventHandler) {
 		_registeredInterrupt = true;
 	}
 
-	_eventHandler = &eventHandler;
+	_eventHandler = eventHandler;
 	return true;
 }
 
