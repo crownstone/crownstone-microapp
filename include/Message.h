@@ -68,7 +68,7 @@ public:
 	 *
 	 * When set, this replaces available() and readBytes().
 	 */
-	bool setHandler(MessageHandler& handler);
+	bool setHandler(MessageHandler handler);
 
 private:
 	MessageClass();
@@ -85,7 +85,7 @@ private:
 	microapp_size_t _available = 0;
 
 	//! The message handler.
-	MessageHandler* _handler = nullptr;
+	MessageHandler _handler = nullptr;
 
 	//! Handle an interrupt.
 	microapp_sdk_result_t handleInterrupt(void* interrupt);

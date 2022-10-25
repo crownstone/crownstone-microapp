@@ -117,7 +117,7 @@ microapp_size_t MessageClass::write(void* data, microapp_size_t size) {
 	return size;
 }
 
-bool MessageClass::setHandler(MessageHandler& handler) {
-	_handler = &handler;
+bool MessageClass::setHandler(MessageHandler handler) {
+	_handler = handler;
 	return true;
 }
