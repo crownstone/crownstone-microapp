@@ -2,7 +2,7 @@
 #include <ServiceData.h>
 
 /*
- * This app will crash bluenet!
+ * This app will (attempt to) crash bluenet!
  * It is meant to steadily increase the stack used by the microapp to explore
  * when bluenet will crash
  */
@@ -22,7 +22,7 @@ void foo(uint32_t i) {
 }
 
 void setup() {
-	Serial.println("Stack overflow microapp");
+	Serial.println("Stack overflow test");
 
 	uint32_t i = 0;
 	foo(i);

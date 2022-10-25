@@ -38,9 +38,6 @@ void onScannedDevice(BleDevice& device) {
 
 // The Arduino setup function.
 void setup() {
-	Serial.begin();
-
-	// Write something to the log (will be shown in the bluenet code as print statement).
 	Serial.println("BLE scanner ATC example");
 
 	if (!BLE.begin()) {

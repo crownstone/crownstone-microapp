@@ -24,7 +24,6 @@ void onCharacteristicSubscribed(BleDevice& device, BleCharacteristic& characteri
 
 // The Arduino setup function.
 void setup() {
-	Serial.begin();
 	Serial.println("BLE peripheral custom service example");
 
 	if (!BLE.begin()) {

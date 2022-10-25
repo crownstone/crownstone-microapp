@@ -15,8 +15,9 @@ static int counter = 0;
 
 void setup() {
 	Serial.begin();
-	if (!Serial) return;
-	Serial.println("Setup");
+
+	// Write something to the log (will be shown in the bluenet code as print statement).
+	Serial.println("TWI example");
 
 	// join the i2c bus
 	Wire.begin();

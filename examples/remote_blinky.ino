@@ -3,7 +3,18 @@
 #include <Mesh.h>
 
 /**
- * An advanced microapp example.
+ * An advanced microapp example showcasing communication between two crownstones
+ * This microapp has to run on at least two crownstones
+ * The eventual goal is to let a crownstone LED blink via a button press on another crownstone
+ * The example showcases mesh and bluetooth functionality
+ * The flow is as follows:
+ * - During setup, the crownstones start advertising a custom service
+ * - On a button press, a crownstone broadcasts a mesh request
+ * - On a received mesh request, the app replies with its own address
+ * - On a received mesh reply, the app starts to scan for the provided address
+ * - On a scan match, a connection is set up and discovery is performed
+ * - The central crownstone reads the characteristic value, increments all bytes by one, and writes it back
+ * - On a write event, the peripheral will set the LED to the first characteristic byte modulo 2 (i.e. toggle it)
  */
 
 enum MeshHeader {
@@ -70,7 +81,7 @@ void onWrite(BleDevice& device, BleCharacteristic& characteristic) {
 
 void setup() {
 	Serial.begin();
-	Serial.println("   Advanced example");
+	Serial.println("   Remote blinky example");
 
 	pinMode(LED1_PIN, OUTPUT);
 

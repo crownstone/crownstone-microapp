@@ -26,9 +26,6 @@ void onNotification(BleDevice& device, BleCharacteristic& characteristic, uint8_
 
 // The Arduino setup function.
 void setup() {
-	Serial.begin();
-
-	// Write something to the log (will be shown in the bluenet code as print statement).
 	Serial.println("   BLE central ATC example");
 
 	if (!BLE.begin()) {

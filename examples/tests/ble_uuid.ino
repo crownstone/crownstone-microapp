@@ -6,6 +6,7 @@ const uint8_t uuid_bytes_128bit[UUID_128BIT_BYTE_LENGTH] = {0x56, 0x34, 0x12, 0x
 		0x78, 0x56, 0x34, 0x12, 0xCD, 0xAB, 0x78, 0x56, 0x34, 0x12};
 
 void setup() {
+	Serial.println("UUID test");
 
 	Uuid uuid_1(uuid_bytes_16bit, UUID_16BIT_BYTE_LENGTH);
 	Serial.println(uuid_1.length());

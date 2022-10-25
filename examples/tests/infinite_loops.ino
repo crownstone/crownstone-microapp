@@ -22,8 +22,6 @@ void introduceFaultInInterruptHandler() {
 }
 
 void setup() {
-	Serial.begin();
-	if (!Serial) return;
 	Serial.println("Faulty microapp");
 
 #if GENERATE_FAULT_IN_SETUP_FUNCTION == 1

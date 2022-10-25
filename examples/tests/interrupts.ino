@@ -52,8 +52,7 @@ void onPushedButton() {
 #endif
 
 void setup() {
-	Serial.begin();
-	Serial.println("Interrupt test code");
+	Serial.println("Interrupt test");
 
 	// initialize gpio
 	pinMode(LED1_PIN, OUTPUT);

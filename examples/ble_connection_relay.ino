@@ -63,7 +63,7 @@ void meshCallback(MeshMsg msg) {
 
 void setup() {
 	Serial.begin();
-	Serial.println("   Relay example");
+	Serial.println("   BLE connection relay example");
 
 	pinMode(LED1_PIN, OUTPUT);
 	pinMode(LED2_PIN, OUTPUT);

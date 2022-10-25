@@ -1,8 +1,14 @@
 #include <Arduino.h>
 
+/**
+ * This app showcases how the custom control command sdk protocol can be used
+ * It toggles the relay just like the relay.ino, but via a control command
+ */
+
 boolean state = LOW;
 
 void setup() {
+	Serial.println("Control command switch example");
 }
 
 void loop() {

@@ -5,6 +5,8 @@ PowerUsage powerUsage;
 
 void setup() {
 	Serial.begin();
+	// Write something to the log (will be shown in the bluenet code as print statement).
+	Serial.println("Power example");
 }
 
 void loop() {

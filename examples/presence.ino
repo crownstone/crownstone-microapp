@@ -8,6 +8,8 @@ Presence presence;
 
 void setup() {
 	Serial.begin();
+	// Write something to the log (will be shown in the bluenet code as print statement).
+	Serial.println("Presence example");
 }
 
 void loop() {
