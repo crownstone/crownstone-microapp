@@ -28,4 +28,5 @@ void loop() {
 		controlCommand->payload[0] = 0;
 	}
 	sendMessage();
+	delay(10000);
 }

@@ -60,8 +60,8 @@ void setup() {
 	pinMode(LED3_PIN, OUTPUT);
 
 #ifdef ENABLE_GPIO_INTERRUPTS
-	pinMode(BUTTON1_PIN, INPUT_PULLUP);
-	if (!attachInterrupt(digitalPinToInterrupt(BUTTON1_PIN), onPushedButton, RISING)) {
+	pinMode(BUTTON2_PIN, INPUT_PULLUP);
+	if (!attachInterrupt(digitalPinToInterrupt(BUTTON2_PIN), onPushedButton, RISING)) {
 		Serial.println("Setting button interrupt failed");
 	}
 #endif

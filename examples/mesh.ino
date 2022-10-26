@@ -10,8 +10,8 @@
  */
 
 // Define or undefine the following to set the role for the crownstone
-#define ROLE_RECEIVER
-// #define ROLE_TRANSMITTER
+// #define ROLE_RECEIVER
+#define ROLE_TRANSMITTER
 
 uint32_t counter;
 

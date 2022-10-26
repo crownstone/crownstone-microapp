@@ -28,4 +28,5 @@ void loop() {
 	else {
 		intensity = intensity + 10;
 	}
+	delay(1000);
 }

@@ -19,7 +19,8 @@ void setup() {
 }
 
 void loop() {
-	if (counter++ % 10 != 0) {
+	if (counter++ < 10) {
+		delay(1000);
 		return;
 	}
 	// Toggle the relay
@@ -31,4 +32,5 @@ void loop() {
 		relay.switchOn();
 	}
 	relayState = !relayState;
+	counter = 0;
 }
