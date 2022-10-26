@@ -44,7 +44,7 @@ public:
 	 * @param[in] eventHandler    The event handler.
 	 * @return                    True on success
 	 */
-	bool setEventHandler(BluenetEventHandler& eventHandler);
+	bool setEventHandler(BluenetEventHandler eventHandler);
 
 	/**
 	 * Subscribe for a bluenet event type.
@@ -68,7 +68,7 @@ private:
 	uint16_t _subscribedTypes[MAX_SUBSCRIPTIONS];
 
 	//! Keep up the registered event handler.
-	BluenetEventHandler* _eventHandler = nullptr;
+	BluenetEventHandler _eventHandler = nullptr;
 
 	//! Handle an interrupt.
 	microapp_sdk_result_t handleInterrupt(void* interrupt);

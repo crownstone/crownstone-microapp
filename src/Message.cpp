@@ -27,7 +27,7 @@ bool MessageClass::begin() {
 	// with an indirect handler
 	interrupt_registration_t interrupt;
 	interrupt.type               = CS_MICROAPP_SDK_TYPE_MESSAGE;
-	interrupt.id                 = 0;
+	interrupt.id                 = CS_MICROAPP_SDK_MSG_EVENT_RECEIVED_MSG;
 	interrupt.handler            = handleMessageInterrupt;
 	microapp_sdk_result_t result = registerInterrupt(&interrupt);
 	if (result != CS_MICROAPP_SDK_ACK_SUCCESS) {
@@ -117,7 +117,7 @@ microapp_size_t MessageClass::write(void* data, microapp_size_t size) {
 	return size;
 }
 
-bool MessageClass::setHandler(MessageHandler& handler) {
-	_handler = &handler;
+bool MessageClass::setHandler(MessageHandler handler) {
+	_handler = handler;
 	return true;
 }
