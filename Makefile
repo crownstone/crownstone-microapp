@@ -3,8 +3,8 @@
 # This version of the Makefile does not use setup, loop, or main symbols
 
 # Adjust target config file for nrf52832 vs nrf52840
-TARGET_CONFIG_FILE=target_nrf52840.mk
-# TARGET_CONFIG_FILE=target_nrf52832.mk
+#TARGET_CONFIG_FILE=target_nrf52840.mk
+TARGET_CONFIG_FILE=target_nrf52832.mk
 
 include $(TARGET_CONFIG_FILE)
 include config.mk
