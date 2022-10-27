@@ -39,7 +39,7 @@ TARGET_SOURCE=examples/$(TARGET_NAME).ino
 TARGET=$(BUILD_PATH)/$(TARGET_NAME)
 
 # Number of pages
-MICROAPP_PAGES=2
+MICROAPP_PAGES=4
 
 # These flags are meant for C++
 # The nano newlib library is removed as well. This reduces binary size even more. Only disadvantage is that memset, etc

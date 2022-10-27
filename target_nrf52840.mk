@@ -1,7 +1,7 @@
 # The location we will write into (in flash)
 
 # For nRF52840
-START_ADDRESS_WITHOUT_PREFIX=DD000
+START_ADDRESS_WITHOUT_PREFIX=D3000
 
 # The location including 0x
 START_ADDRESS=0x$(START_ADDRESS_WITHOUT_PREFIX)
