@@ -24,6 +24,9 @@ void blink() {
 void setup() {
 	Serial.begin();
 
+	// Write something to the log (will be shown in the bluenet code as print statement).
+	Serial.println("Button controlled LED example");
+
 	// Configure LED pin as output
 	pinMode(LED1_PIN, OUTPUT);
 

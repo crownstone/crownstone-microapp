@@ -10,13 +10,15 @@
  */
 
 // The name of the sensor.
-const char* sensorName = "ATC_9A45E3";
+const char* sensorName = "thingy";
 
 // The service UUID that has the characteristic we relay.
-const char* serviceUuid        = "181A";
+const char* serviceUuid        = "ef680200-9b35-4933-9b10-52ffa9740042";
 
 // The characteristic UUID we relay.
-const char* characteristicUuid = "2A1F";
+const char* characteristicUuid = "ef680201-9b35-4933-9b10-52ffa9740042";
+
+uint8_t readBuffer[2];
 
 // The characteristic value we relay.
 uint16_t myCharacteristicValue = 0;
@@ -43,6 +45,22 @@ void onConnect(BleDevice& device) {
 void onDisconnect(BleDevice& device) {
 	connectedToSensor = false;
 	connectedDevice = nullptr;
+	digitalWrite(LED1_PIN, 0);
+	digitalWrite(LED2_PIN, 0);
+}
+
+void onNotification(BleDevice& device, BleCharacteristic& characteristic, uint8_t* data, uint16_t size) {
+	Serial.print("   Microapp notification for ");
+	Serial.println(characteristic.uuid());
+	Serial.println(data, size);
+	if (size == sizeof(readBuffer)) {
+		memcpy(readBuffer, data, size);
+		// Instead of directly sending a mesh message, a flag could be set
+		// which is read in the loop, and only then send the mesh message
+		// That would throttle the amount of sent mesh messages
+		// which for some applications can be beneficial
+		Mesh.sendMeshMsg(readBuffer, sizeof(readBuffer), 0);
+	}
 }
 
 void meshCallback(MeshMsg msg) {
@@ -53,18 +71,19 @@ void meshCallback(MeshMsg msg) {
 		return;
 	}
 
-	if (connectedToSensor && connectedDevice != nullptr) {
+	if (!connectedToSensor && connectedDevice != nullptr) {
 		Serial.println("   Update characteristic value");
 		memcpy((uint8_t*)&myCharacteristicValue, msg.dataPtr, msg.size);
-		BleCharacteristic& characteristic = connectedDevice->characteristic(characteristicUuid);
-		characteristic.writeValue((uint8_t*)&myCharacteristicValue, msg.size);
+		myCharacteristic.writeValue((uint8_t*)&myCharacteristicValue, sizeof(myCharacteristicValue));
 	}
 }
 
 void setup() {
 	Serial.begin();
-	Serial.println("   Relay example");
+	Serial.println("   Connection relay example");
 
+	// LED1 will be on when connected to the sensor
+	// LED2 will be on when connected to the phone
 	pinMode(LED1_PIN, OUTPUT);
 	pinMode(LED2_PIN, OUTPUT);
 	digitalWrite(LED1_PIN, 0);
@@ -95,7 +114,12 @@ void setup() {
 }
 
 // Returns true on successful connect.
-bool connect(BleDevice& peripheral) {
+bool connect() {
+	BleDevice& peripheral = BLE.available();
+	if (!peripheral) {
+		return false;
+	}
+
 	Serial.println("   Connect to the sensor");
 	if (!peripheral.connect()) {
 		Serial.println("   Failed to connect");
@@ -121,14 +145,12 @@ bool connect(BleDevice& peripheral) {
 	return true;
 }
 
-
-
 void loop() {
-
 	if (!BLE.connected()) {
 		// Try to connect to a scanned sensor, or start scanning for a sensor.
-		if (connect(BLE.available())) {
+		if (connect()) {
 			connectedToSensor = true;
+			digitalWrite(LED1_PIN, 1);
 		}
 		else {
 			BLE.scanForName(sensorName);
@@ -138,22 +160,14 @@ void loop() {
 
 	if (connectedToSensor) {
 		BleCharacteristic& characteristic = connectedDevice->characteristic(characteristicUuid);
-		if (!characteristic.valueUpdated()) {
-			return;
-		}
-		uint8_t value[sizeof(myCharacteristicValue)];
-		if (!characteristic.readValue(value, sizeof(value))) {
-			return;
-		}
-
-		Serial.println("   Received notification, send mesh message");
-		Mesh.sendMeshMsg(value, sizeof(value), 0);
+		characteristic.setEventHandler(BLENotification, onNotification);
 		return;
 	}
 
 	// Connected to phone
 	BleDevice& central = BLE.central();
 	if (central) {
+		digitalWrite(LED2_PIN, 1);
 		// Keep the connection alive.
 		central.connectionKeepAlive();
 	}

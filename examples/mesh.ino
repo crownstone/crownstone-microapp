@@ -10,8 +10,8 @@
  */
 
 // Define or undefine the following to set the role for the crownstone
-#define ROLE_RECEIVER
-// #define ROLE_TRANSMITTER
+// #define ROLE_RECEIVER
+#define ROLE_TRANSMITTER
 
 uint32_t counter;
 
@@ -27,6 +27,9 @@ void meshCallback(MeshMsg msg) {
 
 void setup() {
 	Serial.begin();
+	// Write something to the log (will be shown in the bluenet code as print statement).
+	Serial.println("Hello world example");
+
 	counter = 0;
 
 #ifdef ROLE_RECEIVER

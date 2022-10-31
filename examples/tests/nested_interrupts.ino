@@ -12,6 +12,8 @@ void onPushedButton() {
 }
 
 void setup() {
+	Serial.println("Nested interrupt test");
+
 	pinMode(LED1_PIN, OUTPUT);
 
 	pinMode(BUTTON1_PIN, INPUT_PULLUP);

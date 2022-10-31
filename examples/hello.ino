@@ -17,6 +17,7 @@
 uint16_t counter;
 
 const microapp_size_t serviceDataSize = 1;
+// This uuid can be used to identify the microapp
 const uint16_t serviceDataUuid = 0x1234;
 uint8_t serviceData[serviceDataSize];
 
@@ -25,11 +26,8 @@ void setup() {
 	// We can "start" serial.
 	Serial.begin();
 
-	// We can use if(Serial), although this will always return true now (might be different in release mode).
-	if (!Serial) return;
-
 	// Write something to the log (will be shown in the bluenet code as print statement).
-	Serial.println("Hello world");
+	Serial.println("Hello world example");
 
 	counter = 0;
 }

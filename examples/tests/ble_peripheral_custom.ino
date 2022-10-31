@@ -18,13 +18,12 @@ uint8_t readableValue[NR_READABLE_BYTES];
 BleCharacteristic readableCharacteristic;
 
 // To be called when the characteristic is written by a central device
-void onCharacteristicSubscribed(BleDevice device, BleCharacteristic characteristic) {
+void onCharacteristicSubscribed(BleDevice& device, BleCharacteristic& characteristic) {
 	Serial.println("Characteristic subscribed callback");
 }
 
 // The Arduino setup function.
 void setup() {
-	Serial.begin();
 	Serial.println("BLE peripheral custom service example");
 
 	if (!BLE.begin()) {
@@ -70,4 +69,5 @@ void loop() {
 		// Keep the connection alive
 		central.connectionKeepAlive();
 	}
+	delay(1000);
 }

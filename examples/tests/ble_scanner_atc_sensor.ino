@@ -17,49 +17,28 @@ bool scanToggle = false;
 const char* beaconAddress = "A4:C1:38:9A:45:E3";
 const char* beaconName = "ATC_9A45E3";
 
-// For more extensive information about the scanned device
-#define PRINT_EXTENSIVE
-#undef PRINT_EXTENSIVE
-
 // callback for received peripheral advertisement
-void onScannedDevice(BleDevice device) {
-
-	Serial.println("BLE device scanned");
-	Serial.print("\trssi: ");
-	Serial.println(device.rssi());
-
-	Serial.print("\taddress: ");
-	Serial.println(device.address().c_str());
-
-#ifdef PRINT_EXTENSIVE
+void onScannedDevice(BleDevice& device) {
 	if (device.hasLocalName()) {
-		Serial.print("\tComplete local name: ");
 		Serial.println(device.localName().c_str());
+		return;
 	}
-#endif
+	Serial.println(device.address().c_str());
+	Serial.println(device.rssi());
 
 	// parse service data of beacon advertisement if available
 	ble_ad_t serviceData;
 	if (device.findAdvertisementDataType(GapAdvType::ServiceData16BitUuid, &serviceData)) {
-		if (serviceData.len == 15) { // service data length of the Xiaomi service data advertisements
+		if (serviceData.len == 15) { // service data length of the ATC service data advertisements
 			uint16_t temperature = (serviceData.data[8] << 8) | serviceData.data[9];
-			Serial.print("\tTemperature: "); Serial.println(temperature);
-#ifdef PRINT_EXTENSIVE
-			uint8_t humidity = serviceData.data[10];
-			Serial.print("\tHumidity: "); Serial.println(humidity);
-			uint16_t battery_perc = serviceData.data[11];
-			Serial.print("\tBattery \%: "); Serial.println(battery_perc);
-#endif
+			Serial.println(temperature);
 		}
 	}
 }
 
 // The Arduino setup function.
 void setup() {
-	Serial.begin();
-
-	// Write something to the log (will be shown in the bluenet code as print statement).
-	Serial.println("BLE scanner example");
+	Serial.println("BLE scanner ATC example");
 
 	if (!BLE.begin()) {
 		Serial.println("BLE.begin failed");
@@ -79,7 +58,7 @@ void loop() {
 	Serial.println(loopCounter);
 
 	// we would like to loop every 10000 ms (10 seconds)
-	if ((loopCounter >= (10000 / MICROAPP_LOOP_INTERVAL_MS)))
+	if ((loopCounter >= 10))
 	{
 		scanToggle = !scanToggle;
 		if (scanToggle)
@@ -96,4 +75,6 @@ void loop() {
 		loopCounter = 0;
 	}
 	loopCounter++;
+	// wait a second
+	delay(1000);
 }

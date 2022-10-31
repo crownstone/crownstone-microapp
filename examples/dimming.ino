@@ -12,6 +12,9 @@ CrownstoneDimmer dimmer;
 uint8_t intensity = 0;
 
 void setup() {
+	Serial.begin();
+	// Write something to the log (will be shown in the bluenet code as print statement).
+	Serial.println("Dimming example");
 }
 
 void loop() {
@@ -25,4 +28,5 @@ void loop() {
 	else {
 		intensity = intensity + 10;
 	}
+	delay(1000);
 }

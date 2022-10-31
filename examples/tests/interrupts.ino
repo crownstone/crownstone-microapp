@@ -25,7 +25,7 @@ boolean led3state = LOW;
 const char* bleBeaconAddress = "A4:C1:38:9A:45:E3";
 
 #ifdef ENABLE_BLE_INTERRUPTS
-void onScannedDevice(BleDevice device) {
+void onScannedDevice(BleDevice& device) {
 	// toggle led1
 	Serial.println("Scanned device");
 	led1state = !led1state;
@@ -52,8 +52,7 @@ void onPushedButton() {
 #endif
 
 void setup() {
-	Serial.begin();
-	Serial.println("Interrupt test code");
+	Serial.println("Interrupt test");
 
 	// initialize gpio
 	pinMode(LED1_PIN, OUTPUT);
@@ -61,8 +60,8 @@ void setup() {
 	pinMode(LED3_PIN, OUTPUT);
 
 #ifdef ENABLE_GPIO_INTERRUPTS
-	pinMode(BUTTON1_PIN, INPUT_PULLUP);
-	if (!attachInterrupt(digitalPinToInterrupt(BUTTON1_PIN), onPushedButton, RISING)) {
+	pinMode(BUTTON2_PIN, INPUT_PULLUP);
+	if (!attachInterrupt(digitalPinToInterrupt(BUTTON2_PIN), onPushedButton, RISING)) {
 		Serial.println("Setting button interrupt failed");
 	}
 #endif

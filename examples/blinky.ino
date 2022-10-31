@@ -17,6 +17,10 @@ const uint8_t ledPins[nrLEDs] = {LED1_PIN, LED2_PIN};
 uint8_t counter = 0;
 
 void setup() {
+	Serial.begin();
+	// Write something to the log (will be shown in the bluenet code as print statement).
+	Serial.println("Blinky example");
+
 	// Set LEDs to OUTPUT, so we can write.
 	for (int i = 0; i < nrLEDs; i++) {
 		ledState[i] = false;
