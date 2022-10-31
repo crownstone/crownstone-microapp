@@ -114,8 +114,11 @@ erase:
 reset:
 	nrfjprog --reset
 
-ota-upload:
-	scripts/upload_microapp.py --keyFile $(KEYS_JSON) -a $(BLE_ADDRESS) -f $(TARGET).bin
+upload-ble:
+	cs_microapp_upload --keyFile $(KEYS_JSON) -a $(BLE_ADDRESS) -f $(TARGET).bin
+	
+upload-uart:
+	cs_microapp_upload --keyFile $(KEYS_JSON) -d $(UART_DEVICE) -f $(TARGET).bin
 
 inspect: $(TARGET).elf
 	$(OBJDUMP) -x $^
