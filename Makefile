@@ -118,7 +118,7 @@ upload-ble:
 	cs_microapp_upload --keyFile $(KEYS_JSON) -a $(BLE_ADDRESS) -f $(TARGET).bin
 	
 upload-uart:
-	cs_microapp_upload --keyFile $(KEYS_JSON) -d $(UART_DEVICE) -f $(TARGET).bin
+	cs_microapp_upload --keyFile $(KEYS_JSON) -d $(UART_DEVICE) -l $(LOG_STRINGS_FILE) -f $(TARGET).bin
 
 inspect: $(TARGET).elf
 	$(OBJDUMP) -x $^

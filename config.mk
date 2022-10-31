@@ -4,11 +4,14 @@
 # exist.
 ###############################################################################
 
-# Path to the gcc arm none eabi compiler (do not use another one).
-GCC_PATH=$(HOME)/workspace/bluenet/tools/gcc_arm_none_eabi/bin
-
 # The path to the bluenet repository
 BLUENET_PATH=$(HOME)/workspace/bluenet
+
+# Path to the gcc arm none eabi compiler (do not use another one).
+GCC_PATH=$(BLUENET_PATH)/tools/gcc_arm_none_eabi/bin
+
+# The file with the extracted log strings.
+LOG_STRINGS_FILE=$(BLUENET_PATH)/build/default/extracted_logs.json
 
 ###############################################################################
 # The variables following this section probably do not need to be changed.

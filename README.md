@@ -10,6 +10,7 @@ Be careful what microapp you upload though. While there are built in safety meas
 The files that form the backbone of microapps can be found in `include` and `src`.
 There are a lot of examples in `examples`.
 The results of a build can be found in the `build` directory.
+More details can be found in the `docs` dir.
 
 # Configuration
 
@@ -31,11 +32,14 @@ The example to build can be set by changing `TARGET_NAME`:
 TARGET_NAME=hello
 ```
 
-For uploading via BLE or UART, you will need a link to a file somewhere private (say `~/.crownstone/keys`) which contains your keys. Also set the Bluetooth address of your Crownstone, and the UART device of your Crownstone:
+For uploading via BLE or UART, you will need a link to a file somewhere private (say `~/.crownstone/keys`) which contains your keys.
+For BLE, you will also need the address of the Crownstone.
+For UART, the device should be set, and if you want to see the bluenet debug logs, also set the file with extracted log strings.
 ```
 KEYS_JSON=~/.crownstone/keys/your_sphere_keys.json
 BLE_ADDRESS=XX:XX:XX:XX:XX:XX
 UART_DEVICE=/dev/ttyACM0
+LOG_STRINGS_FILE=$(BLUENET_PATH)/build/default/extracted_logs.json
 ```
 
 The file `your_sphere_keys.json` has the format as stipulated in the [python lib](https://github.com/crownstone/crownstone-lib-python-ble) documentation:
@@ -62,15 +66,22 @@ make clean
 make
 ```
 
+# Printing
+
+Release firmware has no debug logs. This includes prints from the microapps.
+If you want `println()` to work, you will have to rebuild bluenet with `CS_SERIAL_ENABLED=SERIAL_ENABLE_RX_AND_TX` and `SERIAL_VERBOSITY=SERIAL_INFO`.
+
+Another option would be to use the `Message` class. This class also works for release firmware, but you will have to write your own client (using the crownstone uart library).
+
 # Uploading
 
 Make sure your Crownstone has been setup, microapps are only allowed in normal mode.
 
 There are 3 different ways to upload the microapp:
 
-- BLE
-- UART
-- SWD
+- BLE: Over the air, handy when you want to upload a microapp to a live Crownstone.
+- UART: Handy when you already have a UART connection to a Crownstone or development kit, as this uploads faster than via BLE.
+- SWD: Quickest to upload and iterate, but requires a JLink and its dependencies. Does not interfere with UART debug logs.
 
 ## BLE
 
