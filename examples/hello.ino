@@ -3,24 +3,21 @@
 /**
  * A very basic 'hello world' microapp example.
  *
- * Every loop (once per second) a counter is incremented and printed.
- * For crownstones equipped with UART, the serial prints are sent over UART,
- * e.g. one of the nRF52 development kits or the crownstone USB dongle.
- * Most 'real' crownstones do not have an available UART port.
- * Hence, the counter is also advertised over the service data,
- * i.e. broadcast over BLE.
+ * Every loop a counter is incremented and printed.
+ * Makes sure the loop is called once every second at most.
+ * For the prints to work, the firmware needs to have UART and logs enabled.
+ * You will also need a crownstone equipped with UART: a development kit or the crownstone USB dongle.
  */
 
-
-uint16_t counter;
-
+// The loop counter.
+unsigned int counter;
 
 // The Arduino setup function.
 void setup() {
 	// We can "start" serial.
 	Serial.begin();
 
-	// Write something to the log (will be shown in the bluenet code as print statement).
+	// Write something to the log (will be shown as bluenet info log).
 	Serial.println("Hello world example");
 
 	counter = 0;
@@ -28,8 +25,9 @@ void setup() {
 
 // The Arduino loop function.
 void loop() {
-	// Print counter ever time we loop (which is every second)
+	// Print counter ever time we loop.
 	Serial.println(counter++);
 
+	// Make sure the loop is called at about once per second.
 	delay(1000);
 }
