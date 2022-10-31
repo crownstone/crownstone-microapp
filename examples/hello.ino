@@ -1,6 +1,4 @@
 #include <Arduino.h>
-#include <ServiceData.h>
-
 
 /**
  * A very basic 'hello world' microapp example.
@@ -16,10 +14,6 @@
 
 uint16_t counter;
 
-const microapp_size_t serviceDataSize = 1;
-// This uuid can be used to identify the microapp
-const uint16_t serviceDataUuid = 0x1234;
-uint8_t serviceData[serviceDataSize];
 
 // The Arduino setup function.
 void setup() {
@@ -37,7 +31,5 @@ void loop() {
 	// Print counter ever time we loop (which is every second)
 	Serial.println(counter++);
 
-	// Also advertise the counter value in the service data.
-	serviceData[0] = counter;
-	ServiceData.write(serviceDataUuid, serviceData, serviceDataSize);
+	delay(1000);
 }
