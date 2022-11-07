@@ -2,15 +2,29 @@
 
 #include <microapp.h>
 
-class PowerUsage {
+class PowerUsageClass {
 public:
-	// Empty constructor
-	PowerUsage(){};
-
 	/**
-	 * Request the filtered power usage in milliwatts from bluenet
-	 *
-	 * @return uint32_t Filtered power usage in milliwatts
+	 * Get the power usage in milliwatt.
 	 */
 	int32_t getPowerUsageMilliWatts();
+
+	// Class instance.
+	static PowerUsageClass& getInstance() {
+		// Guaranteed to be destroyed.
+		static PowerUsageClass instance;
+
+		// Instantiated on first use.
+		return instance;
+	}
+
+private:
+	/**
+	 * Constructors and copy constructors
+	 */
+	PowerUsageClass();
+	PowerUsageClass(PowerUsageClass const&);
+	void operator=(PowerUsageClass const&);
 };
+
+#define PowerUsage PowerUsageClass::getInstance()
