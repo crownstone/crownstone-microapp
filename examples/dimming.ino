@@ -1,7 +1,7 @@
 #include <CrownstoneSwitch.h>
 
 /**
- * A basic microapp example showcasing dimmer functionality
+ * A basic microapp example showcasing dimmer functionality.
  *
  * This example should be run on a crownstone with dimmer functionality, and dimming enabled.
  * I.e. one connected to dimmable lights.

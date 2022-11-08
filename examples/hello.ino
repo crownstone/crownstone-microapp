@@ -3,8 +3,8 @@
 /**
  * A very basic 'hello world' microapp example.
  *
- * Every loop a counter is incremented and printed.
- * Makes sure the loop is called once every second at most.
+ * Every second a counter is incremented and printed.
+ *
  * For the prints to work, the firmware needs to have UART and logs enabled.
  * You will also need a crownstone equipped with UART: a development kit or the crownstone USB dongle.
  */
