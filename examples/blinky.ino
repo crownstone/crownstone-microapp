@@ -1,7 +1,7 @@
 #include <Arduino.h>
 
 /**
- * A very basic microapp example for toggling LEDs.
+ * Turns a LED on for one second, then off for one second, repeatedly.
  *
  * This example should be run on a 'crownstone' equipped with LEDs,
  * e.g. one of the nRF52 development kits
@@ -9,37 +9,31 @@
  * so this example will not do anything for these.
  */
 
-// We use the first two leds here.
-// Leds 3 and 4 are reserved for relay and dimmer on PCA10040 boards.
-const uint8_t nrLEDs = 2;
-boolean ledState[nrLEDs];
-const uint8_t ledPins[nrLEDs] = {LED1_PIN, LED2_PIN};
-uint8_t counter = 0;
+// Which LED to use.
+// LEDs 3 and 4 are reserved for relay and dimmer on PCA10040 boards.
+const uint8_t ledPin = LED1_PIN;
 
 void setup() {
 	Serial.begin();
 	// Write something to the log (will be shown in the bluenet code as print statement).
 	Serial.println("Blinky example");
 
-	// Set LEDs to OUTPUT, so we can write.
-	for (int i = 0; i < nrLEDs; i++) {
-		ledState[i] = false;
-		pinMode(ledPins[i], OUTPUT);
-	}
+	// Set LED to OUTPUT, so we can write.
+	pinMode(ledPin, OUTPUT);
 }
 
 void loop() {
 
-	// get the index of the led to be toggled this cycle
-	uint8_t ledIndex = counter % nrLEDs;
+	// Turn the LED on.
+	digitalWrite(ledPin, true);
 
-	// toggle the led state of the given led
-	ledState[ledIndex] = !ledState[ledIndex];
+	// Keep the LED on for a second.
+	delay(1000);
 
-	// write the new led state
-	digitalWrite(ledPins[ledIndex], ledState[ledIndex]);
+	// Turn the LED off.
+	digitalWrite(ledPin, false);
 
-	// increment the loop counter
-	counter++;
+	// Keep the LED off for a second.
+	delay(1000);
 }
 
