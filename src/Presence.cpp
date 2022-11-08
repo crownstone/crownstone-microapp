@@ -1,6 +1,8 @@
 #include <Presence.h>
 
-uint64_t Presence::getPresence(uint8_t profileId) {
+PresenceClass::PresenceClass() {}
+
+uint64_t PresenceClass::getPresence(uint8_t profileId) {
 	uint8_t* out                             = getOutgoingMessagePayload();
 	microapp_sdk_presence_t* presenceRequest = reinterpret_cast<microapp_sdk_presence_t*>(out);
 	presenceRequest->header.messageType      = CS_MICROAPP_SDK_TYPE_PRESENCE;
@@ -14,7 +16,7 @@ uint64_t Presence::getPresence(uint8_t profileId) {
 	return presenceRequest->presenceBitmask;
 }
 
-bool Presence::isPresent(uint8_t profileId, uint8_t roomId) {
+bool PresenceClass::isPresent(uint8_t profileId, uint8_t roomId) {
 	if (roomId >= MAX_ROOMS) {
 		return false;
 	}
