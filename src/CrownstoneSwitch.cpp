@@ -35,7 +35,8 @@ bool CrownstoneSwitchClass::isOn() {
 }
 
 bool CrownstoneSwitchClass::isOff() {
-	return (getState().relay == false && getState().dimmer == 0);
+	auto state = getState();
+	return (state.relay == false && state.dimmer == 0);
 }
 
 
