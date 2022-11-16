@@ -1,15 +1,13 @@
 #include <Arduino.h>
-#include <CrownstoneRelay.h>
+#include <CrownstoneSwitch.h>
 
 /**
- * A basic microapp example showcasing relay functionality
+ * A basic microapp example showcasing relay functionality.
  *
- * This example should be run on a crownstone with switching functionality
- * If run on one of the nRF52 development kits, the relay is mapped to one of the LEDs
+ * This example should be run on a Crownstone with a relay, and dimming disabled.
+ * If run on one of the nRF52 development kits, with debug firmware, the relay is mapped to one of the LEDs.
  */
 
-CrownstoneRelay relay;
-bool relayState = HIGH;
 uint8_t counter = 0;
 
 void setup() {
@@ -19,18 +17,14 @@ void setup() {
 }
 
 void loop() {
-	if (counter++ < 10) {
-		delay(1000);
-		return;
-	}
 	// Toggle the relay
-	// relay.switchToggle() can be used alternatively
-	if (relayState) {
-		relay.switchOff();
+	// Of course, you could also use CrownstoneSwitch.toggle() instead.
+	if (CrownstoneSwitch.isOn()) {
+		CrownstoneSwitch.turnOff();
 	}
 	else {
-		relay.switchOn();
+		CrownstoneSwitch.turnOn();
 	}
-	relayState = !relayState;
-	counter = 0;
+
+	delay(3000);
 }

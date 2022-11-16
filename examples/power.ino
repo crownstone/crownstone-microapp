@@ -1,8 +1,6 @@
 #include <Arduino.h>
 #include <PowerUsage.h>
 
-PowerUsage powerUsage;
-
 void setup() {
 	Serial.begin();
 	// Write something to the log (will be shown in the bluenet code as print statement).
@@ -10,8 +8,10 @@ void setup() {
 }
 
 void loop() {
-	int powerUsageNow = powerUsage.getPowerUsageMilliWatts();
+	int powerUsage = PowerUsage.getPowerUsageMilliWatts();
 	Serial.print("Power usage is ");
-	Serial.print(powerUsageNow);
+	Serial.print(powerUsage);
 	Serial.println(" mW");
+
+	delay(1000);
 }

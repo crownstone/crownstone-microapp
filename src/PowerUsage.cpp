@@ -1,6 +1,8 @@
 #include <PowerUsage.h>
 
-int32_t PowerUsage::getPowerUsageMilliWatts() {
+PowerUsageClass::PowerUsageClass() {}
+
+int32_t PowerUsageClass::getPowerUsageMilliWatts() {
 	uint8_t* out                             = getOutgoingMessagePayload();
 	microapp_sdk_power_usage_t* powerRequest = reinterpret_cast<microapp_sdk_power_usage_t*>(out);
 	powerRequest->header.messageType         = CS_MICROAPP_SDK_TYPE_POWER_USAGE;

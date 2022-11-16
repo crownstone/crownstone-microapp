@@ -1,14 +1,13 @@
-#include <CrownstoneDimmer.h>
+#include <CrownstoneSwitch.h>
 
 /**
- * A basic microapp example showcasing dimmer functionality
+ * A basic microapp example showcasing dimmer functionality.
  *
- * This example should be run on a crownstone with dimmer functionality
- * I.e. one connected to dimmable lights
- * This example will not do anything if run on one of the nRF52 development kits.
+ * This example should be run on a crownstone with dimmer functionality, and dimming enabled.
+ * I.e. one connected to dimmable lights.
+ * If run on one of the nRF52 development kits, the dimmer is mapped to one of the LEDs.
  */
 
-CrownstoneDimmer dimmer;
 uint8_t intensity = 0;
 
 void setup() {
@@ -19,14 +18,15 @@ void setup() {
 
 void loop() {
 	// Write new dimmer value
-	dimmer.setIntensity(intensity);
+	CrownstoneSwitch.dim(intensity);
 
-	// Increment the loop counter until 100 percent, then reset
+	// Increment the intensity until 100 percent, then reset.
 	if (intensity >= 100) {
 		intensity = 0;
 	}
 	else {
 		intensity = intensity + 10;
 	}
+
 	delay(1000);
 }
