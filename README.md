@@ -1,7 +1,7 @@
 # Bluenet microapp
 
 A microapp is like an addon for a Crownstone.
-The goal of microapps is to make it easy to run additional code on top of released bluenet firmware.
+The goal of microapps is to make it easy to run additional code on top of released [bluenet](https://github.com/crownstone/bluenet) firmware.
 
 Be careful what microapp you upload though. While there are built in safety measures, there are always ways to make your crownstone unaccassible with a microapp. It's best to first test a microapp on a development kit.
 
@@ -60,7 +60,7 @@ By default, the microapp builds for the nRF52832 chip. This can be changed in th
 
 Create a `private.mk` file to override some default configs.
 
-In order to build a microapp, you need to specify where to find the bluenet repository:
+In order to build a microapp, you need to specify where to find the [bluenet](https://github.com/crownstone/bluenet) repository:
 ```
 # The path to the bluenet repository
 BLUENET_PATH=$(HOME)/workspace/bluenet
